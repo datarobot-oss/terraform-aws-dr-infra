@@ -1,33 +1,73 @@
-resource "aws_vpc" "this" {
-  cidr_block           = var.vpc_cidr_block
-  enable_dns_hostnames = true
+provider "aws" {}
+
+data "aws_availability_zones" "available" {}
+
+locals {
+  azs = slice(data.aws_availability_zones.available.names, 0, 3)
+  ecr_repos = toset([
+    "base-image",
+    "ephemeral-image",
+    "managed-image",
+    "custom-apps-managed-image"
+  ])
+  hosted_zone_name = "${var.name}.${var.dns_zone}"
+}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = var.name
+  cidr = var.vpc_cidr
+
+  azs             = local.azs
+  private_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 4, k)]
+  public_subnets  = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k + 48)]
+
+  enable_nat_gateway = true
+  single_nat_gateway = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
 
   tags = var.tags
 }
 
-resource "aws_subnet" "kubernetes_nodes" {
-  vpc_id     = aws_vpc.this.id
-  cidr_block = var.kubernetes_nodes_cidr_block
+module "dns" {
+  source  = "terraform-aws-modules/route53/aws//modules/zones"
+  version = "~> 3.0"
+
+  zones = {
+    local.hosted_zone_name = {}
+  }
 
   tags = var.tags
 }
 
-resource "aws_subnet" "kubernetes_ingress" {
-  vpc_id     = aws_vpc.this.id
-  cidr_block = var.kubernetes_ingress_cidr_block
+module "storage" {
+  source  = "terraform-aws-modules/s3-bucket/aws"
+  version = "~> 4.0"
 
-  tags = merge(var.tags, { "kubernetes.io/role/elb" : "1" })
-}
-
-resource "aws_subnet" "kubernetes_controlplane" {
-  vpc_id     = aws_vpc.this.id
-  cidr_block = var.kubernetes_controlplane_cidr_block
-
-  tags = var.tags
-}
-
-resource "aws_s3_bucket" "this" {
   bucket_prefix = replace(var.name, "_", "-")
+  force_destroy = true
+  #   acl           = "private"
+
+  tags = var.tags
+}
+
+module "ecr" {
+  source  = "terraform-aws-modules/ecr/aws"
+  version = "~> 2.0"
+
+  for_each = local.ecr_repos
+
+  repository_name               = "${var.name}/${each.key}"
+  repository_image_scan_on_push = false
+  repository_force_delete       = true
 
   tags = var.tags
 }
@@ -42,17 +82,16 @@ module "eks" {
   cluster_endpoint_public_access = true
 
   cluster_addons = {
-    coredns                = {}
-    eks-pod-identity-agent = {}
-    kube-proxy             = {}
-    vpc-cni                = {}
+    coredns = {}
+    # eks-pod-identity-agent = {}
+    kube-proxy = {}
+    vpc-cni    = {}
   }
 
   enable_cluster_creator_admin_permissions = true
 
-  vpc_id                   = aws_vpc.this.id
-  subnet_ids               = [aws_subnet.kubernetes_nodes.id]
-  control_plane_subnet_ids = [aws_subnet.kubernetes_controlplane.id]
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.private_subnets
 
   eks_managed_node_groups = {
     primary = {
@@ -67,17 +106,19 @@ module "eks" {
   tags = var.tags
 }
 
-module "app_role" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
+
+module "app_irsa_role" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
+  version = "~> 5.0"
 
   create_role = true
-  role_name   = "${var.name}-application"
+  role_name   = "${var.name}-irsa"
 
   provider_url                 = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
   oidc_subjects_with_wildcards = ["system:serviceaccount:${var.kubernetes_namespace}:*"]
+
   role_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser",
-    aws_iam_policy.s3_access_for_application.arn
+    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
   ]
   inline_policy_statements = [
     {
@@ -90,8 +131,8 @@ module "app_role" {
         "s3:ListMultipartUploadParts"
       ]
       resources = [
-        "arn:aws:s3:::${aws_s3_bucket.this.id}/*",
-        "arn:aws:s3:::${aws_s3_bucket.this.id}"
+        "arn:aws:s3:::${module.storage.s3_bucket_id}/*",
+        "arn:aws:s3:::${module.storage.s3_bucket_id}"
       ]
     },
     {
@@ -106,4 +147,143 @@ module "app_role" {
   ]
 
   tags = var.tags
+}
+
+module "ingress_nginx" {
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
+
+  namespace  = "ingress-nginx"
+  repository = "https://kubernetes.github.io/ingress-nginx"
+
+  app = {
+    name             = "ingress-nginx"
+    version          = "4.11.1"
+    chart            = "ingress-nginx"
+    create_namespace = true
+    wait             = true
+    recreate_pods    = false
+    deploy           = 1
+    timeout          = 600
+  }
+}
+
+module "external_dns_pod_identity" {
+  source = "terraform-aws-modules/eks-pod-identity/aws"
+
+  name = "external-dns"
+
+  attach_external_dns_policy    = true
+  external_dns_hosted_zone_arns = [module.dns.route53_zone_zone_arn]
+
+  association_defaults = {
+    cluster_name    = module.eks.cluster_name
+    namespace       = "external-dns"
+    service_account = "external-dns"
+  }
+
+  tags = var.tags
+}
+
+module "external_dns" {
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
+
+  namespace  = "external-dns"
+  repository = "https://charts.bitnami.com/bitnami"
+
+  app = {
+    name             = "external-dns"
+    version          = "8.3.5"
+    chart            = "external-dns"
+    create_namespace = true
+    wait             = true
+    recreate_pods    = false
+    deploy           = 1
+    timeout          = 600
+  }
+
+  values = [
+    templatefile(
+      "${path.module}/templates/external_dns.tftpl",
+      {
+        clusterName           = module.eks.cluster_name,
+        route53HostedZoneName = local.hosted_zone_name
+      }
+    )
+  ]
+}
+
+module "cert_manager_pod_identity" {
+  source = "terraform-aws-modules/eks-pod-identity/aws"
+
+  name = "cert-manager"
+
+  attach_cert_manager_policy    = true
+  cert_manager_hosted_zone_arns = [module.dns.route53_zone_zone_arn]
+
+  association_defaults = {
+    cluster_name    = module.eks.cluster_name
+    namespace       = "cert-manager"
+    service_account = "cert-manager"
+  }
+
+  tags = var.tags
+}
+
+module "cert_manager" {
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
+
+  namespace  = "cert-manager"
+  repository = "https://charts.jetstack.io"
+
+  app = {
+    name             = "cert-manager"
+    version          = "1.15.2"
+    chart            = "cert-manager"
+    create_namespace = true
+    wait             = true
+    recreate_pods    = false
+    deploy           = 1
+    timeout          = 600
+  }
+}
+
+module "cluster_autoscaler_pod_identity" {
+  source = "terraform-aws-modules/eks-pod-identity/aws"
+
+  name = "cluster-autoscaler"
+
+  attach_cluster_autoscaler_policy = true
+  cluster_autoscaler_cluster_names = [module.eks.cluster_name]
+
+  association_defaults = {
+    cluster_name    = module.eks.cluster_name
+    namespace       = "kube-system"
+    service_account = "cluster-autoscaler"
+  }
+
+  tags = var.tags
+}
+
+module "cluster_autoscaler" {
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
+
+  namespace  = "cluster-autoscaler"
+  repository = "https://kubernetes.github.io/autoscaler"
+
+  app = {
+    name             = "cluster-autoscaler"
+    version          = "1.30.2"
+    chart            = "cluster-autoscaler"
+    create_namespace = true
+    wait             = true
+    recreate_pods    = false
+    deploy           = 1
+    timeout          = 600
+  }
+
+
 }
