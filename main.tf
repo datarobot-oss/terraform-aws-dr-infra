@@ -1,6 +1,6 @@
-provider "aws" {}
-
 data "aws_availability_zones" "available" {}
+
+provider "aws" {}
 
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -10,7 +10,7 @@ locals {
     "managed-image",
     "custom-apps-managed-image"
   ])
-  hosted_zone_name = "${var.name}.${var.dns_zone}"
+  zone_name = "${var.name}.${var.dns_zone}"
 }
 
 module "vpc" {
@@ -42,8 +42,27 @@ module "dns" {
   version = "~> 3.0"
 
   zones = {
-    local.hosted_zone_name = {}
+    "${local.zone_name}" = {}
   }
+
+  tags = var.tags
+}
+
+module "acm" {
+  source  = "terraform-aws-modules/acm/aws"
+  version = "~> 4.0"
+
+  domain_name = local.zone_name
+  zone_id     = module.dns.route53_zone_zone_id[local.zone_name]
+
+  validation_method = "DNS"
+
+  subject_alternative_names = [
+    "*.${local.zone_name}",
+    "app.${local.zone_name}"
+  ]
+
+  wait_for_validation = true
 
   tags = var.tags
 }
@@ -68,6 +87,8 @@ module "ecr" {
   repository_name               = "${var.name}/${each.key}"
   repository_image_scan_on_push = false
   repository_force_delete       = true
+  attach_repository_policy      = false
+  create_lifecycle_policy       = false
 
   tags = var.tags
 }
@@ -82,10 +103,10 @@ module "eks" {
   cluster_endpoint_public_access = true
 
   cluster_addons = {
-    coredns = {}
-    # eks-pod-identity-agent = {}
-    kube-proxy = {}
-    vpc-cni    = {}
+    coredns                = {}
+    eks-pod-identity-agent = {}
+    kube-proxy             = {}
+    vpc-cni                = {}
   }
 
   enable_cluster_creator_admin_permissions = true
@@ -106,7 +127,7 @@ module "eks" {
   tags = var.tags
 }
 
-
+# TODO: can we use terraform-aws-modules/eks-pod-identity/awsinstead?
 module "app_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "~> 5.0"
@@ -149,141 +170,30 @@ module "app_irsa_role" {
   tags = var.tags
 }
 
-module "ingress_nginx" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
 
-  namespace  = "ingress-nginx"
-  repository = "https://kubernetes.github.io/ingress-nginx"
-
-  app = {
-    name             = "ingress-nginx"
-    version          = "4.11.1"
-    chart            = "ingress-nginx"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    token                  = data.aws_eks_cluster_auth.this.token
   }
 }
 
-module "external_dns_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
+module "amenities" {
+  source = "./amenities"
 
-  name = "external-dns"
+  eks_cluster_name  = module.eks.cluster_name
+  route53_zone_arn  = module.dns.route53_zone_zone_arn[local.zone_name]
+  route53_zone_name = local.zone_name
 
-  attach_external_dns_policy    = true
-  external_dns_hosted_zone_arns = [module.dns.route53_zone_zone_arn]
-
-  association_defaults = {
-    cluster_name    = module.eks.cluster_name
-    namespace       = "external-dns"
-    service_account = "external-dns"
-  }
+  cert_manager        = false
+  cluster_autoscaler  = true
+  external_dns        = true
+  ingress_nginx       = true
+  acm_certificate_arn = module.acm.acm_certificate_arn
 
   tags = var.tags
-}
-
-module "external_dns" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
-
-  namespace  = "external-dns"
-  repository = "https://charts.bitnami.com/bitnami"
-
-  app = {
-    name             = "external-dns"
-    version          = "8.3.5"
-    chart            = "external-dns"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
-
-  values = [
-    templatefile(
-      "${path.module}/templates/external_dns.tftpl",
-      {
-        clusterName           = module.eks.cluster_name,
-        route53HostedZoneName = local.hosted_zone_name
-      }
-    )
-  ]
-}
-
-module "cert_manager_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
-
-  name = "cert-manager"
-
-  attach_cert_manager_policy    = true
-  cert_manager_hosted_zone_arns = [module.dns.route53_zone_zone_arn]
-
-  association_defaults = {
-    cluster_name    = module.eks.cluster_name
-    namespace       = "cert-manager"
-    service_account = "cert-manager"
-  }
-
-  tags = var.tags
-}
-
-module "cert_manager" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
-
-  namespace  = "cert-manager"
-  repository = "https://charts.jetstack.io"
-
-  app = {
-    name             = "cert-manager"
-    version          = "1.15.2"
-    chart            = "cert-manager"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
-}
-
-module "cluster_autoscaler_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
-
-  name = "cluster-autoscaler"
-
-  attach_cluster_autoscaler_policy = true
-  cluster_autoscaler_cluster_names = [module.eks.cluster_name]
-
-  association_defaults = {
-    cluster_name    = module.eks.cluster_name
-    namespace       = "kube-system"
-    service_account = "cluster-autoscaler"
-  }
-
-  tags = var.tags
-}
-
-module "cluster_autoscaler" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
-
-  namespace  = "cluster-autoscaler"
-  repository = "https://kubernetes.github.io/autoscaler"
-
-  app = {
-    name             = "cluster-autoscaler"
-    version          = "1.30.2"
-    chart            = "cluster-autoscaler"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
-
-
 }
