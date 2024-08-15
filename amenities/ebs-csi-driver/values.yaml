@@ -1,0 +1,24 @@
+storageClasses:
+  - name: ebs-standard
+    annotations:
+      storageclass.kubernetes.io/is-default-class: "true"
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    reclaimPolicy: Delete
+    parameters:
+      csi.storage.k8s.io/fstype: ext4
+      type: gp3
+      encrypted: "true"
+      # The full ARN of the key to use when encrypting the volume. When not specified, the default KMS key is used
+      # kmskeyid:
+
+  - name: ebs-standard-retain
+    volumeBindingMode: WaitForFirstConsumer
+    allowVolumeExpansion: true
+    reclaimPolicy: Retain
+    parameters:
+      csi.storage.k8s.io/fstype: ext4
+      type: gp3
+      encrypted: "true"
+      # The full ARN of the key to use when encrypting the volume. When not specified, the default KMS key is used
+      # kmskeyid:

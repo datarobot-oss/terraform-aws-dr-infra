@@ -15,6 +15,12 @@ variable "cluster_autoscaler" {
   default     = false
 }
 
+variable "ebs_csi_driver" {
+  description = "Install the aws-ebs-csi-driver helm chart"
+  type        = bool
+  default     = false
+}
+
 variable "external_dns" {
   description = "Install the external-dns helm chart"
   type        = bool

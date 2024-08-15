@@ -1,6 +1,18 @@
 data "aws_availability_zones" "available" {}
 
+data "aws_eks_cluster_auth" "this" {
+  name = module.eks.cluster_name
+}
+
 provider "aws" {}
+
+provider "helm" {
+  kubernetes {
+    host                   = module.eks.cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    token                  = data.aws_eks_cluster_auth.this.token
+  }
+}
 
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
@@ -120,16 +132,29 @@ module "eks" {
     primary = {
       instance_types = ["r6i.4xlarge"]
 
-      min_size     = 2
+      min_size     = 3
       max_size     = 6
-      desired_size = 2
+      desired_size = 3
+
+      block_device_mappings = {
+        device_name = "/dev/xvda"
+
+        ebs = {
+          volume_size           = 500
+          volume_type           = "io1"
+          root_iops             = 2000
+          kms_key_id            = ""
+          encrypted             = false
+          delete_on_termination = true
+        }
+      }
     }
   }
 
   tags = var.tags
 }
 
-# TODO: can we use terraform-aws-modules/eks-pod-identity/awsinstead?
+# TODO: can we use terraform-aws-modules/eks-pod-identity/aws instead?
 module "app_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "~> 5.0"
@@ -172,17 +197,7 @@ module "app_irsa_role" {
   tags = var.tags
 }
 
-data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
-}
 
-provider "helm" {
-  kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.this.token
-  }
-}
 
 module "amenities" {
   source = "./amenities"
@@ -192,8 +207,9 @@ module "amenities" {
   route53_zone_arn  = module.dns.route53_zone_zone_arn[local.zone_name]
   route53_zone_name = local.zone_name
 
-  cert_manager        = false
+  cert_manager        = true
   cluster_autoscaler  = true
+  ebs_csi_driver      = true
   external_dns        = true
   ingress_nginx       = true
   acm_certificate_arn = module.acm.acm_certificate_arn

@@ -6,10 +6,12 @@ module "cluster_autoscaler_pod_identity" {
   attach_cluster_autoscaler_policy = true
   cluster_autoscaler_cluster_names = [var.eks_cluster_name]
 
-  association_defaults = {
-    cluster_name    = var.eks_cluster_name
-    namespace       = "kube-system"
-    service_account = "cluster-autoscaler"
+  associations = {
+    this = {
+      cluster_name    = var.eks_cluster_name
+      namespace       = "kube-system"
+      service_account = "cluster-autoscaler"
+    }
   }
 
   tags = var.tags

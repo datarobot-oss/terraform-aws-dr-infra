@@ -6,10 +6,12 @@ module "cert_manager_pod_identity" {
   attach_cert_manager_policy    = true
   cert_manager_hosted_zone_arns = [var.route53_zone_arn]
 
-  association_defaults = {
-    cluster_name    = var.eks_cluster_name
-    namespace       = "cert-manager"
-    service_account = "cert-manager"
+  associations = {
+    this = {
+      cluster_name    = var.eks_cluster_name
+      namespace       = "cert-manager"
+      service_account = "cert-manager"
+    }
   }
 
   tags = var.tags

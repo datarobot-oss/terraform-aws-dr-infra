@@ -6,10 +6,12 @@ module "external_dns_pod_identity" {
   attach_external_dns_policy    = true
   external_dns_hosted_zone_arns = [var.route53_zone_arn]
 
-  association_defaults = {
-    cluster_name    = var.eks_cluster_name
-    namespace       = "external-dns"
-    service_account = "external-dns"
+  associations = {
+    this = {
+      cluster_name    = var.eks_cluster_name
+      namespace       = "external-dns"
+      service_account = "external-dns"
+    }
   }
 
   tags = var.tags

@@ -17,6 +17,16 @@ module "cluster_autoscaler" {
   tags = var.tags
 }
 
+module "ebs_csi_driver" {
+  count  = var.ebs_csi_driver ? 1 : 0
+  source = "./ebs-csi-driver"
+
+  eks_cluster_name     = var.eks_cluster_name
+  aws_ebs_csi_kms_arns = []
+
+  tags = var.tags
+}
+
 module "external_dns" {
   count  = var.external_dns ? 1 : 0
   source = "./external-dns"
