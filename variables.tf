@@ -21,7 +21,7 @@ variable "vpc_cidr" {
 variable "dns_zone" {
   description = "DNS zone to use for app"
   type        = string
-  default     = "ent.datarobot.com"
+  default     = "rd.int.datarobot.com"
 }
 
 variable "kubernetes_namespace" {

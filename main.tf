@@ -4,13 +4,16 @@ provider "aws" {}
 
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
+
   ecr_repos = toset([
     "base-image",
     "ephemeral-image",
     "managed-image",
     "custom-apps-managed-image"
   ])
+
   zone_name = "${var.name}.${var.dns_zone}"
+  app_fqdn  = "app.${local.zone_name}"
 }
 
 module "vpc" {
@@ -58,8 +61,7 @@ module "acm" {
   validation_method = "DNS"
 
   subject_alternative_names = [
-    "*.${local.zone_name}",
-    "app.${local.zone_name}"
+    local.app_fqdn
   ]
 
   wait_for_validation = true
@@ -185,6 +187,7 @@ provider "helm" {
 module "amenities" {
   source = "./amenities"
 
+
   eks_cluster_name  = module.eks.cluster_name
   route53_zone_arn  = module.dns.route53_zone_zone_arn[local.zone_name]
   route53_zone_name = local.zone_name
@@ -194,6 +197,7 @@ module "amenities" {
   external_dns        = true
   ingress_nginx       = true
   acm_certificate_arn = module.acm.acm_certificate_arn
+  app_fqdn            = local.app_fqdn
 
   tags = var.tags
 }
