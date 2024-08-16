@@ -198,7 +198,7 @@ module "amenities" {
   eks_cluster_name  = module.eks.cluster_name
   route53_zone_arn  = module.dns.route53_zone_zone_arn[local.zone_name]
   route53_zone_name = local.zone_name
-
+  
   aws_loadbalancer_controller = true
   cert_manager                = true
   cluster_autoscaler          = true
@@ -207,6 +207,7 @@ module "amenities" {
   ingress_nginx               = true
   acm_certificate_arn         = module.acm.acm_certificate_arn
   app_fqdn                    = local.app_fqdn
+  vpc_id                      = module.vpc.vpc_id
 
   tags = var.tags
 }

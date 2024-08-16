@@ -3,6 +3,7 @@ module "aws_loadbalancer_controller" {
   source = "./aws-loadbalancer-controller"
 
   eks_cluster_name = var.eks_cluster_name
+  vpc_id           = var.vpc_id
 
   tags = var.tags
 }

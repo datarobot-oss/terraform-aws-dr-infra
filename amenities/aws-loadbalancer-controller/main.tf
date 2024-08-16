@@ -38,6 +38,10 @@ module "aws_loadbalancer_controller" {
     {
       name  = "clusterName"
       value = var.eks_cluster_name
+    },
+    {
+      name = "vpcId"
+      value = var.vpc_id
     }
   ]
 }
