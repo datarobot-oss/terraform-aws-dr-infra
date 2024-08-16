@@ -3,6 +3,12 @@ variable "tags" {
   type        = map(string)
 }
 
+variable "aws_loadbalancer_controller" {
+  description = "Install the aws-load-balancer-controller helm chart"
+  type        = bool
+  default     = false
+}
+
 variable "cert_manager" {
   description = "Install the cert-manager helm chart"
   type        = bool

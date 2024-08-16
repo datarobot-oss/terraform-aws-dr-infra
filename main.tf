@@ -57,7 +57,9 @@ module "dns" {
   version = "~> 3.0"
 
   zones = {
-    "${local.zone_name}" = {}
+    "${local.zone_name}" = {
+      force_destroy = true
+    }
   }
 
   tags = var.tags
@@ -133,21 +135,11 @@ module "eks" {
       instance_types = ["r6i.4xlarge"]
 
       min_size     = 3
-      max_size     = 6
-      desired_size = 3
+      max_size     = 10
+      desired_size = 6
 
-      block_device_mappings = {
-        device_name = "/dev/xvda"
-
-        ebs = {
-          volume_size           = 500
-          volume_type           = "io1"
-          root_iops             = 2000
-          kms_key_id            = ""
-          encrypted             = false
-          delete_on_termination = true
-        }
-      }
+      disk_size                  = 500
+      use_custom_launch_template = false
     }
   }
 
@@ -207,13 +199,14 @@ module "amenities" {
   route53_zone_arn  = module.dns.route53_zone_zone_arn[local.zone_name]
   route53_zone_name = local.zone_name
 
-  cert_manager        = true
-  cluster_autoscaler  = true
-  ebs_csi_driver      = true
-  external_dns        = true
-  ingress_nginx       = true
-  acm_certificate_arn = module.acm.acm_certificate_arn
-  app_fqdn            = local.app_fqdn
+  aws_loadbalancer_controller = true
+  cert_manager                = true
+  cluster_autoscaler          = true
+  ebs_csi_driver              = true
+  external_dns                = true
+  ingress_nginx               = true
+  acm_certificate_arn         = module.acm.acm_certificate_arn
+  app_fqdn                    = local.app_fqdn
 
   tags = var.tags
 }

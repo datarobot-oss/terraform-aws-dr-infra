@@ -1,3 +1,12 @@
+module "aws_loadbalancer_controller" {
+  count  = var.aws_loadbalancer_controller ? 1 : 0
+  source = "./aws-loadbalancer-controller"
+
+  eks_cluster_name = var.eks_cluster_name
+
+  tags = var.tags
+}
+
 module "cert_manager" {
   count  = var.cert_manager ? 1 : 0
   source = "./cert-manager"

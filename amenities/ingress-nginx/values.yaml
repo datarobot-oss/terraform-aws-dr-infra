@@ -5,13 +5,15 @@ controller:
   config:
     use-forwarded-headers: "true"
     use-proxy-protocol: "true"
-  replicaCount: 3
+  replicaCount: 6
   service:
     externalTrafficPolicy: Local
     annotations:
       external-dns.alpha.kubernetes.io/hostname: ${app_hostname}
-      service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
-      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-type: external
+      service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
       service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ${acm_certificate_arn}
       service.beta.kubernetes.io/aws-load-balancer-ssl-ports: https
-      service.beta.kubernetes.io/aws-load-balancer-type: nlb
+      service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60"
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"

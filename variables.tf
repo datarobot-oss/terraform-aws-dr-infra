@@ -27,5 +27,5 @@ variable "dns_zone" {
 variable "kubernetes_namespace" {
   description = "Namespace where the DataRobot application will be installed"
   type        = string
-  default     = "drcore"
+  default     = "dr-core"
 }
