@@ -40,8 +40,12 @@ module "aws_loadbalancer_controller" {
       value = var.eks_cluster_name
     },
     {
-      name = "vpcId"
+      name  = "vpcId"
       value = var.vpc_id
     }
+  ]
+
+  values = [
+    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 }

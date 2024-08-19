@@ -12,3 +12,15 @@ variable "aws_ebs_csi_kms_arns" {
   description = "EBS CSI KMS ARNs"
   type        = list(string)
 }
+
+variable "custom_values_templatefile" {
+  description = "Custom values templatefile to pass to the helm chart"
+  type        = string
+  default     = ""
+}
+
+variable "custom_values_variables" {
+  description = "Variables for the custom values templatefile"
+  type        = map(string)
+  default     = {}
+}

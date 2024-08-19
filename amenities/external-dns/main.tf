@@ -41,4 +41,8 @@ module "external_dns" {
       value = var.route53_zone_name
     }
   ]
+
+  values = [
+    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+  ]
 }

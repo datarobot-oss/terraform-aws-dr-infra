@@ -41,4 +41,8 @@ module "cert_manager" {
       value = "true"
     }
   ]
+
+  values = [
+    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+  ]
 }

@@ -17,8 +17,11 @@ module "ingress_nginx" {
     timeout          = 600
   }
 
-  values = [templatefile("${path.module}/values.yaml", {
-    acm_certificate_arn = var.acm_certificate_arn,
-    app_hostname        = var.app_hostname
-  })]
+  values = [
+    templatefile("${path.module}/values.yaml", {
+      acm_certificate_arn = var.acm_certificate_arn,
+      app_hostname        = var.app_hostname
+    }),
+    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+  ]
 }

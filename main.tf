@@ -31,6 +31,7 @@ locals {
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
+  # count   = var.create_vpc ? 1 : 0
 
   name = var.name
   cidr = var.vpc_cidr
@@ -55,6 +56,7 @@ module "vpc" {
 module "dns" {
   source  = "terraform-aws-modules/route53/aws//modules/zones"
   version = "~> 3.0"
+  count   = var.create_dns ? 1 : 0
 
   zones = {
     "${local.zone_name}" = {
@@ -68,6 +70,7 @@ module "dns" {
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0"
+  count   = var.create_acm_certificate ? 1 : 0
 
   domain_name = local.zone_name
   zone_id     = module.dns.route53_zone_zone_id[local.zone_name]
@@ -86,6 +89,7 @@ module "acm" {
 module "storage" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
+  count   = var.create_s3_storage_bucket ? 1 : 0
 
   bucket_prefix = replace(var.name, "_", "-")
   force_destroy = true
@@ -97,6 +101,7 @@ module "storage" {
 module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "~> 2.0"
+  count   = var.create_ecr_repositories ? 1 : 0
 
   for_each = local.ecr_repos
 
@@ -112,6 +117,7 @@ module "ecr" {
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
+  count   = var.create_eks_cluster ? 1 : 0
 
   cluster_name    = var.name
   cluster_version = "1.30"
@@ -150,6 +156,7 @@ module "eks" {
 module "app_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "~> 5.0"
+  count   = var.create_app_irsa_role ? 1 : 0
 
   create_role = true
   role_name   = "${var.name}-irsa"
@@ -194,20 +201,31 @@ module "app_irsa_role" {
 module "amenities" {
   source = "./amenities"
 
+  eks_cluster_name    = module.eks.cluster_name
+  route53_zone_arn    = module.dns.route53_zone_zone_arn[local.zone_name]
+  route53_zone_name   = local.zone_name
+  acm_certificate_arn = module.acm.acm_certificate_arn
+  app_fqdn            = local.app_fqdn
+  vpc_id              = module.vpc.vpc_id
 
-  eks_cluster_name  = module.eks.cluster_name
-  route53_zone_arn  = module.dns.route53_zone_zone_arn[local.zone_name]
-  route53_zone_name = local.zone_name
-  
-  aws_loadbalancer_controller = true
-  cert_manager                = true
-  cluster_autoscaler          = true
-  ebs_csi_driver              = true
-  external_dns                = true
-  ingress_nginx               = true
-  acm_certificate_arn         = module.acm.acm_certificate_arn
-  app_fqdn                    = local.app_fqdn
-  vpc_id                      = module.vpc.vpc_id
+  aws_loadbalancer_controller           = var.aws_loadbalancer_controller
+  aws_loadbalancer_controller_values    = var.aws_loadbalancer_controller_values
+  aws_loadbalancer_controller_variables = var.aws_loadbalancer_controller_variables
+  cert_manager                          = var.cert_manager
+  cert_manager_values                   = var.cert_manager_values
+  cert_manager_variables                = var.cert_manager_variables
+  cluster_autoscaler                    = var.cluster_autoscaler
+  cluster_autoscaler_values             = var.cluster_autoscaler_values
+  cluster_autoscaler_variables          = var.cluster_autoscaler_variables
+  ebs_csi_driver                        = var.ebs_csi_driver
+  ebs_csi_driver_values                 = var.ebs_csi_driver_values
+  ebs_csi_driver_variables              = var.ebs_csi_driver_variables
+  external_dns                          = var.external_dns
+  external_dns_values                   = var.external_dns_values
+  external_dns_variables                = var.external_dns_variables
+  ingress_nginx                         = var.ingress_nginx
+  ingress_nginx_values                  = var.ingress_nginx_values
+  ingress_nginx_variables               = var.ingress_nginx_variables
 
   tags = var.tags
 }

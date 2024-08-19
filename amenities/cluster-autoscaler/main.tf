@@ -35,4 +35,8 @@ module "cluster_autoscaler" {
     timeout          = 600
   }
 
+  values = [
+    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+  ]
+
 }

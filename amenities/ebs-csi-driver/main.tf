@@ -36,5 +36,8 @@ module "ebs_csi_driver" {
     timeout          = 600
   }
 
-  values = [templatefile("${path.module}/values.yaml", {})]
+  values = [
+    templatefile("${path.module}/values.yaml", {}),
+    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+  ]
 }
