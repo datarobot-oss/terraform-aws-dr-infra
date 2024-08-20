@@ -5,7 +5,7 @@ output "app_role_arn" {
 
 output "app_fqdn" {
   description = "FQDN of the DataRobot application"
-  value       = local.app_fqdn
+  value       = var.app_fqdn
 }
 
 output "ecr_repository_urls" {
@@ -15,7 +15,7 @@ output "ecr_repository_urls" {
 
 output "s3_bucket_name" {
   description = "S3 bucket name to use for DataRobot application file storage"
-  value       = module.storage[0].s3_bucket_id
+  value       = local.s3_bucket_id
 }
 
 output "s3_bucket_regional_domain" {

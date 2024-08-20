@@ -1,0 +1,12 @@
+controller:
+  allowSnippetAnnotations: true
+  admissionWebhooks:
+    enabled: false
+  config:
+    use-forwarded-headers: "true"
+    use-proxy-protocol: "true"
+  replicaCount: 3
+  service:
+    externalTrafficPolicy: Local
+    targetPorts:
+      https: http

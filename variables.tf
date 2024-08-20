@@ -1,7 +1,11 @@
 variable "name" {
-  description = "Name to use for created resources"
+  description = "Name to use as a prefix for created resources"
   type        = string
-  default     = "datarobot"
+}
+
+variable "app_fqdn" {
+  description = "FQDN to be used to access the DataRobot application"
+  type        = string
 }
 
 variable "tags" {
@@ -12,80 +16,112 @@ variable "tags" {
   }
 }
 
-variable "create_vpc" {
-  description = "Create a new VPC"
+variable "public" {
+  description = "Connect to the DataRobot application via an internet-facing load balancer. If dns is enabled, create a public route53 zone"
   type        = bool
-  default     = true
+}
+
+variable "vpc_id" {
+  description = "ID of existing VPC"
+  type        = string
+  default     = ""
+}
+
+variable "create_vpc" {
+  description = "Create a new VPC. Ignored when existing vpc_id is specified."
+  type        = bool
 }
 
 variable "vpc_cidr" {
-  description = "CIDR block to be used for the VPC"
+  description = "CIDR block to be used for the VPC. Ignored when existing vpc_id is specified or create_vpc is false"
   type        = string
-  default     = "10.0.0.0/16"
 }
 
-variable "create_dns" {
+variable "eks_subnets" {
+  description = "List of existing subnet IDs to be used for the EKS cluster"
+  type        = list(string)
+  default     = []
+}
+
+variable "route53_zone_arn" {
+  description = "ARN of existing route53 zone"
+  type        = string
+  default     = ""
+}
+
+variable "route53_zone_id" {
+  description = "ID of existing route53 zone"
+  type        = string
+  default     = ""
+}
+
+variable "create_dns_zone" {
   description = "Create a new Route53 zone"
   type        = bool
-  default     = true
 }
 
-variable "dns_zone" {
-  description = "DNS zone to use for app"
+variable "acm_certificate_arn" {
+  description = "ARN of existing ACM certificate to use on the ingress load balancer"
   type        = string
-  default     = "rd.int.datarobot.com"
+  default     = ""
 }
 
 variable "create_acm_certificate" {
   description = "Create a new ACM SSL certificate"
   type        = bool
-  default     = true
 }
+
+variable "s3_bucket_id" {
+  description = "ID of existing S3 storage bucket"
+  type = string
+  default = ""
+}
+
 
 variable "create_s3_storage_bucket" {
   description = "Create a new S3 storage bucket"
   type        = bool
-  default     = true
 }
 
 variable "create_ecr_repositories" {
   description = "Create DataRobot image builder container repositories"
   type        = bool
-  default     = true
+}
+
+variable "eks_cluster_name" {
+  description = "Name of existing EKS cluster"
+  type        = string
+  default     = ""
 }
 
 variable "create_eks_cluster" {
   description = "Create an EKS cluster"
   type        = bool
-  default     = true
 }
 
 variable "create_app_irsa_role" {
   description = "Create IAM role for Datarobot application service account"
   type        = bool
-  default     = true
 }
 
 variable "kubernetes_namespace" {
   description = "Namespace where the DataRobot application will be installed"
   type        = string
-  default     = "dr-core"
 }
 
-variable "aws_loadbalancer_controller" {
+variable "aws_load_balancer_controller" {
   description = "Install the aws-load-balancer-controller helm chart"
   type        = bool
-  default     = true
 }
 
-variable "aws_loadbalancer_controller_values" {
+variable "aws_load_balancer_controller_values" {
   description = "Custom values file for the aws-load-balancer-controller helm chart"
   type        = string
   default     = ""
 }
 
-variable "aws_loadbalancer_controller_variables" {
-  description = "Variables passed to the aws_loadbalancer_controller_values templatefile"
+variable "aws_load_balancer_controller_variables" {
+  description = "Variables passed to the aws_load_balancer_controller_values templatefile"
   type        = map(string)
   default     = {}
 }
@@ -93,7 +129,6 @@ variable "aws_loadbalancer_controller_variables" {
 variable "cert_manager" {
   description = "Install the cert-manager helm chart"
   type        = bool
-  default     = true
 }
 
 variable "cert_manager_values" {
@@ -111,7 +146,6 @@ variable "cert_manager_variables" {
 variable "cluster_autoscaler" {
   description = "Install the cluster-autoscaler helm chart"
   type        = bool
-  default     = true
 }
 
 variable "cluster_autoscaler_values" {
@@ -129,7 +163,6 @@ variable "cluster_autoscaler_variables" {
 variable "ebs_csi_driver" {
   description = "Install the aws-ebs-csi-driver helm chart"
   type        = bool
-  default     = true
 }
 
 variable "ebs_csi_driver_values" {
@@ -147,7 +180,6 @@ variable "ebs_csi_driver_variables" {
 variable "external_dns" {
   description = "Install the external-dns helm chart"
   type        = bool
-  default     = true
 }
 
 variable "external_dns_values" {
@@ -165,7 +197,6 @@ variable "external_dns_variables" {
 variable "ingress_nginx" {
   description = "Install the ingress-nginx helm chart"
   type        = bool
-  default     = true
 }
 
 variable "ingress_nginx_values" {

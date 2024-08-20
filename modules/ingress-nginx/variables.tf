@@ -8,9 +8,15 @@ variable "acm_certificate_arn" {
   type        = string
 }
 
-variable "app_hostname" {
+variable "app_fqdn" {
   description = "Hostname to expose the app on"
   type        = string
+}
+
+variable "public" {
+  description = "Connect to the DataRobot application via an internet-facing load balancer. If dns is enabled, create a public route53 zone"
+  type        = bool
+  default     = true
 }
 
 variable "custom_values_templatefile" {

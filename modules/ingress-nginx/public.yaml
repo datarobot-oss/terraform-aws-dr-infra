@@ -1,13 +1,5 @@
 controller:
-  allowSnippetAnnotations: true
-  admissionWebhooks:
-    enabled: false
-  config:
-    use-forwarded-headers: "true"
-    use-proxy-protocol: "true"
-  replicaCount: 3
   service:
-    externalTrafficPolicy: Local
     annotations:
       service.beta.kubernetes.io/aws-load-balancer-type: external
       service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
@@ -18,5 +10,3 @@ controller:
       service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
       service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
       service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: ${tags}
-    targetPorts:
-      https: http

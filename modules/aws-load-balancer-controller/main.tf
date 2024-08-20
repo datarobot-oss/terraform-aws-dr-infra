@@ -1,4 +1,4 @@
-module "aws_loadbalancer_controller_pod_identity" {
+module "aws_load_balancer_controller_pod_identity" {
   source = "terraform-aws-modules/eks-pod-identity/aws"
 
   name = "aws-lbc"
@@ -16,7 +16,7 @@ module "aws_loadbalancer_controller_pod_identity" {
   tags = var.tags
 }
 
-module "aws_loadbalancer_controller" {
+module "aws_load_balancer_controller" {
   source  = "terraform-module/release/helm"
   version = "~> 2.0"
 

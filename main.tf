@@ -22,14 +22,19 @@ locals {
     "custom-apps-managed-image"
   ]) : []
 
-  zone_name = "${var.name}.${var.dns_zone}"
-  app_fqdn  = "app.${local.zone_name}"
+  vpc_id              = var.create_vpc && var.vpc_id == "" ? module.vpc[0].vpc_id : var.vpc_id
+  eks_subnets         = var.create_vpc && length(var.eks_subnets) == 0 ? module.vpc[0].private_subnets : var.eks_subnets
+  eks_cluster_name    = var.create_eks_cluster && var.eks_cluster_name == "" ? module.eks[0].cluster_name : var.eks_cluster_name
+  route53_zone_arn    = var.create_dns_zone && var.route53_zone_arn == "" ? module.dns[0].route53_zone_zone_arn[var.app_fqdn] : var.route53_zone_arn
+  route53_zone_id     = var.create_dns_zone && var.route53_zone_id == "" ? module.dns[0].route53_zone_zone_id[var.app_fqdn] : var.route53_zone_id
+  s3_bucket_id        = var.create_s3_storage_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
+  acm_certificate_arn = var.create_acm_certificate && var.acm_certificate_arn == "" ? module.acm[0].acm_certificate_arn : var.acm_certificate_arn
 }
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  count   = var.create_vpc ? 1 : 0
+  count   = var.create_vpc && var.vpc_id == "" ? 1 : 0
 
   name = var.name
   cidr = var.vpc_cidr
@@ -54,11 +59,12 @@ module "vpc" {
 module "dns" {
   source  = "terraform-aws-modules/route53/aws//modules/zones"
   version = "~> 3.0"
-  count   = var.create_dns ? 1 : 0
+  count   = var.create_dns_zone ? 1 : 0
 
   zones = {
-    "${local.zone_name}" = {
+    "${var.app_fqdn}" = {
       force_destroy = true
+      vpc           = var.public ? [] : [{ vpc_id = local.vpc_id }]
     }
   }
 
@@ -70,15 +76,14 @@ module "acm" {
   version = "~> 4.0"
   count   = var.create_acm_certificate ? 1 : 0
 
-  domain_name = local.zone_name
-  zone_id     = module.dns[0].route53_zone_zone_id[local.zone_name]
-
-  validation_method = "DNS"
+  domain_name = var.app_fqdn
+  zone_id     = local.route53_zone_id
 
   subject_alternative_names = [
-    local.app_fqdn
+    var.app_fqdn
   ]
 
+  validation_method   = "DNS"
   wait_for_validation = true
 
   tags = var.tags
@@ -91,14 +96,13 @@ module "storage" {
 
   bucket_prefix = replace(var.name, "_", "-")
   force_destroy = true
-  #   acl           = "private"
 
   tags = var.tags
 }
 
 module "ecr" {
-  source  = "terraform-aws-modules/ecr/aws"
-  version = "~> 2.0"
+  source   = "terraform-aws-modules/ecr/aws"
+  version  = "~> 2.0"
   for_each = local.ecr_repos
 
   repository_name               = "${var.name}/${each.key}"
@@ -129,18 +133,18 @@ module "eks" {
 
   enable_cluster_creator_admin_permissions = true
 
-  vpc_id     = module.vpc[0].vpc_id
-  subnet_ids = module.vpc[0].private_subnets
+  vpc_id     = local.vpc_id
+  subnet_ids = local.eks_subnets
 
   eks_managed_node_groups = {
     primary = {
       instance_types = ["r6i.4xlarge"]
 
-      min_size     = 3
+      min_size     = 5
       max_size     = 10
       desired_size = 6
 
-      disk_size                  = 500
+      disk_size                  = 1500
       use_custom_launch_template = false
     }
   }
@@ -148,14 +152,13 @@ module "eks" {
   tags = var.tags
 }
 
-# TODO: can we use terraform-aws-modules/eks-pod-identity/aws instead?
 module "app_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "~> 5.0"
   count   = var.create_app_irsa_role ? 1 : 0
 
   create_role = true
-  role_name   = "${var.name}-irsa"
+  role_name   = "${var.name}-app-irsa"
 
   provider_url                 = replace(module.eks[0].cluster_oidc_issuer_url, "https://", "")
   oidc_subjects_with_wildcards = ["system:serviceaccount:${var.kubernetes_namespace}:*"]
@@ -174,8 +177,8 @@ module "app_irsa_role" {
         "s3:ListMultipartUploadParts"
       ]
       resources = [
-        "arn:aws:s3:::${module.storage[0].s3_bucket_id}/*",
-        "arn:aws:s3:::${module.storage[0].s3_bucket_id}"
+        "arn:aws:s3:::${local.s3_bucket_id}/*",
+        "arn:aws:s3:::${local.s3_bucket_id}"
       ]
     },
     {
@@ -192,35 +195,81 @@ module "app_irsa_role" {
   tags = var.tags
 }
 
+module "aws_load_balancer_controller" {
+  source = "./modules/aws-load-balancer-controller"
+  count = var.aws_load_balancer_controller ? 1 : 0
 
-module "amenities" {
-  source = "./amenities"
+  eks_cluster_name = local.eks_cluster_name
+  vpc_id           = local.vpc_id
 
-  eks_cluster_name    = module.eks[0].cluster_name
-  route53_zone_arn    = module.dns[0].route53_zone_zone_arn[local.zone_name]
-  route53_zone_name   = local.zone_name
-  acm_certificate_arn = module.acm[0].acm_certificate_arn
-  app_fqdn            = local.app_fqdn
-  vpc_id              = module.vpc[0].vpc_id
+  custom_values_templatefile = var.aws_load_balancer_controller_values
+  custom_values_variables    = var.aws_load_balancer_controller_variables
 
-  aws_loadbalancer_controller           = var.aws_loadbalancer_controller
-  aws_loadbalancer_controller_values    = var.aws_loadbalancer_controller_values
-  aws_loadbalancer_controller_variables = var.aws_loadbalancer_controller_variables
-  cert_manager                          = var.cert_manager
-  cert_manager_values                   = var.cert_manager_values
-  cert_manager_variables                = var.cert_manager_variables
-  cluster_autoscaler                    = var.cluster_autoscaler
-  cluster_autoscaler_values             = var.cluster_autoscaler_values
-  cluster_autoscaler_variables          = var.cluster_autoscaler_variables
-  ebs_csi_driver                        = var.ebs_csi_driver
-  ebs_csi_driver_values                 = var.ebs_csi_driver_values
-  ebs_csi_driver_variables              = var.ebs_csi_driver_variables
-  external_dns                          = var.external_dns
-  external_dns_values                   = var.external_dns_values
-  external_dns_variables                = var.external_dns_variables
-  ingress_nginx                         = var.ingress_nginx
-  ingress_nginx_values                  = var.ingress_nginx_values
-  ingress_nginx_variables               = var.ingress_nginx_variables
+  tags = var.tags
+}
+
+module "cert_manager" {
+  source = "./modules/cert-manager"
+  count = var.cert_manager ? 1 : 0
+
+  eks_cluster_name = local.eks_cluster_name
+  route53_zone_arn = local.route53_zone_arn
+
+  custom_values_templatefile = var.cert_manager_values
+  custom_values_variables    = var.cert_manager_variables
+
+  tags = var.tags
+}
+
+module "cluster_autoscaler" {
+  source = "./modules/cluster-autoscaler"
+  count = var.cluster_autoscaler ? 1 : 0
+
+  eks_cluster_name = local.eks_cluster_name
+
+  custom_values_templatefile = var.cluster_autoscaler_values
+  custom_values_variables    = var.cluster_autoscaler_variables
+
+  tags = var.tags
+}
+
+module "ebs_csi_driver" {
+  source = "./modules/ebs-csi-driver"
+  count = var.ebs_csi_driver ? 1 : 0
+
+  eks_cluster_name     = local.eks_cluster_name
+  aws_ebs_csi_kms_arns = []
+
+  custom_values_templatefile = var.ebs_csi_driver_values
+  custom_values_variables    = var.ebs_csi_driver_variables
+
+  tags = var.tags
+}
+
+module "external_dns" {
+  source = "./modules/external-dns"
+  count = var.external_dns ? 1 : 0
+
+  eks_cluster_name  = local.eks_cluster_name
+  route53_zone_arn  = local.route53_zone_arn
+  route53_zone_name = var.app_fqdn
+
+  custom_values_templatefile = var.external_dns_values
+  custom_values_variables    = var.external_dns_variables
+
+  tags = var.tags
+}
+
+module "ingress_nginx" {
+  source = "./modules/ingress-nginx"
+  count = var.ingress_nginx ? 1 : 0
+
+  acm_certificate_arn = local.acm_certificate_arn
+  app_fqdn            = var.app_fqdn
+  public              = var.public
+
+  custom_values_templatefile = var.ingress_nginx_values
+  custom_values_variables    = var.ingress_nginx_variables
 
   tags = var.tags
 }
