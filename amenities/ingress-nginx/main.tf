@@ -20,7 +20,8 @@ module "ingress_nginx" {
   values = [
     templatefile("${path.module}/values.yaml", {
       acm_certificate_arn = var.acm_certificate_arn,
-      app_hostname        = var.app_hostname
+      app_hostname        = var.app_hostname,
+      tags                = join(",", [for k, v in var.tags : "${k}=${v}"])
     }),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]

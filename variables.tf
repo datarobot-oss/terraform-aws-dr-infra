@@ -8,7 +8,7 @@ variable "tags" {
   description = "A map of tags to add to all resources"
   type        = map(string)
   default = {
-    "ManagedBy" : "Terraform"
+    managed-by : "terraform"
   }
 }
 
@@ -75,7 +75,7 @@ variable "kubernetes_namespace" {
 variable "aws_loadbalancer_controller" {
   description = "Install the aws-load-balancer-controller helm chart"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "aws_loadbalancer_controller_values" {
@@ -93,7 +93,7 @@ variable "aws_loadbalancer_controller_variables" {
 variable "cert_manager" {
   description = "Install the cert-manager helm chart"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "cert_manager_values" {
@@ -111,7 +111,7 @@ variable "cert_manager_variables" {
 variable "cluster_autoscaler" {
   description = "Install the cluster-autoscaler helm chart"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "cluster_autoscaler_values" {
@@ -129,7 +129,7 @@ variable "cluster_autoscaler_variables" {
 variable "ebs_csi_driver" {
   description = "Install the aws-ebs-csi-driver helm chart"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "ebs_csi_driver_values" {
@@ -147,7 +147,7 @@ variable "ebs_csi_driver_variables" {
 variable "external_dns" {
   description = "Install the external-dns helm chart"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "external_dns_values" {
@@ -165,7 +165,7 @@ variable "external_dns_variables" {
 variable "ingress_nginx" {
   description = "Install the ingress-nginx helm chart"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "ingress_nginx_values" {

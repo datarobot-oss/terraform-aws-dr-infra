@@ -1,15 +1,13 @@
 data "aws_availability_zones" "available" {}
 
 data "aws_eks_cluster_auth" "this" {
-  name = module.eks.cluster_name
+  name = module.eks[0].cluster_name
 }
-
-provider "aws" {}
 
 provider "helm" {
   kubernetes {
-    host                   = module.eks.cluster_endpoint
-    cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+    host                   = module.eks[0].cluster_endpoint
+    cluster_ca_certificate = base64decode(module.eks[0].cluster_certificate_authority_data)
     token                  = data.aws_eks_cluster_auth.this.token
   }
 }
@@ -17,12 +15,12 @@ provider "helm" {
 locals {
   azs = slice(data.aws_availability_zones.available.names, 0, 3)
 
-  ecr_repos = toset([
+  ecr_repos = var.create_ecr_repositories ? toset([
     "base-image",
     "ephemeral-image",
     "managed-image",
     "custom-apps-managed-image"
-  ])
+  ]) : []
 
   zone_name = "${var.name}.${var.dns_zone}"
   app_fqdn  = "app.${local.zone_name}"
@@ -31,7 +29,7 @@ locals {
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  # count   = var.create_vpc ? 1 : 0
+  count   = var.create_vpc ? 1 : 0
 
   name = var.name
   cidr = var.vpc_cidr
@@ -73,7 +71,7 @@ module "acm" {
   count   = var.create_acm_certificate ? 1 : 0
 
   domain_name = local.zone_name
-  zone_id     = module.dns.route53_zone_zone_id[local.zone_name]
+  zone_id     = module.dns[0].route53_zone_zone_id[local.zone_name]
 
   validation_method = "DNS"
 
@@ -101,8 +99,6 @@ module "storage" {
 module "ecr" {
   source  = "terraform-aws-modules/ecr/aws"
   version = "~> 2.0"
-  count   = var.create_ecr_repositories ? 1 : 0
-
   for_each = local.ecr_repos
 
   repository_name               = "${var.name}/${each.key}"
@@ -133,8 +129,8 @@ module "eks" {
 
   enable_cluster_creator_admin_permissions = true
 
-  vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+  vpc_id     = module.vpc[0].vpc_id
+  subnet_ids = module.vpc[0].private_subnets
 
   eks_managed_node_groups = {
     primary = {
@@ -161,7 +157,7 @@ module "app_irsa_role" {
   create_role = true
   role_name   = "${var.name}-irsa"
 
-  provider_url                 = replace(module.eks.cluster_oidc_issuer_url, "https://", "")
+  provider_url                 = replace(module.eks[0].cluster_oidc_issuer_url, "https://", "")
   oidc_subjects_with_wildcards = ["system:serviceaccount:${var.kubernetes_namespace}:*"]
 
   role_policy_arns = [
@@ -178,8 +174,8 @@ module "app_irsa_role" {
         "s3:ListMultipartUploadParts"
       ]
       resources = [
-        "arn:aws:s3:::${module.storage.s3_bucket_id}/*",
-        "arn:aws:s3:::${module.storage.s3_bucket_id}"
+        "arn:aws:s3:::${module.storage[0].s3_bucket_id}/*",
+        "arn:aws:s3:::${module.storage[0].s3_bucket_id}"
       ]
     },
     {
@@ -197,16 +193,15 @@ module "app_irsa_role" {
 }
 
 
-
 module "amenities" {
   source = "./amenities"
 
-  eks_cluster_name    = module.eks.cluster_name
-  route53_zone_arn    = module.dns.route53_zone_zone_arn[local.zone_name]
+  eks_cluster_name    = module.eks[0].cluster_name
+  route53_zone_arn    = module.dns[0].route53_zone_zone_arn[local.zone_name]
   route53_zone_name   = local.zone_name
-  acm_certificate_arn = module.acm.acm_certificate_arn
+  acm_certificate_arn = module.acm[0].acm_certificate_arn
   app_fqdn            = local.app_fqdn
-  vpc_id              = module.vpc.vpc_id
+  vpc_id              = module.vpc[0].vpc_id
 
   aws_loadbalancer_controller           = var.aws_loadbalancer_controller
   aws_loadbalancer_controller_values    = var.aws_loadbalancer_controller_values
