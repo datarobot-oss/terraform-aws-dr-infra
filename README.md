@@ -4,7 +4,7 @@ Terraform for minimum infrastructure required to run DataRobot in AWS.
 ## Usage
 ```
 module "datarobot-infra" {
-  source = "../.."
+  source = "git@github.com/datarobot/dr-terraform-infra-aws"
 
   name     = "datarobot"
   app_fqdn = "datarobot.yourdomain.com"
