@@ -19,7 +19,7 @@ module "datarobot-infra" {
   create_dns_zone          = true
   create_acm_certificate   = true
   create_s3_storage_bucket = true
-  create_ecr_repositories  = true
+  create_ecr_repositories  = false
   create_eks_cluster       = true
   create_app_irsa_role     = true
 

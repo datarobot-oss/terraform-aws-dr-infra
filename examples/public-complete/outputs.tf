@@ -18,7 +18,3 @@ output "s3_bucket_name" {
   value       = module.datarobot-infra.s3_bucket_name
 }
 
-output "s3_bucket_regional_domain" {
-  description = "S3 bucket region-specific domain name"
-  value       = module.datarobot-infra.s3_bucket_regional_domain
-}

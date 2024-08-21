@@ -131,5 +131,4 @@ module "datarobot-infra" {
 | <a name="output_app_role_arn"></a> [app\_role\_arn](#output\_app\_role\_arn) | ARN of the IAM role to be assumed by the DataRobot app service accounts |
 | <a name="output_ecr_repository_urls"></a> [ecr\_repository\_urls](#output\_ecr\_repository\_urls) | URLs of the image builder repositories |
 | <a name="output_s3_bucket_name"></a> [s3\_bucket\_name](#output\_s3\_bucket\_name) | S3 bucket name to use for DataRobot application file storage |
-| <a name="output_s3_bucket_regional_domain"></a> [s3\_bucket\_regional\_domain](#output\_s3\_bucket\_regional\_domain) | S3 bucket region-specific domain name |
 <!-- END_TF_DOCS -->
