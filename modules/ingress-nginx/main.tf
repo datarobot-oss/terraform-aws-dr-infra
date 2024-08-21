@@ -21,7 +21,7 @@ module "ingress_nginx" {
     templatefile("${path.module}/common.yaml", {}),
     templatefile(var.public ? "${path.module}/public.yaml" : "${path.module}/private.yaml", {
       acm_certificate_arn = var.acm_certificate_arn,
-      app_fqdn        = var.app_fqdn,
+      app_fqdn            = var.app_fqdn,
       tags                = join(",", [for k, v in var.tags : "${k}=${v}"])
     }),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""

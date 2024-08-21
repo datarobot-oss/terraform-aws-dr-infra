@@ -1,19 +1,21 @@
-provider "aws" {}
+provider "aws" {
+  region = "us-west-2"
+}
 
 locals {
-  name = "datarobot-infra-full-public"
+  name     = "datarobot"
+  app_fqdn = "${local.name}.yourdomain.com"
+  vpc_cidr = "10.7.0.0/16"
 }
 
 module "datarobot-infra" {
   source = "../.."
 
-  name                 = local.name
-  app_fqdn             = "${local.name}.rd.int.datarobot.com"
-  public               = true
-  vpc_cidr             = "10.0.0.0/16"
-  kubernetes_namespace = "dr-core"
+  name     = local.name
+  app_fqdn = local.app_fqdn
 
   create_vpc               = true
+  vpc_cidr                 = local.vpc_cidr
   create_dns_zone          = true
   create_acm_certificate   = true
   create_s3_storage_bucket = true
@@ -27,9 +29,11 @@ module "datarobot-infra" {
   ebs_csi_driver               = true
   external_dns                 = true
   ingress_nginx                = true
+  internet_facing_ingress_lb   = true
 
   tags = {
-    datarobot-app = local.name
-    managed-by    = "terraform"
+    application = local.name
+    environment = "dev"
+    managed-by  = "terraform"
   }
 }

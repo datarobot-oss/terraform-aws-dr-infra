@@ -3,6 +3,7 @@ controller:
     external:
       enabled: false
     internal:
+      enabled: true
       annotations:
         service.beta.kubernetes.io/aws-load-balancer-type: external
         service.beta.kubernetes.io/aws-load-balancer-scheme: internal
