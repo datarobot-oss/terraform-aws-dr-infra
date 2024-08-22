@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 module "cluster_autoscaler_pod_identity" {
   source = "terraform-aws-modules/eks-pod-identity/aws"
 
@@ -9,8 +11,8 @@ module "cluster_autoscaler_pod_identity" {
   associations = {
     this = {
       cluster_name    = var.eks_cluster_name
-      namespace       = "kube-system"
-      service_account = "cluster-autoscaler"
+      namespace       = "cluster-autoscaler"
+      service_account = "cluster-autoscaler-aws-cluster-autoscaler"
     }
   }
 
@@ -34,6 +36,17 @@ module "cluster_autoscaler" {
     deploy           = 1
     timeout          = 600
   }
+
+  set = [
+    {
+      name  = "autoDiscovery.clusterName"
+      value = var.eks_cluster_name
+    },
+    {
+      name  = "awsRegion"
+      value = data.aws_region.current.name
+    }
+  ]
 
   values = [
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
