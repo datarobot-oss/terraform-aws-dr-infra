@@ -15,9 +15,11 @@ module "datarobot_infra" {
   route53_zone_id          = "<existing-route53-zone-id>"
   create_acm_certificate   = false
   acm_certificate_arn      = "<existing-acm-certificate-arn>"
+  create_kms_key           = true
   create_s3_storage_bucket = true
   create_ecr_repositories  = true
   create_eks_cluster       = true
+  eks_create_gpu_nodegroup = true
   create_app_irsa_role     = true
 
   aws_load_balancer_controller = true
