@@ -1,5 +1,6 @@
 module "aws_load_balancer_controller_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.0"
 
   name = "aws-lbc"
 

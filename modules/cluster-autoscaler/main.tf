@@ -1,7 +1,8 @@
 data "aws_region" "current" {}
 
 module "cluster_autoscaler_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.0"
 
   name = "cluster-autoscaler"
 
