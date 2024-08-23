@@ -1,5 +1,5 @@
 ## Example: minimal
-Demonstrate the minimal set of variables required to create the infrastructure required to install the DataRobot application helm charts using an internet-facing NLB for ingress.
+Demonstrates the minimal set of variables required to create the infrastructure required to install the DataRobot application helm charts using an internet-facing NLB for ingress.
 
 ## Usage
 ```
