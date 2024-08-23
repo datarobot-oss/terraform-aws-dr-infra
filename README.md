@@ -1,5 +1,5 @@
 # dr-terraform-infra-aws
-Terraform for minimum infrastructure required to run DataRobot in AWS.
+Terraform for infrastructure required to run DataRobot in AWS.
 
 ## Usage
 ```
@@ -37,8 +37,9 @@ module "datarobot_infra" {
 ```
 
 ## Examples
-- [Private Partial](examples/private-partial)
-- [Public Complete](examples/public-complete)
+- [Internet Facing Comprehensive](examples/internet-facing)
+- [Internal](examples/internal)
+- [Minimal](examples/minimal)
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
