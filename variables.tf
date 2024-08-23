@@ -64,6 +64,18 @@ variable "create_acm_certificate" {
   default     = true
 }
 
+variable "kms_key_arn" {
+  description = "ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create_kms_key will be ignored."
+  type        = string
+  default     = ""
+}
+
+variable "create_kms_key" {
+  description = "Create a new KMS key used for EBS volume encryption on EKS nodes. Ignored if kms_key_arn is specified."
+  type        = bool
+  default     = true
+}
+
 variable "s3_bucket_id" {
   description = "ID of existing S3 storage bucket to use for Datarobot application file storage. When specified, create_s3_storage_bucket will be ignored."
   type        = string
@@ -98,6 +110,60 @@ variable "eks_cluster_version" {
   description = "EKS cluster version. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
   type        = string
   default     = "1.30"
+}
+
+variable "eks_primary_nodegroup_instance_types" {
+  description = "Instance types used for the primary node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = list(string)
+  default     = ["r6i.4xlarge"]
+}
+
+variable "eks_primary_nodegroup_min_size" {
+  description = "Minimum number of nodes in the primary node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = number
+  default     = 5
+}
+
+variable "eks_primary_nodegroup_max_size" {
+  description = "Maximum number of nodes in the primary node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = number
+  default     = 10
+}
+
+variable "eks_primary_nodegroup_desired_size" {
+  description = "Desired number of nodes in the primary node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = number
+  default     = 6
+}
+
+variable "eks_create_gpu_nodegroup" {
+  description = "Whether to create a nodegroup with GPU instances. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = bool
+  default     = false
+}
+
+variable "eks_gpu_nodegroup_instance_types" {
+  description = "Instance types used for the primary node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = list(string)
+  default     = ["g4dn.2xlarge"]
+}
+
+variable "eks_gpu_nodegroup_min_size" {
+  description = "Minimum number of nodes in the GPU node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = number
+  default     = 1
+}
+
+variable "eks_gpu_nodegroup_max_size" {
+  description = "Maximum number of nodes in the GPU node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = number
+  default     = 3
+}
+
+variable "eks_gpu_nodegroup_desired_size" {
+  description = "Desired number of nodes in the GPU node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = number
+  default     = 1
 }
 
 variable "create_app_irsa_role" {

@@ -12,7 +12,7 @@ locals {
   acm_certificate_arn = "<acm-certificate-arn>"
 }
 
-module "datarobot-infra" {
+module "datarobot_infra" {
   source = "../.."
 
   name     = local.name
@@ -25,9 +25,11 @@ module "datarobot-infra" {
   route53_zone_id          = local.route53_zone_id
   create_acm_certificate   = false
   acm_certificate_arn      = local.acm_certificate_arn
+  create_kms_key           = true
   create_s3_storage_bucket = true
   create_ecr_repositories  = true
   create_eks_cluster       = true
+  eks_create_gpu_nodegroup = false
   create_app_irsa_role     = true
 
   aws_load_balancer_controller = true

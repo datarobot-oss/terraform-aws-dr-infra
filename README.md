@@ -3,7 +3,7 @@ Terraform for minimum infrastructure required to run DataRobot in AWS.
 
 ## Usage
 ```
-module "datarobot-infra" {
+module "datarobot_infra" {
   source = "git@github.com/datarobot/dr-terraform-infra-aws"
 
   name     = "datarobot"
@@ -69,6 +69,7 @@ module "datarobot-infra" {
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | ~> 20.0 |
 | <a name="module_external_dns"></a> [external\_dns](#module\_external\_dns) | ./modules/external-dns | n/a |
 | <a name="module_ingress_nginx"></a> [ingress\_nginx](#module\_ingress\_nginx) | ./modules/ingress-nginx | n/a |
+| <a name="module_kms"></a> [kms](#module\_kms) | terraform-aws-modules/kms/aws | ~> 3.0 |
 | <a name="module_storage"></a> [storage](#module\_storage) | terraform-aws-modules/s3-bucket/aws | ~> 4.0 |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | ~> 5.0 |
 
@@ -77,6 +78,7 @@ module "datarobot-infra" {
 | Name | Type |
 |------|------|
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_eks_cluster_auth.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
 | [aws_route53_zone.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 
@@ -100,6 +102,7 @@ module "datarobot-infra" {
 | <a name="input_create_dns_zone"></a> [create\_dns\_zone](#input\_create\_dns\_zone) | Create new public and private Route53 zones with domain name app\_fqdn. Ignored if an existing route53\_zone\_id is specified. | `bool` | `true` | no |
 | <a name="input_create_ecr_repositories"></a> [create\_ecr\_repositories](#input\_create\_ecr\_repositories) | Create Datarobot image builder container repositories | `bool` | `true` | no |
 | <a name="input_create_eks_cluster"></a> [create\_eks\_cluster](#input\_create\_eks\_cluster) | Create an EKS cluster. Ignored if an existing eks\_cluster\_name is specified. | `bool` | `true` | no |
+| <a name="input_create_kms_key"></a> [create\_kms\_key](#input\_create\_kms\_key) | Create a new KMS key used for EBS volume encryption on EKS nodes. Ignored if kms\_key\_arn is specified. | `bool` | `true` | no |
 | <a name="input_create_s3_storage_bucket"></a> [create\_s3\_storage\_bucket](#input\_create\_s3\_storage\_bucket) | Create a new S3 storage bucket to use for Datarobot application file storage. Ignored if an existing s3\_bucket\_id is specified. | `bool` | `true` | no |
 | <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Create a new VPC. This variable is ignored if an existing vpc\_id is specified. | `bool` | `true` | no |
 | <a name="input_ebs_csi_driver"></a> [ebs\_csi\_driver](#input\_ebs\_csi\_driver) | Install the aws-ebs-csi-driver helm chart | `bool` | `true` | no |
@@ -107,6 +110,15 @@ module "datarobot-infra" {
 | <a name="input_ebs_csi_driver_variables"></a> [ebs\_csi\_driver\_variables](#input\_ebs\_csi\_driver\_variables) | Variables passed to the ebs\_csi\_driver\_values templatefile | `map(string)` | `{}` | no |
 | <a name="input_eks_cluster_name"></a> [eks\_cluster\_name](#input\_eks\_cluster\_name) | Name of existing EKS cluster. When specified, create\_eks\_cluster will be ignored. | `string` | `""` | no |
 | <a name="input_eks_cluster_version"></a> [eks\_cluster\_version](#input\_eks\_cluster\_version) | EKS cluster version. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `string` | `"1.30"` | no |
+| <a name="input_eks_create_gpu_nodegroup"></a> [eks\_create\_gpu\_nodegroup](#input\_eks\_create\_gpu\_nodegroup) | Whether to create a nodegroup with GPU instances. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `bool` | `false` | no |
+| <a name="input_eks_gpu_nodegroup_desired_size"></a> [eks\_gpu\_nodegroup\_desired\_size](#input\_eks\_gpu\_nodegroup\_desired\_size) | Desired number of nodes in the GPU node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `number` | `1` | no |
+| <a name="input_eks_gpu_nodegroup_instance_types"></a> [eks\_gpu\_nodegroup\_instance\_types](#input\_eks\_gpu\_nodegroup\_instance\_types) | Instance types used for the primary node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `list(string)` | <pre>[<br>  "g4dn.2xlarge"<br>]</pre> | no |
+| <a name="input_eks_gpu_nodegroup_max_size"></a> [eks\_gpu\_nodegroup\_max\_size](#input\_eks\_gpu\_nodegroup\_max\_size) | Maximum number of nodes in the GPU node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `number` | `3` | no |
+| <a name="input_eks_gpu_nodegroup_min_size"></a> [eks\_gpu\_nodegroup\_min\_size](#input\_eks\_gpu\_nodegroup\_min\_size) | Minimum number of nodes in the GPU node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `number` | `1` | no |
+| <a name="input_eks_primary_nodegroup_desired_size"></a> [eks\_primary\_nodegroup\_desired\_size](#input\_eks\_primary\_nodegroup\_desired\_size) | Desired number of nodes in the primary node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `number` | `6` | no |
+| <a name="input_eks_primary_nodegroup_instance_types"></a> [eks\_primary\_nodegroup\_instance\_types](#input\_eks\_primary\_nodegroup\_instance\_types) | Instance types used for the primary node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `list(string)` | <pre>[<br>  "r6i.4xlarge"<br>]</pre> | no |
+| <a name="input_eks_primary_nodegroup_max_size"></a> [eks\_primary\_nodegroup\_max\_size](#input\_eks\_primary\_nodegroup\_max\_size) | Maximum number of nodes in the primary node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `number` | `10` | no |
+| <a name="input_eks_primary_nodegroup_min_size"></a> [eks\_primary\_nodegroup\_min\_size](#input\_eks\_primary\_nodegroup\_min\_size) | Minimum number of nodes in the primary node group. Ignored if an existing eks\_cluster\_name is specified or create\_eks\_cluster is false. | `number` | `5` | no |
 | <a name="input_eks_subnet_ids"></a> [eks\_subnet\_ids](#input\_eks\_subnet\_ids) | List of existing subnet IDs to be used for the EKS cluster. Ignored if existing vpc\_id is not specified. Ensure the subnets adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `[]` | no |
 | <a name="input_external_dns"></a> [external\_dns](#input\_external\_dns) | Install the external-dns helm chart | `bool` | `true` | no |
 | <a name="input_external_dns_values"></a> [external\_dns\_values](#input\_external\_dns\_values) | Path to templatefile containing custom values for the external-dns helm chart | `string` | `""` | no |
@@ -115,6 +127,7 @@ module "datarobot-infra" {
 | <a name="input_ingress_nginx_values"></a> [ingress\_nginx\_values](#input\_ingress\_nginx\_values) | Path to templatefile containing custom values for the ingress-nginx helm chart | `string` | `""` | no |
 | <a name="input_ingress_nginx_variables"></a> [ingress\_nginx\_variables](#input\_ingress\_nginx\_variables) | Variables passed to the ingress\_nginx\_values templatefile | `map(string)` | `{}` | no |
 | <a name="input_internet_facing_ingress_lb"></a> [internet\_facing\_ingress\_lb](#input\_internet\_facing\_ingress\_lb) | Determines the type of NLB created for EKS ingress. If true, an internet-facing NLB will be created. If false, an internal NLB will be created. Ignored when ingress\_nginx is false. | `bool` | `true` | no |
+| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create\_kms\_key will be ignored. | `string` | `""` | no |
 | <a name="input_kubernetes_namespace"></a> [kubernetes\_namespace](#input\_kubernetes\_namespace) | Namespace where the Datarobot application will be installed. Ignored if create\_app\_irsa\_role is false. | `string` | `"dr-core"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to use as a prefix for created resources | `string` | n/a | yes |
 | <a name="input_route53_zone_id"></a> [route53\_zone\_id](#input\_route53\_zone\_id) | ID of an existing route53 zone. When specified, create\_dns\_zone will be ignored. | `string` | `""` | no |

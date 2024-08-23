@@ -8,7 +8,7 @@ locals {
   vpc_cidr = "10.7.0.0/16"
 }
 
-module "datarobot-infra" {
+module "datarobot_infra" {
   source = "../.."
 
   name     = local.name
@@ -18,9 +18,11 @@ module "datarobot-infra" {
   vpc_cidr                 = local.vpc_cidr
   create_dns_zone          = true
   create_acm_certificate   = true
+  create_kms_key           = true
   create_s3_storage_bucket = true
   create_ecr_repositories  = true
   create_eks_cluster       = true
+  eks_create_gpu_nodegroup = true
   create_app_irsa_role     = true
 
   aws_load_balancer_controller = true

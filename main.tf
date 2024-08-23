@@ -1,5 +1,7 @@
 data "aws_availability_zones" "available" {}
 
+data "aws_caller_identity" "current" {}
+
 data "aws_eks_cluster_auth" "this" {
   name = module.eks[0].cluster_name
 }
@@ -44,6 +46,8 @@ locals {
   s3_bucket_id = var.create_s3_storage_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
 
   acm_certificate_arn = var.create_acm_certificate && var.acm_certificate_arn == "" ? module.acm[0].acm_certificate_arn : var.acm_certificate_arn
+
+  kms_key_arn = var.create_kms_key && var.kms_key_arn == "" ? module.kms[0].key_arn : var.kms_key_arn
 }
 
 module "vpc" {
@@ -112,6 +116,22 @@ module "acm" {
   tags = var.tags
 }
 
+module "kms" {
+  source  = "terraform-aws-modules/kms/aws"
+  version = "~> 3.0"
+  count   = var.create_kms_key ? 1 : 0
+
+  description = "Ec2 AutoScaling key usage"
+  key_usage   = "ENCRYPT_DECRYPT"
+
+  key_administrators                = [data.aws_caller_identity.current.arn]
+  key_service_roles_for_autoscaling = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"]
+
+  aliases = ["datarobot/ebs"]
+
+  tags = var.tags
+}
+
 module "storage" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
@@ -159,18 +179,48 @@ module "eks" {
   vpc_id     = local.vpc_id
   subnet_ids = local.eks_subnet_ids
 
-  eks_managed_node_groups = {
-    primary = {
-      instance_types = ["r6i.4xlarge"]
-
-      min_size     = 5
-      max_size     = 10
-      desired_size = 6
-
-      disk_size                  = 200
-      use_custom_launch_template = false
+  eks_managed_node_group_defaults = {
+    block_device_mappings = {
+      xvda = {
+        device_name = "/dev/xvda"
+        ebs = {
+          delete_on_termination = true
+          encrypted             = var.create_kms_key || var.kms_key_arn != ""
+          iops                  = 2000
+          kms_key_id            = local.kms_key_arn
+          volume_size           = 200
+          volume_type           = "gp3"
+        }
+      }
     }
   }
+
+  eks_managed_node_groups = merge(
+    {
+      primary = {
+        instance_types = var.eks_primary_nodegroup_instance_types
+        min_size       = var.eks_primary_nodegroup_min_size
+        max_size       = var.eks_primary_nodegroup_max_size
+        desired_size   = var.eks_primary_nodegroup_desired_size
+      }
+    },
+    var.eks_create_gpu_nodegroup ? {
+      gpu = {
+        instance_types = var.eks_gpu_nodegroup_instance_types
+        min_size       = var.eks_gpu_nodegroup_min_size
+        max_size       = var.eks_gpu_nodegroup_max_size
+        desired_size   = var.eks_gpu_nodegroup_desired_size
+
+        taints = {
+          dedicated = {
+            key    = "dedicated"
+            value  = "gpuGroup"
+            effect = "NO_SCHEDULE"
+          }
+        }
+      }
+    } : {}
+  )
 
   tags = var.tags
 }
