@@ -284,8 +284,9 @@ module "aws_load_balancer_controller" {
 }
 
 module "cert_manager" {
-  source = "./modules/cert-manager"
-  count  = var.cert_manager ? 1 : 0
+  source     = "./modules/cert-manager"
+  count      = var.cert_manager ? 1 : 0
+  depends_on = [module.ingress_nginx]
 
   eks_cluster_name = local.eks_cluster_name
   route53_zone_arn = local.cert_validation_route53_zone_arn
@@ -322,8 +323,9 @@ module "ebs_csi_driver" {
 }
 
 module "external_dns" {
-  source = "./modules/external-dns"
-  count  = var.external_dns ? 1 : 0
+  source     = "./modules/external-dns"
+  count      = var.external_dns ? 1 : 0
+  depends_on = [module.ingress_nginx]
 
   eks_cluster_name  = local.eks_cluster_name
   route53_zone_arn  = local.external_dns_route53_zone_arn
