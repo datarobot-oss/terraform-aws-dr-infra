@@ -112,6 +112,26 @@ variable "eks_cluster_version" {
   default     = "1.30"
 }
 
+variable "eks_cluster_endpoint_public_access" {
+  description = "Indicates whether or not the Amazon EKS public API server endpoint is enabled"
+  type        = bool
+  default     = true
+}
+
+variable "eks_cluster_endpoint_public_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS public API server endpoint"
+  type        = list(string)
+  default = [
+    "0.0.0.0/0"
+  ]
+}
+
+variable "eks_cluster_access_entries" {
+  description = "Map of access entries to add to the cluster. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
+  type        = any
+  default     = {}
+}
+
 variable "eks_primary_nodegroup_instance_types" {
   description = "Instance types used for the primary node group. Ignored if an existing eks_cluster_name is specified or create_eks_cluster is false."
   type        = list(string)

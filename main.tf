@@ -165,7 +165,8 @@ module "eks" {
   cluster_name    = var.name
   cluster_version = var.eks_cluster_version
 
-  cluster_endpoint_public_access = true
+  cluster_endpoint_public_access       = var.eks_cluster_endpoint_public_access
+  cluster_endpoint_public_access_cidrs = var.eks_cluster_endpoint_public_access_cidrs
 
   cluster_addons = {
     coredns                = {}
@@ -175,6 +176,7 @@ module "eks" {
   }
 
   enable_cluster_creator_admin_permissions = true
+  access_entries                           = var.eks_cluster_access_entries
 
   vpc_id     = local.vpc_id
   subnet_ids = local.eks_subnet_ids

@@ -25,20 +25,9 @@ module "datarobot_infra" {
   route53_zone_id          = local.route53_zone_id
   create_acm_certificate   = false
   acm_certificate_arn      = local.acm_certificate_arn
-  create_kms_key           = true
-  create_s3_storage_bucket = true
-  create_ecr_repositories  = true
-  create_eks_cluster       = true
   eks_create_gpu_nodegroup = false
-  create_app_irsa_role     = true
 
-  aws_load_balancer_controller = true
-  cert_manager                 = true
-  cluster_autoscaler           = true
-  ebs_csi_driver               = true
-  external_dns                 = true
-  ingress_nginx                = true
-  internet_facing_ingress_lb   = false
+  internet_facing_ingress_lb = false
 
   tags = {
     application = local.name
