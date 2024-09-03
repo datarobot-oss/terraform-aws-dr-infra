@@ -4,7 +4,7 @@ Terraform module to create AWS Cloud infrastructure resources required to run Da
 ## Usage
 ```
 module "datarobot_infra" {
-  source = "git@github.com/datarobot-oss/terraform-aws-dr-infra"
+  source = "datarobot-oss/dr-infra/aws"
 
   name        = "datarobot"
   domain_name = "yourdomain.com"
@@ -12,9 +12,9 @@ module "datarobot_infra" {
   create_vpc               = true
   vpc_cidr                 = "10.7.0.0/16"
   create_dns_zone          = false
-  route53_zone_id          = "<existing-route53-zone-id>"
+  route53_zone_id          = "Z06110132R7HO9BLI64XY"
   create_acm_certificate   = false
-  acm_certificate_arn      = "<existing-acm-certificate-arn>"
+  acm_certificate_arn      = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
   create_kms_key           = true
   create_s3_bucket         = true
   create_ecr_repositories  = true
@@ -44,31 +44,478 @@ module "datarobot_infra" {
 - [Minimal](examples/minimal)
 
 ## Permissions Requirements
-_Disclaimer: These lists are kept as best-effort and are subject to change at the discretion of AWS._
+_Disclaimer: These lists are meant to be used as guidelines. All possible configurations have not been tested and required permissions are subject to change._
 
-### Module specific
-| Module | IAM Policies |
-|--------|--------------|
-| vpc | arn:aws:iam::aws:policy/AmazonVPCFullAccess |
-| dns | arn:aws:iam::aws:policy/AmazonRoute53DomainsFullAccess |
-| acm | arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess |
-| kms | arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser |
-| storage | arn:aws:iam::aws:policy/AmazonS3FullAccess |
-| ecr | arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess |
-| eks | arn:aws:iam::aws:policy/AmazonEKSClusterPolicy, arn:aws:iam::aws:policy/AmazonEKSVPCResourceController |
-| app_irsa_role | arn:aws:iam::aws:policy/IAMFullAccess |
-
+### Modules
+#### vpc
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowVPCActions",
+            "Effect": "Allow",
+            "Action": [
+              "ec2:DescribeAvailabilityZones",
+              "ec2:CreateVpc",
+              "ec2:DescribeVpcs",
+              "ec2:DescribeVpcAttribute",
+              "ec2:ModifyVpcAttribute",
+              "ec2:DeleteVpc",
+              "ec2:CreateSubnet",
+              "ec2:DescribeSubnets",
+              "ec2:DeleteSubnet",
+              "ec2:CreateRouteTable",
+              "ec2:DescribeRouteTables",
+              "ec2:AssociateRouteTable",
+              "ec2:DisassociateRouteTable",
+              "ec2:DeleteRouteTable",
+              "ec2:CreateRoute",
+              "ec2:DeleteRoute",
+              "ec2:CreateInternetGateway",
+              "ec2:DescribeInternetGateways",
+              "ec2:AttachInternetGateway",
+              "ec2:DetachInternetGateway",
+              "ec2:DeleteInternetGateway",
+              "ec2:CreateNatGateway",
+              "ec2:DescribeNatGateways",
+              "ec2:DeleteNatGateway",
+              "ec2:AllocateAddress",
+              "ec2:DescribeAddresses",
+              "ec2:DescribeAddressesAttribute",
+              "ec2:DisassociateAddress",
+              "ec2:ReleaseAddress",
+              "ec2:DescribeSecurityGroups",
+              "ec2:DescribeSecurityGroupRules",
+              "ec2:RevokeSecurityGroupEgress",
+              "ec2:RevokeSecurityGroupIngress",
+              "ec2:CreateNetworkAclEntry",
+              "ec2:DescribeNetworkAcls",
+              "ec2:DeleteNetworkAclEntry",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:CreateTags"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+#### dns
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowRoute53Actions",
+            "Effect": "Allow",
+            "Action": [
+                "route53:CreateHostedZone",
+                "route53:GetHostedZone",
+                "route53:DeleteHostedZone",
+                "route53:ListResourceRecordSets",
+                "route53:GetChange",
+                "route53:GetDNSSEC",
+                "route53:ListTagsForResource",
+                "route53:ChangeTagsForResource"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+#### acm
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowACMActions",
+            "Effect": "Allow",
+            "Action": [
+                "acm:RequestCertificate",
+                "acm:DescribeCertificate",
+                "acm:DeleteCertificate",
+                "acm:AddTagsToCertificate",
+                "acm:ListTagsForCertificate",
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+#### kms
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowKMSActions",
+            "Effect": "Allow",
+            "Action": [
+                "kms:TagResource",
+                "kms:CreateKey",
+                "kms:CreateAlias",
+                "kms:ListAliases",
+                "kms:DeleteAlias"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+#### storage
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowS3Actions",
+            "Effect": "Allow",
+            "Action": [
+                "s3:CreateBucket",
+                "s3:ListBucket",
+                "s3:ListBucketVersions",
+                "s3:GetBucketPolicy",
+                "s3:GetBucketAcl",
+                "s3:GetBucketCORS",
+                "s3:GetBucketWebsite",
+                "s3:GetBucketVersioning",
+                "s3:GetBucketLogging",
+                "s3:GetBucketRequestPayment",
+                "s3:GetBucketTagging",
+                "s3:PutBucketTagging",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:PutBucketPublicAccessBlock",
+                "s3:GetBucketObjectLockConfiguration",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetLifecycleConfiguration",
+                "s3:GetReplicationConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:DeleteObjectVersion",
+                "s3:DeleteBucket"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+#### ecr
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowECRActions",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:CreateRepository",
+                "ecr:DescribeRepositories",
+                "ecr:DeleteRepository",
+                "ecr:TagResource",
+                "ecr:ListTagsForResource"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+#### eks
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowEKSActions",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateSecurityGroup",
+                "ec2:DeleteSecurityGroup",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:CreateLaunchTemplate",
+                "ec2:DescribeLaunchTemplates",
+                "ec2:DescribeLaunchTemplateVersions",
+                "ec2:DeleteLaunchTemplate",
+                "ec2:RunInstances",
+                "ec2:DescribeTags",
+                "ec2:DeleteTags",
+                "eks:CreateCluster",
+                "eks:DescribeCluster",
+                "eks:DeleteCluster",
+                "eks:CreateAccessEntry",
+                "eks:DescribeAccessEntry",
+                "eks:DeleteAccessEntry",
+                "eks:CreateNodegroup",
+                "eks:DescribeNodegroup",
+                "eks:DeleteNodegroup",
+                "eks:AssociateAccessPolicy",
+                "eks:ListAssociatedAccessPolicies",
+                "eks:DisassociateAccessPolicy",
+                "eks:CreateAddon",
+                "eks:DescribeAddon",
+                "eks:DescribeAddonVersions",
+                "eks:DeleteAddon",
+                "eks:TagResource",
+                "iam:CreateRole",
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:TagRole",
+                "iam:PassRole",
+                "iam:DeleteRole",
+                "iam:CreatePolicy",
+                "iam:GetPolicy",
+                "iam:TagPolicy",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:DeletePolicy",
+                "iam:AttachRolePolicy",
+                "iam:ListRolePolicies",
+                "iam:ListAttachedRolePolicies",
+                "iam:PutRolePolicy",
+                "iam:DetachRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:ListInstanceProfilesForRole",
+                "iam:CreateOpenIDConnectProvider",
+                "iam:GetOpenIDConnectProvider",
+                "iam:TagOpenIDConnectProvider",
+                "iam:DeleteOpenIDConnectProvider",
+                "logs:CreateLogGroup",
+                "logs:DescribeLogGroups",
+                "logs:DeleteLogGroup",
+                "logs:PutRetentionPolicy",
+                "logs:TagResource",
+                "logs:ListTagsForResource"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+#### helm charts
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPodIdentityActions",
+            "Effect": "Allow",
+            "Action": [
+                "eks:CreatePodIdentityAssociation",
+                "eks:DescribePodIdentityAssociation",
+                "eks:DeletePodIdentityAssociation"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
 ### Comprehensive
 ```
-arn:aws:iam::aws:policy/AmazonVPCFullAccess
-arn:aws:iam::aws:policy/AmazonRoute53DomainsFullAccess
-arn:aws:iam::aws:policy/AWSCertificateManagerFullAccess
-arn:aws:iam::aws:policy/AWSKeyManagementServicePowerUser
-arn:aws:iam::aws:policy/AmazonS3FullAccess
-arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess
-arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
-arn:aws:iam::aws:policy/AmazonEKSVPCResourceController
-arn:aws:iam::aws:policy/IAMFullAccess
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowVPCActions",
+            "Effect": "Allow",
+            "Action": [
+              "ec2:DescribeAvailabilityZones",
+              "ec2:CreateVpc",
+              "ec2:DescribeVpcs",
+              "ec2:DescribeVpcAttribute",
+              "ec2:ModifyVpcAttribute",
+              "ec2:DeleteVpc",
+              "ec2:CreateSubnet",
+              "ec2:DescribeSubnets",
+              "ec2:DeleteSubnet",
+              "ec2:CreateRouteTable",
+              "ec2:DescribeRouteTables",
+              "ec2:AssociateRouteTable",
+              "ec2:DisassociateRouteTable",
+              "ec2:DeleteRouteTable",
+              "ec2:CreateRoute",
+              "ec2:DeleteRoute",
+              "ec2:CreateInternetGateway",
+              "ec2:DescribeInternetGateways",
+              "ec2:AttachInternetGateway",
+              "ec2:DetachInternetGateway",
+              "ec2:DeleteInternetGateway",
+              "ec2:CreateNatGateway",
+              "ec2:DescribeNatGateways",
+              "ec2:DeleteNatGateway",
+              "ec2:AllocateAddress",
+              "ec2:DescribeAddresses",
+              "ec2:DescribeAddressesAttribute",
+              "ec2:DisassociateAddress",
+              "ec2:ReleaseAddress",
+              "ec2:DescribeSecurityGroups",
+              "ec2:DescribeSecurityGroupRules",
+              "ec2:RevokeSecurityGroupEgress",
+              "ec2:RevokeSecurityGroupIngress",
+              "ec2:CreateNetworkAclEntry",
+              "ec2:DescribeNetworkAcls",
+              "ec2:DeleteNetworkAclEntry",
+              "ec2:DescribeNetworkInterfaces",
+              "ec2:CreateTags"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowRoute53Actions",
+            "Effect": "Allow",
+            "Action": [
+                "route53:CreateHostedZone",
+                "route53:GetHostedZone",
+                "route53:DeleteHostedZone",
+                "route53:ListResourceRecordSets",
+                "route53:GetChange",
+                "route53:GetDNSSEC",
+                "route53:ListTagsForResource",
+                "route53:ChangeTagsForResource"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowACMActions",
+            "Effect": "Allow",
+            "Action": [
+                "acm:RequestCertificate",
+                "acm:DescribeCertificate",
+                "acm:DeleteCertificate",
+                "acm:AddTagsToCertificate",
+                "acm:ListTagsForCertificate",
+                "route53:ChangeResourceRecordSets"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowKMSActions",
+            "Effect": "Allow",
+            "Action": [
+                "kms:TagResource",
+                "kms:CreateKey",
+                "kms:CreateAlias",
+                "kms:ListAliases",
+                "kms:DeleteAlias"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowS3Actions",
+            "Effect": "Allow",
+            "Action": [
+                "s3:CreateBucket",
+                "s3:ListBucket",
+                "s3:ListBucketVersions",
+                "s3:GetBucketPolicy",
+                "s3:GetBucketAcl",
+                "s3:GetBucketCORS",
+                "s3:GetBucketWebsite",
+                "s3:GetBucketVersioning",
+                "s3:GetBucketLogging",
+                "s3:GetBucketRequestPayment",
+                "s3:GetBucketTagging",
+                "s3:PutBucketTagging",
+                "s3:GetBucketPublicAccessBlock",
+                "s3:PutBucketPublicAccessBlock",
+                "s3:GetBucketObjectLockConfiguration",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetLifecycleConfiguration",
+                "s3:GetReplicationConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:DeleteObjectVersion",
+                "s3:DeleteBucket"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowECRActions",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:CreateRepository",
+                "ecr:DescribeRepositories",
+                "ecr:DeleteRepository",
+                "ecr:TagResource",
+                "ecr:ListTagsForResource"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowEKSActions",
+            "Effect": "Allow",
+            "Action": [
+                "ec2:CreateSecurityGroup",
+                "ec2:DeleteSecurityGroup",
+                "ec2:AuthorizeSecurityGroupIngress",
+                "ec2:AuthorizeSecurityGroupEgress",
+                "ec2:CreateLaunchTemplate",
+                "ec2:DescribeLaunchTemplates",
+                "ec2:DescribeLaunchTemplateVersions",
+                "ec2:DeleteLaunchTemplate",
+                "ec2:RunInstances",
+                "ec2:DescribeTags",
+                "ec2:DeleteTags",
+                "eks:CreateCluster",
+                "eks:DescribeCluster",
+                "eks:DeleteCluster",
+                "eks:CreateAccessEntry",
+                "eks:DescribeAccessEntry",
+                "eks:DeleteAccessEntry",
+                "eks:CreateNodegroup",
+                "eks:DescribeNodegroup",
+                "eks:DeleteNodegroup",
+                "eks:AssociateAccessPolicy",
+                "eks:ListAssociatedAccessPolicies",
+                "eks:DisassociateAccessPolicy",
+                "eks:CreateAddon",
+                "eks:DescribeAddon",
+                "eks:DescribeAddonVersions",
+                "eks:DeleteAddon",
+                "eks:TagResource",
+                "iam:CreateRole",
+                "iam:GetRole",
+                "iam:GetRolePolicy",
+                "iam:TagRole",
+                "iam:PassRole",
+                "iam:DeleteRole",
+                "iam:CreatePolicy",
+                "iam:GetPolicy",
+                "iam:TagPolicy",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:DeletePolicy",
+                "iam:AttachRolePolicy",
+                "iam:ListRolePolicies",
+                "iam:ListAttachedRolePolicies",
+                "iam:PutRolePolicy",
+                "iam:DetachRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:ListInstanceProfilesForRole",
+                "iam:CreateOpenIDConnectProvider",
+                "iam:GetOpenIDConnectProvider",
+                "iam:TagOpenIDConnectProvider",
+                "iam:DeleteOpenIDConnectProvider",
+                "logs:CreateLogGroup",
+                "logs:DescribeLogGroups",
+                "logs:DeleteLogGroup",
+                "logs:PutRetentionPolicy",
+                "logs:TagResource",
+                "logs:ListTagsForResource"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowPodIdentityActions",
+            "Effect": "Allow",
+            "Action": [
+                "eks:CreatePodIdentityAssociation",
+                "eks:DescribePodIdentityAssociation",
+                "eks:DeletePodIdentityAssociation"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
 ```
 
 
