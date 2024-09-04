@@ -132,6 +132,12 @@ variable "eks_cluster_endpoint_public_access_cidrs" {
   ]
 }
 
+variable "eks_cluster_endpoint_private_access_cidrs" {
+  description = "List of CIDR blocks which can access the Amazon EKS private API server endpoint. Ignored if create_eks_cluster is false."
+  type        = list(string)
+  default     = []
+}
+
 variable "eks_cluster_access_entries" {
   description = "Map of access entries to add to the cluster. Ignored if create_eks_cluster is false."
   type        = any
