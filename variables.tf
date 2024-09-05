@@ -147,7 +147,7 @@ variable "eks_cluster_access_entries" {
 variable "eks_primary_nodegroup_instance_types" {
   description = "Instance types used for the primary node group. Ignored if create_eks_cluster is false."
   type        = list(string)
-  default     = ["r6i.4xlarge"]
+  default     = ["r6a.4xlarge"]
 }
 
 variable "eks_primary_nodegroup_min_size" {
@@ -165,7 +165,7 @@ variable "eks_primary_nodegroup_max_size" {
 variable "eks_primary_nodegroup_desired_size" {
   description = "Desired number of nodes in the primary node group. Ignored if create_eks_cluster is false."
   type        = number
-  default     = 6
+  default     = 5
 }
 
 variable "create_eks_gpu_nodegroup" {
