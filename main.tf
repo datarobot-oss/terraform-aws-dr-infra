@@ -176,6 +176,17 @@ module "eks" {
   vpc_id     = local.vpc_id
   subnet_ids = local.eks_subnet_ids
 
+  cluster_security_group_additional_rules = length(var.eks_cluster_endpoint_private_access_cidrs) != 0 ? {
+    ingress_custom_https = {
+      description = "Custom hosts to control plane"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = var.eks_cluster_endpoint_private_access_cidrs
+    }
+  } : {}
+
   eks_managed_node_group_defaults = {
     block_device_mappings = {
       xvda = {
@@ -307,9 +318,8 @@ module "aws_load_balancer_controller" {
 }
 
 module "ingress_nginx" {
-  source     = "./modules/ingress-nginx"
-  count      = var.create_eks_cluster && var.ingress_nginx ? 1 : 0
-  depends_on = [module.aws_load_balancer_controller]
+  source = "./modules/ingress-nginx"
+  count  = var.create_eks_cluster && var.ingress_nginx ? 1 : 0
 
   acm_certificate_arn = local.acm_certificate_arn
   public              = var.internet_facing_ingress_lb
