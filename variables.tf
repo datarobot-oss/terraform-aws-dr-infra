@@ -133,7 +133,7 @@ variable "eks_cluster_endpoint_public_access_cidrs" {
 }
 
 variable "eks_cluster_endpoint_private_access_cidrs" {
-  description = "List of CIDR blocks which can access the Amazon EKS private API server endpoint. Ignored if create_eks_cluster is false."
+  description = "List of additional CIDR blocks allowed to access the Amazon EKS private API server endpoint. By default only the kubernetes nodes are allowed, if any other hosts such as a provisioner need to access the EKS private API endpoint they need to be added here. Ignored if create_eks_cluster is false."
   type        = list(string)
   default     = []
 }

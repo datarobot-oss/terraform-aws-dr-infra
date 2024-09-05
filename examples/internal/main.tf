@@ -23,7 +23,7 @@ module "datarobot_infra" {
   vpc_id                                    = local.vpc_id
   eks_subnet_ids                            = local.eks_subnet_ids
   eks_cluster_endpoint_public_access        = false
-  eks_cluster_endpoint_private_access_cidrs = [local.provisioner_ip]
+  eks_cluster_endpoint_private_access_cidrs = ["${local.provisioner_ip}/32"]
   create_dns_zone                           = false
   route53_zone_id                           = local.route53_zone_id
   create_acm_certificate                    = false
