@@ -4,7 +4,7 @@ variable "name" {
 }
 
 variable "domain_name" {
-  description = "The domain name used in the dns and acm modules."
+  description = "The domain name used in the dns and acm modules"
   type        = string
   default     = ""
 }
@@ -17,20 +17,19 @@ variable "tags" {
   }
 }
 
+
+################################################################################
+# VPC
+################################################################################
+
 variable "vpc_id" {
   description = "ID of an existing VPC. When specified, create_vpc and vpc_cidr will be ignored."
   type        = string
   default     = ""
 }
 
-variable "eks_subnet_ids" {
-  description = "List of existing subnet IDs to be used for the EKS cluster. Ignored if existing vpc_id is not specified. Ensure the subnets adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html."
-  type        = list(string)
-  default     = []
-}
-
 variable "create_vpc" {
-  description = "Create a new VPC. This variable is ignored if an existing vpc_id is specified."
+  description = "Create a new VPC. Ignored if an existing vpc_id is specified."
   type        = bool
   default     = true
 }
@@ -40,6 +39,11 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+
+
+################################################################################
+# DNS
+################################################################################
 
 variable "route53_zone_id" {
   description = "ID of an existing route53 zone. When specified, create_dns_zone will be ignored."
@@ -53,6 +57,11 @@ variable "create_dns_zone" {
   default     = true
 }
 
+
+################################################################################
+# ACM
+################################################################################
+
 variable "acm_certificate_arn" {
   description = "ARN of existing ACM certificate to use with the ingress load balancer created by the ingress_nginx module. When specified, create_acm_certificate will be ignored."
   type        = string
@@ -64,6 +73,11 @@ variable "create_acm_certificate" {
   type        = bool
   default     = true
 }
+
+
+################################################################################
+# KMS
+################################################################################
 
 variable "kms_key_arn" {
   description = "ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create_kms_key will be ignored."
@@ -77,6 +91,11 @@ variable "create_kms_key" {
   default     = true
 }
 
+
+################################################################################
+# S3
+################################################################################
+
 variable "s3_bucket_id" {
   description = "ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, create_s3_bucket will be ignored."
   type        = string
@@ -88,6 +107,11 @@ variable "create_s3_bucket" {
   type        = bool
   default     = true
 }
+
+
+################################################################################
+# ECR
+################################################################################
 
 variable "create_ecr_repositories" {
   description = "Create DataRobot image builder container repositories"
@@ -106,10 +130,21 @@ variable "ecr_repositories" {
   ]
 }
 
+
+################################################################################
+# EKS
+################################################################################
+
 variable "create_eks_cluster" {
   description = "Create an EKS cluster"
   type        = bool
   default     = true
+}
+
+variable "eks_subnet_ids" {
+  description = "List of existing subnet IDs to be used for the EKS cluster. Ignored if create_eks_cluster is false. Required when an existing vpc_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html."
+  type        = list(string)
+  default     = []
 }
 
 variable "eks_cluster_version" {
@@ -144,6 +179,12 @@ variable "eks_cluster_access_entries" {
   default     = {}
 }
 
+variable "eks_primary_nodegroup_ami_type" {
+  description = "Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values. Ignored if create_eks_cluster is false."
+  type        = string
+  default     = "AL2023_x86_64_STANDARD"
+}
+
 variable "eks_primary_nodegroup_instance_types" {
   description = "Instance types used for the primary node group. Ignored if create_eks_cluster is false."
   type        = list(string)
@@ -168,10 +209,22 @@ variable "eks_primary_nodegroup_desired_size" {
   default     = 5
 }
 
+variable "eks_primary_nodegroup_taints" {
+  description = "The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group"
+  type        = any
+  default     = {}
+}
+
 variable "create_eks_gpu_nodegroup" {
   description = "Whether to create a nodegroup with GPU instances. Ignored if create_eks_cluster is false."
   type        = bool
   default     = false
+}
+
+variable "eks_gpu_nodegroup_ami_type" {
+  description = "Type of Amazon Machine Image (AMI) associated with the EKS GPU Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values. Ignored if create_eks_cluster is false."
+  type        = string
+  default     = "AL2_x86_64_GPU"
 }
 
 variable "eks_gpu_nodegroup_instance_types" {
@@ -198,6 +251,22 @@ variable "eks_gpu_nodegroup_desired_size" {
   default     = 1
 }
 
+variable "eks_gpu_nodegroup_taints" {
+  description = "The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group"
+  type        = any
+  default = {
+    dedicated = {
+      key    = "dedicated"
+      value  = "gpuGroup"
+      effect = "NO_SCHEDULE"
+    }
+  }
+}
+
+################################################################################
+# APP IRSA
+################################################################################
+
 variable "create_app_irsa_role" {
   description = "Create IAM role for DataRobot application service account"
   type        = bool
@@ -209,6 +278,11 @@ variable "kubernetes_namespace" {
   type        = string
   default     = "dr-core"
 }
+
+
+################################################################################
+# HELM CHARTS
+################################################################################
 
 variable "aws_load_balancer_controller" {
   description = "Install the aws-load-balancer-controller helm chart to use AWS Network Load Balancers as ingress to the EKS cluster. Ignored if create_eks_cluster is false."

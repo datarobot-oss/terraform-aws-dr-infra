@@ -2,46 +2,19 @@ data "aws_availability_zones" "available" {}
 
 data "aws_caller_identity" "current" {}
 
-data "aws_eks_cluster_auth" "this" {
-  count = var.create_eks_cluster ? 1 : 0
-  name  = module.eks[0].cluster_name
-}
-
 data "aws_route53_zone" "provided" {
   count   = var.route53_zone_id != "" ? 1 : 0
   zone_id = var.route53_zone_id
 }
 
-provider "helm" {
-  kubernetes {
-    host                   = try(module.eks[0].cluster_endpoint, "")
-    cluster_ca_certificate = base64decode(try(module.eks[0].cluster_certificate_authority_data, ""))
-    token                  = try(data.aws_eks_cluster_auth.this[0].token, "")
-  }
-}
+
+################################################################################
+# VPC
+################################################################################
 
 locals {
-  azs = slice(data.aws_availability_zones.available.names, 0, 3)
-
-  vpc_id         = var.create_vpc && var.vpc_id == "" ? module.vpc[0].vpc_id : var.vpc_id
-  eks_subnet_ids = var.create_vpc && length(var.eks_subnet_ids) == 0 ? module.vpc[0].private_subnets : var.eks_subnet_ids
-
-  # keys used by the "dns" module. these are not the actual domain names associated with the zones.
-  public_route53_zone_key  = var.domain_name
-  private_route53_zone_key = "private.${var.domain_name}"
-
-  # use the provided zone or the created public zone to validate a created ACM certificate
-  cert_validation_route53_zone_id  = var.create_dns_zone && var.route53_zone_id == "" ? module.dns[0].route53_zone_zone_id[local.public_route53_zone_key] : var.route53_zone_id
-  cert_validation_route53_zone_arn = try(data.aws_route53_zone.provided[0].arn, module.dns[0].route53_zone_zone_arn[local.public_route53_zone_key], "")
-
-  external_dns_route53_zone_arn  = try(data.aws_route53_zone.provided[0].arn, module.dns[0].route53_zone_zone_arn[var.internet_facing_ingress_lb ? local.public_route53_zone_key : local.private_route53_zone_key], "")
-  external_dns_route53_zone_name = try(data.aws_route53_zone.provided[0].name, var.domain_name)
-
-  s3_bucket_id = var.create_s3_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
-
-  acm_certificate_arn = var.create_acm_certificate && var.acm_certificate_arn == "" ? module.acm[0].acm_certificate_arn : var.acm_certificate_arn
-
-  kms_key_arn = var.create_kms_key && var.kms_key_arn == "" ? module.kms[0].key_arn : var.kms_key_arn
+  azs    = slice(data.aws_availability_zones.available.names, 0, 3)
+  vpc_id = var.create_vpc && var.vpc_id == "" ? module.vpc[0].vpc_id : var.vpc_id
 }
 
 module "vpc" {
@@ -69,10 +42,21 @@ module "vpc" {
   tags = var.tags
 }
 
+
+################################################################################
+# DNS
+################################################################################
+
+locals {
+  # keys used by the "dns" module. these are not the actual domain names associated with the zones.
+  public_route53_zone_key  = var.domain_name
+  private_route53_zone_key = "private.${var.domain_name}"
+}
+
 module "dns" {
   source  = "terraform-aws-modules/route53/aws//modules/zones"
   version = "~> 3.0"
-  count   = var.create_dns_zone ? 1 : 0
+  count   = var.create_dns_zone && var.route53_zone_id == "" ? 1 : 0
 
   zones = {
     (local.public_route53_zone_key) = {
@@ -91,10 +75,23 @@ module "dns" {
   tags = var.tags
 }
 
+
+################################################################################
+# ACM
+################################################################################
+
+locals {
+  acm_certificate_arn = var.create_acm_certificate && var.acm_certificate_arn == "" ? module.acm[0].acm_certificate_arn : var.acm_certificate_arn
+
+  # use the provided zone or the created public zone to validate a created ACM certificate
+  cert_validation_route53_zone_id  = var.create_dns_zone && var.route53_zone_id == "" ? module.dns[0].route53_zone_zone_id[local.public_route53_zone_key] : var.route53_zone_id
+  cert_validation_route53_zone_arn = try(data.aws_route53_zone.provided[0].arn, module.dns[0].route53_zone_zone_arn[local.public_route53_zone_key], "")
+}
+
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0"
-  count   = var.create_acm_certificate ? 1 : 0
+  count   = var.create_acm_certificate && var.acm_certificate_arn == "" ? 1 : 0
 
   domain_name = var.domain_name
   zone_id     = local.cert_validation_route53_zone_id
@@ -111,10 +108,19 @@ module "acm" {
   tags = var.tags
 }
 
+
+################################################################################
+# KMS
+################################################################################
+
+locals {
+  kms_key_arn = var.create_kms_key && var.kms_key_arn == "" ? module.kms[0].key_arn : var.kms_key_arn
+}
+
 module "kms" {
   source  = "terraform-aws-modules/kms/aws"
   version = "~> 3.0"
-  count   = var.create_kms_key ? 1 : 0
+  count   = var.create_kms_key && var.kms_key_arn == "" ? 1 : 0
 
   description = "Ec2 AutoScaling key usage"
   key_usage   = "ENCRYPT_DECRYPT"
@@ -127,16 +133,30 @@ module "kms" {
   tags = var.tags
 }
 
+
+################################################################################
+# S3
+################################################################################
+
+locals {
+  s3_bucket_id = var.create_s3_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
+}
+
 module "storage" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
-  count   = var.create_s3_bucket ? 1 : 0
+  count   = var.create_s3_bucket && var.s3_bucket_id == "" ? 1 : 0
 
   bucket_prefix = replace(var.name, "_", "-")
   force_destroy = true
 
   tags = var.tags
 }
+
+
+################################################################################
+# ECR
+################################################################################
 
 module "ecr" {
   source   = "terraform-aws-modules/ecr/aws"
@@ -150,6 +170,15 @@ module "ecr" {
   create_lifecycle_policy       = false
 
   tags = var.tags
+}
+
+
+################################################################################
+# EKS
+################################################################################
+
+locals {
+  eks_subnet_ids = var.create_vpc && length(var.eks_subnet_ids) == 0 ? module.vpc[0].private_subnets : var.eks_subnet_ids
 }
 
 module "eks" {
@@ -206,32 +235,33 @@ module "eks" {
   eks_managed_node_groups = merge(
     {
       primary = {
+        ami_type       = var.eks_primary_nodegroup_ami_type
         instance_types = var.eks_primary_nodegroup_instance_types
         min_size       = var.eks_primary_nodegroup_min_size
         max_size       = var.eks_primary_nodegroup_max_size
         desired_size   = var.eks_primary_nodegroup_desired_size
+        taints         = var.eks_primary_nodegroup_taints
       }
     },
     var.create_eks_gpu_nodegroup ? {
       gpu = {
+        ami_type       = var.eks_gpu_nodegroup_ami_type
         instance_types = var.eks_gpu_nodegroup_instance_types
         min_size       = var.eks_gpu_nodegroup_min_size
         max_size       = var.eks_gpu_nodegroup_max_size
         desired_size   = var.eks_gpu_nodegroup_desired_size
-
-        taints = {
-          dedicated = {
-            key    = "dedicated"
-            value  = "gpuGroup"
-            effect = "NO_SCHEDULE"
-          }
-        }
+        taints         = var.eks_gpu_nodegroup_taints
       }
     } : {}
   )
 
   tags = var.tags
 }
+
+
+################################################################################
+# APP IRSA
+################################################################################
 
 module "app_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
@@ -276,6 +306,25 @@ module "app_irsa_role" {
   tags = var.tags
 }
 
+
+################################################################################
+# HELM CHARTS
+################################################################################
+
+data "aws_eks_cluster_auth" "this" {
+  count = var.create_eks_cluster ? 1 : 0
+  name  = module.eks[0].cluster_name
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = try(module.eks[0].cluster_endpoint, "")
+    cluster_ca_certificate = base64decode(try(module.eks[0].cluster_certificate_authority_data, ""))
+    token                  = try(data.aws_eks_cluster_auth.this[0].token, "")
+  }
+}
+
+
 module "cluster_autoscaler" {
   source     = "./modules/cluster-autoscaler"
   count      = var.create_eks_cluster && var.cluster_autoscaler ? 1 : 0
@@ -288,6 +337,7 @@ module "cluster_autoscaler" {
 
   tags = var.tags
 }
+
 
 module "ebs_csi_driver" {
   source     = "./modules/ebs-csi-driver"
@@ -303,6 +353,7 @@ module "ebs_csi_driver" {
   tags = var.tags
 }
 
+
 module "aws_load_balancer_controller" {
   source     = "./modules/aws-load-balancer-controller"
   count      = var.create_eks_cluster && var.aws_load_balancer_controller ? 1 : 0
@@ -317,9 +368,11 @@ module "aws_load_balancer_controller" {
   tags = var.tags
 }
 
+
 module "ingress_nginx" {
-  source = "./modules/ingress-nginx"
-  count  = var.create_eks_cluster && var.ingress_nginx ? 1 : 0
+  source     = "./modules/ingress-nginx"
+  count      = var.create_eks_cluster && var.ingress_nginx ? 1 : 0
+  depends_on = [module.aws_load_balancer_controller]
 
   acm_certificate_arn = local.acm_certificate_arn
   public              = var.internet_facing_ingress_lb
@@ -329,6 +382,7 @@ module "ingress_nginx" {
 
   tags = var.tags
 }
+
 
 module "cert_manager" {
   source     = "./modules/cert-manager"
@@ -342,6 +396,12 @@ module "cert_manager" {
   custom_values_variables    = var.cert_manager_variables
 
   tags = var.tags
+}
+
+
+locals {
+  external_dns_route53_zone_arn  = try(data.aws_route53_zone.provided[0].arn, module.dns[0].route53_zone_zone_arn[var.internet_facing_ingress_lb ? local.public_route53_zone_key : local.private_route53_zone_key], "")
+  external_dns_route53_zone_name = try(data.aws_route53_zone.provided[0].name, var.domain_name)
 }
 
 module "external_dns" {

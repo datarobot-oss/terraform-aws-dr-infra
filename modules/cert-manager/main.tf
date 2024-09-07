@@ -19,8 +19,9 @@ module "cert_manager_pod_identity" {
 }
 
 module "cert_manager" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
+  source     = "terraform-module/release/helm"
+  version    = "~> 2.0"
+  depends_on = [module.cert_manager_pod_identity]
 
   namespace  = "cert-manager"
   repository = "https://charts.jetstack.io"

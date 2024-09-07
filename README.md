@@ -530,15 +530,15 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 5.0 |
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 2.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.2 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.61 |
+| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.15 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 5.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | >= 5.61 |
 
 ## Modules
 
@@ -590,8 +590,8 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 | <a name="input_create_eks_gpu_nodegroup"></a> [create\_eks\_gpu\_nodegroup](#input\_create\_eks\_gpu\_nodegroup) | Whether to create a nodegroup with GPU instances. Ignored if create\_eks\_cluster is false. | `bool` | `false` | no |
 | <a name="input_create_kms_key"></a> [create\_kms\_key](#input\_create\_kms\_key) | Create a new KMS key used for EBS volume encryption on EKS nodes. Ignored if kms\_key\_arn is specified. | `bool` | `true` | no |
 | <a name="input_create_s3_bucket"></a> [create\_s3\_bucket](#input\_create\_s3\_bucket) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing s3\_bucket\_id is specified. | `bool` | `true` | no |
-| <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Create a new VPC. This variable is ignored if an existing vpc\_id is specified. | `bool` | `true` | no |
-| <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | The domain name used in the dns and acm modules. | `string` | `""` | no |
+| <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Create a new VPC. Ignored if an existing vpc\_id is specified. | `bool` | `true` | no |
+| <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | The domain name used in the dns and acm modules | `string` | `""` | no |
 | <a name="input_ebs_csi_driver"></a> [ebs\_csi\_driver](#input\_ebs\_csi\_driver) | Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
 | <a name="input_ebs_csi_driver_values"></a> [ebs\_csi\_driver\_values](#input\_ebs\_csi\_driver\_values) | Path to templatefile containing custom values for the aws-ebs-csi-driver helm chart | `string` | `""` | no |
 | <a name="input_ebs_csi_driver_variables"></a> [ebs\_csi\_driver\_variables](#input\_ebs\_csi\_driver\_variables) | Variables passed to the ebs\_csi\_driver\_values templatefile | `map(string)` | `{}` | no |
@@ -601,15 +601,19 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 | <a name="input_eks_cluster_endpoint_public_access"></a> [eks\_cluster\_endpoint\_public\_access](#input\_eks\_cluster\_endpoint\_public\_access) | Indicates whether or not the Amazon EKS public API server endpoint is enabled. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
 | <a name="input_eks_cluster_endpoint_public_access_cidrs"></a> [eks\_cluster\_endpoint\_public\_access\_cidrs](#input\_eks\_cluster\_endpoint\_public\_access\_cidrs) | List of CIDR blocks which can access the Amazon EKS public API server endpoint. Ignored if create\_eks\_cluster is false. | `list(string)` | <pre>[<br>  "0.0.0.0/0"<br>]</pre> | no |
 | <a name="input_eks_cluster_version"></a> [eks\_cluster\_version](#input\_eks\_cluster\_version) | EKS cluster version. Ignored if create\_eks\_cluster is false. | `string` | `"1.30"` | no |
+| <a name="input_eks_gpu_nodegroup_ami_type"></a> [eks\_gpu\_nodegroup\_ami\_type](#input\_eks\_gpu\_nodegroup\_ami\_type) | Type of Amazon Machine Image (AMI) associated with the EKS GPU Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values. Ignored if create\_eks\_cluster is false. | `string` | `"AL2_x86_64_GPU"` | no |
 | <a name="input_eks_gpu_nodegroup_desired_size"></a> [eks\_gpu\_nodegroup\_desired\_size](#input\_eks\_gpu\_nodegroup\_desired\_size) | Desired number of nodes in the GPU node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `number` | `1` | no |
 | <a name="input_eks_gpu_nodegroup_instance_types"></a> [eks\_gpu\_nodegroup\_instance\_types](#input\_eks\_gpu\_nodegroup\_instance\_types) | Instance types used for the primary node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `list(string)` | <pre>[<br>  "g4dn.2xlarge"<br>]</pre> | no |
 | <a name="input_eks_gpu_nodegroup_max_size"></a> [eks\_gpu\_nodegroup\_max\_size](#input\_eks\_gpu\_nodegroup\_max\_size) | Maximum number of nodes in the GPU node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `number` | `3` | no |
 | <a name="input_eks_gpu_nodegroup_min_size"></a> [eks\_gpu\_nodegroup\_min\_size](#input\_eks\_gpu\_nodegroup\_min\_size) | Minimum number of nodes in the GPU node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `number` | `1` | no |
+| <a name="input_eks_gpu_nodegroup_taints"></a> [eks\_gpu\_nodegroup\_taints](#input\_eks\_gpu\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group | `any` | <pre>{<br>  "dedicated": {<br>    "effect": "NO_SCHEDULE",<br>    "key": "dedicated",<br>    "value": "gpuGroup"<br>  }<br>}</pre> | no |
+| <a name="input_eks_primary_nodegroup_ami_type"></a> [eks\_primary\_nodegroup\_ami\_type](#input\_eks\_primary\_nodegroup\_ami\_type) | Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values. Ignored if create\_eks\_cluster is false. | `string` | `"AL2023_x86_64_STANDARD"` | no |
 | <a name="input_eks_primary_nodegroup_desired_size"></a> [eks\_primary\_nodegroup\_desired\_size](#input\_eks\_primary\_nodegroup\_desired\_size) | Desired number of nodes in the primary node group. Ignored if create\_eks\_cluster is false. | `number` | `5` | no |
 | <a name="input_eks_primary_nodegroup_instance_types"></a> [eks\_primary\_nodegroup\_instance\_types](#input\_eks\_primary\_nodegroup\_instance\_types) | Instance types used for the primary node group. Ignored if create\_eks\_cluster is false. | `list(string)` | <pre>[<br>  "r6a.4xlarge"<br>]</pre> | no |
 | <a name="input_eks_primary_nodegroup_max_size"></a> [eks\_primary\_nodegroup\_max\_size](#input\_eks\_primary\_nodegroup\_max\_size) | Maximum number of nodes in the primary node group. Ignored if create\_eks\_cluster is false. | `number` | `10` | no |
 | <a name="input_eks_primary_nodegroup_min_size"></a> [eks\_primary\_nodegroup\_min\_size](#input\_eks\_primary\_nodegroup\_min\_size) | Minimum number of nodes in the primary node group. Ignored if create\_eks\_cluster is false. | `number` | `5` | no |
-| <a name="input_eks_subnet_ids"></a> [eks\_subnet\_ids](#input\_eks\_subnet\_ids) | List of existing subnet IDs to be used for the EKS cluster. Ignored if existing vpc\_id is not specified. Ensure the subnets adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `[]` | no |
+| <a name="input_eks_primary_nodegroup_taints"></a> [eks\_primary\_nodegroup\_taints](#input\_eks\_primary\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group | `any` | `{}` | no |
+| <a name="input_eks_subnet_ids"></a> [eks\_subnet\_ids](#input\_eks\_subnet\_ids) | List of existing subnet IDs to be used for the EKS cluster. Ignored if create\_eks\_cluster is false. Required when an existing vpc\_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `[]` | no |
 | <a name="input_external_dns"></a> [external\_dns](#input\_external\_dns) | Install the external-dns helm chart to manage DNS records for EKS ingress and service resources. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
 | <a name="input_external_dns_values"></a> [external\_dns\_values](#input\_external\_dns\_values) | Path to templatefile containing custom values for the external-dns helm chart | `string` | `""` | no |
 | <a name="input_external_dns_variables"></a> [external\_dns\_variables](#input\_external\_dns\_variables) | Variables passed to the external\_dns\_values templatefile | `map(string)` | `{}` | no |

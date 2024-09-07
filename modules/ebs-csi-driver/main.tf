@@ -20,8 +20,9 @@ module "ebs_csi_driver_pod_identity" {
 
 
 module "ebs_csi_driver" {
-  source  = "terraform-module/release/helm"
-  version = "2.8.1"
+  source     = "terraform-module/release/helm"
+  version    = "2.8.1"
+  depends_on = [module.ebs_csi_driver_pod_identity]
 
   namespace  = "kube-system"
   repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
