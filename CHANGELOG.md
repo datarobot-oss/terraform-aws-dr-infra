@@ -3,6 +3,18 @@
 All notable changes are documented in this file.
 
 
+## v1.0.2
+
+### Fixed
+- Race condition when aws-load-balancer-controller helm chart was installed before its pod identity association was created causing it to lack permissions required to create a load balancer
+
+### Added
+- Configurable EKS nodegroup taints and AMI types
+
+### Updated
+- Examples now source the module from the terraform registry rather than locally
+
+
 ## v1.0.1
 
 ### Added
