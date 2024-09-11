@@ -3,6 +3,12 @@
 All notable changes are documented in this file.
 
 
+## v1.0.3
+
+### Fixed
+- Issue where helm charts failed to install on first run
+
+
 ## v1.0.2
 
 ### Fixed
