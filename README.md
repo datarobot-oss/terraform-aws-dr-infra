@@ -43,6 +43,24 @@ module "datarobot_infra" {
 - [Internal](examples/internal)
 - [Minimal](examples/minimal)
 
+### Using an example directly from source
+1. Clone the repo
+```bash
+git clone https://github.com/datarobot-oss/terraform-aws-dr-infra.git
+```
+2. Change directories into the example that best suits your needs
+```bash
+cd terraform-aws-dr-infra/examples/internal
+```
+3. Modify `main.tf` as needed
+4. Run terraform commands
+```bash
+terraform init
+terraform plan
+terraform apply
+terraform destroy
+```
+
 ## Permissions Requirements
 _Disclaimer: These lists are meant to be used as guidelines. All possible configurations have not been tested and required permissions are subject to change._
 
