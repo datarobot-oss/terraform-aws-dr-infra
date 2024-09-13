@@ -138,10 +138,6 @@ module "kms" {
 # S3
 ################################################################################
 
-locals {
-  s3_bucket_id = var.create_s3_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
-}
-
 module "storage" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
@@ -262,6 +258,10 @@ module "eks" {
 ################################################################################
 # APP IRSA
 ################################################################################
+
+locals {
+  s3_bucket_id = var.create_s3_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
+}
 
 module "app_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
