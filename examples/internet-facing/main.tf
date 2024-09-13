@@ -5,6 +5,7 @@ provider "aws" {
 locals {
   name        = "datarobot"
   domain_name = "${local.name}.yourdomain.com"
+  vpc_cidr    = "10.7.0.0/16"
 
   tags = {
     application = local.name
@@ -20,6 +21,7 @@ module "datarobot_infra" {
   domain_name = local.domain_name
 
   create_vpc               = true
+  vpc_cidr                 = local.vpc_cidr
   create_dns_zone          = true
   create_acm_certificate   = true
   create_kms_key           = true
