@@ -23,7 +23,7 @@ locals {
 }
 
 module "datarobot_infra" {
-  source = "../.."
+  source = "datarobot-oss/dr-infra/aws"
 
   name        = local.name
   domain_name = local.domain_name
@@ -55,7 +55,7 @@ provider "helm" {
 }
 
 module "datarobot_amenities" {
-  source = "../../modules/amenities"
+  source = "datarobot-oss/dr-infra/aws//modules/amenities"
 
   eks_cluster_name = module.datarobot_infra.eks_cluster_name
   vpc_id           = local.vpc_id
