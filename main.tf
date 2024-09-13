@@ -2,11 +2,6 @@ data "aws_availability_zones" "available" {}
 
 data "aws_caller_identity" "current" {}
 
-data "aws_route53_zone" "provided" {
-  count   = var.route53_zone_id != "" ? 1 : 0
-  zone_id = var.route53_zone_id
-}
-
 
 ################################################################################
 # VPC
@@ -81,11 +76,7 @@ module "dns" {
 ################################################################################
 
 locals {
-  acm_certificate_arn = var.create_acm_certificate && var.acm_certificate_arn == "" ? module.acm[0].acm_certificate_arn : var.acm_certificate_arn
-
-  # use the provided zone or the created public zone to validate a created ACM certificate
-  cert_validation_route53_zone_id  = var.create_dns_zone && var.route53_zone_id == "" ? module.dns[0].route53_zone_zone_id[local.public_route53_zone_key] : var.route53_zone_id
-  cert_validation_route53_zone_arn = try(data.aws_route53_zone.provided[0].arn, module.dns[0].route53_zone_zone_arn[local.public_route53_zone_key], "")
+  cert_validation_route53_zone_id = var.create_dns_zone && var.route53_zone_id == "" ? module.dns[0].route53_zone_zone_id[local.public_route53_zone_key] : var.route53_zone_id
 }
 
 module "acm" {
@@ -302,121 +293,6 @@ module "app_irsa_role" {
       resources = ["arn:aws:s3:::*"]
     }
   ]
-
-  tags = var.tags
-}
-
-
-################################################################################
-# HELM CHARTS
-################################################################################
-
-data "aws_eks_cluster_auth" "this" {
-  count      = var.create_eks_cluster ? 1 : 0
-  depends_on = [module.eks]
-
-  name = module.eks[0].cluster_name
-}
-
-provider "helm" {
-  kubernetes {
-    host                   = try(module.eks[0].cluster_endpoint, "")
-    cluster_ca_certificate = base64decode(try(module.eks[0].cluster_certificate_authority_data, ""))
-    token                  = try(data.aws_eks_cluster_auth.this[0].token, "")
-  }
-}
-
-
-module "cluster_autoscaler" {
-  source     = "./modules/cluster-autoscaler"
-  count      = var.create_eks_cluster && var.cluster_autoscaler ? 1 : 0
-  depends_on = [module.eks]
-
-  eks_cluster_name = module.eks[0].cluster_name
-
-  custom_values_templatefile = var.cluster_autoscaler_values
-  custom_values_variables    = var.cluster_autoscaler_variables
-
-  tags = var.tags
-}
-
-
-module "ebs_csi_driver" {
-  source     = "./modules/ebs-csi-driver"
-  count      = var.create_eks_cluster && var.ebs_csi_driver ? 1 : 0
-  depends_on = [module.eks]
-
-  eks_cluster_name    = module.eks[0].cluster_name
-  aws_ebs_csi_kms_arn = local.kms_key_arn
-
-  custom_values_templatefile = var.ebs_csi_driver_values
-  custom_values_variables    = var.ebs_csi_driver_variables
-
-  tags = var.tags
-}
-
-
-module "aws_load_balancer_controller" {
-  source     = "./modules/aws-load-balancer-controller"
-  count      = var.create_eks_cluster && var.aws_load_balancer_controller ? 1 : 0
-  depends_on = [module.eks]
-
-  eks_cluster_name = module.eks[0].cluster_name
-  vpc_id           = local.vpc_id
-
-  custom_values_templatefile = var.aws_load_balancer_controller_values
-  custom_values_variables    = var.aws_load_balancer_controller_variables
-
-  tags = var.tags
-}
-
-
-module "ingress_nginx" {
-  source     = "./modules/ingress-nginx"
-  count      = var.create_eks_cluster && var.ingress_nginx ? 1 : 0
-  depends_on = [module.aws_load_balancer_controller]
-
-  acm_certificate_arn = local.acm_certificate_arn
-  public              = var.internet_facing_ingress_lb
-
-  custom_values_templatefile = var.ingress_nginx_values
-  custom_values_variables    = var.ingress_nginx_variables
-
-  tags = var.tags
-}
-
-
-module "cert_manager" {
-  source     = "./modules/cert-manager"
-  count      = var.create_eks_cluster && var.cert_manager ? 1 : 0
-  depends_on = [module.ingress_nginx]
-
-  eks_cluster_name = module.eks[0].cluster_name
-  route53_zone_arn = local.cert_validation_route53_zone_arn
-
-  custom_values_templatefile = var.cert_manager_values
-  custom_values_variables    = var.cert_manager_variables
-
-  tags = var.tags
-}
-
-
-locals {
-  external_dns_route53_zone_arn  = try(data.aws_route53_zone.provided[0].arn, module.dns[0].route53_zone_zone_arn[var.internet_facing_ingress_lb ? local.public_route53_zone_key : local.private_route53_zone_key], "")
-  external_dns_route53_zone_name = try(data.aws_route53_zone.provided[0].name, var.domain_name)
-}
-
-module "external_dns" {
-  source     = "./modules/external-dns"
-  count      = var.create_eks_cluster && var.external_dns ? 1 : 0
-  depends_on = [module.ingress_nginx]
-
-  eks_cluster_name  = module.eks[0].cluster_name
-  route53_zone_arn  = local.external_dns_route53_zone_arn
-  route53_zone_name = local.external_dns_route53_zone_name
-
-  custom_values_templatefile = var.external_dns_values
-  custom_values_variables    = var.external_dns_variables
 
   tags = var.tags
 }

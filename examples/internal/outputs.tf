@@ -8,7 +8,7 @@ output "ecr_repository_urls" {
   value       = module.datarobot_infra.ecr_repository_urls
 }
 
-output "s3_bucket_name" {
-  description = "S3 bucket name to use for DataRobot application file storage"
-  value       = module.datarobot_infra.s3_bucket_name
+output "s3_bucket_id" {
+  description = "Name of the S3 bucket to use for DataRobot application file storage"
+  value       = module.datarobot_infra.s3_bucket_id
 }
