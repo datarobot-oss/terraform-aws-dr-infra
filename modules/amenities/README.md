@@ -1,3 +1,36 @@
+# DataRobot amenities sub-module
+This module contains helm charts which can be installed in an EKS cluster and provide required functionality for a DataRobot installation.
+
+## Usage
+```
+module "datarobot_amenities" {
+  source = "datarobot-oss/dr-infra/aws//modules/amenities"
+
+  eks_cluster_name = module.datarobot_infra.eks_cluster_name
+  vpc_id           = local.vpc_id
+
+  install_cluster_autoscaler           = true
+  install_ebs_csi_driver               = true
+  ebs_csi_driver_kms_arn               = local.kms_key_arn
+  install_aws_load_balancer_controller = true
+  install_ingress_nginx                = true
+  ingress_nginx_acm_certificate_arn    = local.acm_certificate_arn
+  ingress_nginx_internet_facing        = false
+  install_cert_manager                 = true
+  cert_manager_hosted_zone_arns        = [local.route53_zone_arn]
+  install_external_dns                 = true
+  external_dns_hosted_zone_arn         = local.route53_zone_arn
+  external_dns_hosted_zone_id          = local.route53_zone_id
+  external_dns_hosted_zone_name        = local.domain_name
+
+  tags = {
+    application   = "datarobot"
+    environment   = "dev"
+    managed-by    = "terraform"
+  }
+}
+```
+
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 

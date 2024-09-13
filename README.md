@@ -1,6 +1,8 @@
 # terraform-aws-dr-infra
 Terraform module to create AWS Cloud infrastructure resources required to run DataRobot.
 
+Helm charts which can provide other functionality required by the DataRobot application (e.g., ingress-nginx) are separated into their own [amenities sub-module](modules/amenities).
+
 ## Usage
 ```
 module "datarobot_infra" {
@@ -21,14 +23,6 @@ module "datarobot_infra" {
   create_eks_cluster       = true
   create_eks_gpu_nodegroup = true
   create_app_irsa_role     = true
-
-  aws_load_balancer_controller = true
-  cert_manager                 = true
-  cluster_autoscaler           = true
-  ebs_csi_driver               = true
-  external_dns                 = true
-  ingress_nginx                = true
-  internet_facing_ingress_lb   = true
 
   tags = {
     application   = "datarobot"
