@@ -57,6 +57,12 @@ variable "create_dns_zone" {
   default     = true
 }
 
+variable "dns_zone_force_destroy" {
+  description = "Force destroy the public and private Route53 zones. Ignored if an existing route53_zone_id is specified or create_dns_zone is false."
+  type        = bool
+  default     = false
+}
+
 
 ################################################################################
 # ACM
@@ -108,6 +114,12 @@ variable "create_s3_bucket" {
   default     = true
 }
 
+variable "s3_bucket_force_destroy" {
+  description = "Force destroy the public and private Route53 zones. Ignored if an existing s3_bucket_id is specified or create_s3_bucket is false."
+  type        = bool
+  default     = false
+}
+
 
 ################################################################################
 # ECR
@@ -128,6 +140,12 @@ variable "ecr_repositories" {
     "managed-image",
     "custom-apps-managed-image"
   ]
+}
+
+variable "ecr_repositories_force_destroy" {
+  description = "Force destroy the ECR repositories. Ignored if an existing create_ecr_repositories is false."
+  type        = bool
+  default     = false
 }
 
 

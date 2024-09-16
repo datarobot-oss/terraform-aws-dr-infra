@@ -62,13 +62,13 @@ module "dns" {
     (local.public_route53_zone_key) = {
       domain_name   = var.domain_name
       comment       = "${var.domain_name} public zone"
-      force_destroy = true
+      force_destroy = var.dns_zone_force_destroy
     },
     (local.private_route53_zone_key) = {
       domain_name   = var.domain_name
       vpc           = [{ vpc_id = local.vpc_id }]
       comment       = "${var.domain_name} private zone"
-      force_destroy = true
+      force_destroy = var.dns_zone_force_destroy
     }
   }
 
@@ -144,7 +144,7 @@ module "storage" {
   count   = var.create_s3_bucket && var.s3_bucket_id == "" ? 1 : 0
 
   bucket_prefix = replace(var.name, "_", "-")
-  force_destroy = true
+  force_destroy = var.s3_bucket_force_destroy
 
   tags = var.tags
 }
@@ -161,7 +161,7 @@ module "ecr" {
 
   repository_name               = "${var.name}/${each.key}"
   repository_image_scan_on_push = false
-  repository_force_delete       = true
+  repository_force_delete       = var.ecr_repositories_force_destroy
   attach_repository_policy      = false
   create_lifecycle_policy       = false
 
