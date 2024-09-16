@@ -276,7 +276,7 @@ variable "create_app_irsa_role" {
 variable "kubernetes_namespace" {
   description = "Namespace where the DataRobot application will be installed. Ignored if create_app_irsa_role is false."
   type        = string
-  default     = "dr-core"
+  default     = "dr-app"
 }
 
 
