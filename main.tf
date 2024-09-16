@@ -138,6 +138,10 @@ module "kms" {
 # S3
 ################################################################################
 
+locals {
+  s3_bucket_id = var.create_s3_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
+}
+
 module "storage" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
@@ -259,10 +263,6 @@ module "eks" {
 # APP IRSA
 ################################################################################
 
-locals {
-  s3_bucket_id = var.create_s3_bucket && var.s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.s3_bucket_id
-}
-
 module "app_irsa_role" {
   source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
   version = "~> 5.0"
@@ -312,8 +312,7 @@ module "app_irsa_role" {
 ################################################################################
 
 data "aws_eks_cluster_auth" "this" {
-  count      = var.create_eks_cluster ? 1 : 0
-  depends_on = [module.eks]
+  count = var.create_eks_cluster ? 1 : 0
 
   name = module.eks[0].cluster_name
 }
@@ -328,9 +327,8 @@ provider "helm" {
 
 
 module "cluster_autoscaler" {
-  source     = "./modules/cluster-autoscaler"
-  count      = var.create_eks_cluster && var.cluster_autoscaler ? 1 : 0
-  depends_on = [module.eks]
+  source = "./modules/cluster-autoscaler"
+  count  = var.create_eks_cluster && var.cluster_autoscaler ? 1 : 0
 
   eks_cluster_name = module.eks[0].cluster_name
 
@@ -342,9 +340,8 @@ module "cluster_autoscaler" {
 
 
 module "ebs_csi_driver" {
-  source     = "./modules/ebs-csi-driver"
-  count      = var.create_eks_cluster && var.ebs_csi_driver ? 1 : 0
-  depends_on = [module.eks]
+  source = "./modules/ebs-csi-driver"
+  count  = var.create_eks_cluster && var.ebs_csi_driver ? 1 : 0
 
   eks_cluster_name    = module.eks[0].cluster_name
   aws_ebs_csi_kms_arn = local.kms_key_arn
@@ -357,9 +354,8 @@ module "ebs_csi_driver" {
 
 
 module "aws_load_balancer_controller" {
-  source     = "./modules/aws-load-balancer-controller"
-  count      = var.create_eks_cluster && var.aws_load_balancer_controller ? 1 : 0
-  depends_on = [module.eks]
+  source = "./modules/aws-load-balancer-controller"
+  count  = var.create_eks_cluster && var.aws_load_balancer_controller ? 1 : 0
 
   eks_cluster_name = module.eks[0].cluster_name
   vpc_id           = local.vpc_id
