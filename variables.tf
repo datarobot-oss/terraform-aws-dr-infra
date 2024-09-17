@@ -40,6 +40,12 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "vpc_endpoints" {
+  description = "List of AWS services to create VPC endpoints for. Ignored if an existing vpc_id is specified or create_vpc is false."
+  type        = list(string)
+  default     = ["s3"]
+}
+
 
 ################################################################################
 # DNS

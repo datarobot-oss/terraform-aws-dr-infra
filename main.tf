@@ -42,6 +42,36 @@ module "vpc" {
   tags = var.tags
 }
 
+module "endpoints" {
+  source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
+  version = "~> 5.0"
+  count   = var.create_vpc && var.vpc_id == "" && length(var.vpc_endpoints) > 0 ? 1 : 0
+
+  vpc_id                     = module.vpc[0].vpc_id
+  create_security_group      = true
+  security_group_name        = "${var.name}-endpoints"
+  security_group_description = "VPC endpoint default security group"
+  security_group_rules = {
+    ingress_https = {
+      description = "HTTPS from VPC"
+      cidr_blocks = [module.vpc[0].vpc_cidr_block]
+    }
+  }
+
+  endpoints = { for endpoint_service in var.vpc_endpoints :
+    endpoint_service => {
+      service             = endpoint_service
+      subnet_ids          = module.vpc[0].private_subnets
+      private_dns_enabled = true
+      dns_options = {
+        private_dns_only_for_inbound_resolver_endpoint = false
+      }
+    }
+  }
+
+  tags = var.tags
+}
+
 
 ################################################################################
 # DNS
