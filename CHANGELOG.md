@@ -3,6 +3,13 @@
 All notable changes are documented in this file.
 
 
+## v1.0.5
+
+### Added
+
+- vpc_endpoint variable with s3 as the default
+
+
 ## v1.0.4
 
 ### Fixed
