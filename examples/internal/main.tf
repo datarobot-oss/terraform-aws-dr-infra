@@ -11,6 +11,8 @@ locals {
   provisioner_ip      = "10.0.0.99"
   route53_zone_id     = "Z06110132R7HO9BLI64XY"
   acm_certificate_arn = "arn:aws:acm:us-west-2:000000000000:certificate/00000000-0000-0000-0000-000000000000"
+  kms_key_arn         = "arn:aws:kms:us-west-2:500395161552:key/00000000-0000-0000-0000-000000000000"
+  s3_bucket_id        = "datarobot-file-storage"
 }
 
 module "datarobot_infra" {
@@ -28,7 +30,10 @@ module "datarobot_infra" {
   route53_zone_id                           = local.route53_zone_id
   create_acm_certificate                    = false
   acm_certificate_arn                       = local.acm_certificate_arn
-  create_eks_gpu_nodegroup                  = false
+  create_kms_key                            = false
+  kms_key_arn                               = local.kms_key_arn
+  create_s3_bucket                          = false
+  s3_bucket_id                              = local.s3_bucket_id
 
   internet_facing_ingress_lb = false
 
