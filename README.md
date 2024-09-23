@@ -560,6 +560,7 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 | <a name="module_dns"></a> [dns](#module\_dns) | terraform-aws-modules/route53/aws//modules/zones | ~> 3.0 |
 | <a name="module_ecr"></a> [ecr](#module\_ecr) | terraform-aws-modules/ecr/aws | ~> 2.0 |
 | <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | ~> 20.0 |
+| <a name="module_endpoints"></a> [endpoints](#module\_endpoints) | terraform-aws-modules/vpc/aws//modules/vpc-endpoints | ~> 5.0 |
 | <a name="module_kms"></a> [kms](#module\_kms) | terraform-aws-modules/kms/aws | ~> 3.0 |
 | <a name="module_storage"></a> [storage](#module\_storage) | terraform-aws-modules/s3-bucket/aws | ~> 4.0 |
 | <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | ~> 5.0 |
@@ -585,8 +586,10 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 | <a name="input_create_kms_key"></a> [create\_kms\_key](#input\_create\_kms\_key) | Create a new KMS key used for EBS volume encryption on EKS nodes. Ignored if kms\_key\_arn is specified. | `bool` | `true` | no |
 | <a name="input_create_s3_bucket"></a> [create\_s3\_bucket](#input\_create\_s3\_bucket) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing s3\_bucket\_id is specified. | `bool` | `true` | no |
 | <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Create a new VPC. Ignored if an existing vpc\_id is specified. | `bool` | `true` | no |
+| <a name="input_dns_zone_force_destroy"></a> [dns\_zone\_force\_destroy](#input\_dns\_zone\_force\_destroy) | Force destroy the public and private Route53 zones. Ignored if an existing route53\_zone\_id is specified or create\_dns\_zone is false. | `bool` | `false` | no |
 | <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | The domain name used in the dns and acm modules | `string` | `""` | no |
 | <a name="input_ecr_repositories"></a> [ecr\_repositories](#input\_ecr\_repositories) | Repositories to create | `set(string)` | <pre>[<br>  "base-image",<br>  "ephemeral-image",<br>  "managed-image",<br>  "custom-apps-managed-image"<br>]</pre> | no |
+| <a name="input_ecr_repositories_force_destroy"></a> [ecr\_repositories\_force\_destroy](#input\_ecr\_repositories\_force\_destroy) | Force destroy the ECR repositories. Ignored if an existing create\_ecr\_repositories is false. | `bool` | `false` | no |
 | <a name="input_eks_cluster_access_entries"></a> [eks\_cluster\_access\_entries](#input\_eks\_cluster\_access\_entries) | Map of access entries to add to the cluster. Ignored if create\_eks\_cluster is false. | `any` | `{}` | no |
 | <a name="input_eks_cluster_endpoint_private_access_cidrs"></a> [eks\_cluster\_endpoint\_private\_access\_cidrs](#input\_eks\_cluster\_endpoint\_private\_access\_cidrs) | List of additional CIDR blocks allowed to access the Amazon EKS private API server endpoint. By default only the kubernetes nodes are allowed, if any other hosts such as a provisioner need to access the EKS private API endpoint they need to be added here. Ignored if create\_eks\_cluster is false. | `list(string)` | `[]` | no |
 | <a name="input_eks_cluster_endpoint_public_access"></a> [eks\_cluster\_endpoint\_public\_access](#input\_eks\_cluster\_endpoint\_public\_access) | Indicates whether or not the Amazon EKS public API server endpoint is enabled. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
@@ -606,12 +609,13 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 | <a name="input_eks_primary_nodegroup_taints"></a> [eks\_primary\_nodegroup\_taints](#input\_eks\_primary\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group | `any` | `{}` | no |
 | <a name="input_eks_subnet_ids"></a> [eks\_subnet\_ids](#input\_eks\_subnet\_ids) | List of existing subnet IDs to be used for the EKS cluster. Ignored if create\_eks\_cluster is false. Required when an existing vpc\_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `[]` | no |
 | <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create\_kms\_key will be ignored. | `string` | `""` | no |
-| <a name="input_kubernetes_namespace"></a> [kubernetes\_namespace](#input\_kubernetes\_namespace) | Namespace where the DataRobot application will be installed. Ignored if create\_app\_irsa\_role is false. | `string` | `"dr-core"` | no |
+| <a name="input_kubernetes_namespace"></a> [kubernetes\_namespace](#input\_kubernetes\_namespace) | Namespace where the DataRobot application will be installed. Ignored if create\_app\_irsa\_role is false. | `string` | `"dr-app"` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to use as a prefix for created resources | `string` | n/a | yes |
 | <a name="input_route53_zone_id"></a> [route53\_zone\_id](#input\_route53\_zone\_id) | ID of an existing route53 zone to use for ACM certificate validation. When specified, create\_dns\_zone will be ignored. | `string` | `""` | no |
 | <a name="input_s3_bucket_id"></a> [s3\_bucket\_id](#input\_s3\_bucket\_id) | ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, create\_s3\_bucket will be ignored. | `string` | `""` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all created resources | `map(string)` | <pre>{<br>  "managed-by": "terraform"<br>}</pre> | no |
 | <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR block to be used for the new VPC. Ignored if an existing vpc\_id is specified or create\_vpc is false. | `string` | `"10.0.0.0/16"` | no |
+| <a name="input_vpc_endpoints"></a> [vpc\_endpoints](#input\_vpc\_endpoints) | List of AWS services to create VPC endpoints for. Ignored if an existing vpc\_id is specified or create\_vpc is false. | `list(string)` | <pre>[<br>  "s3"<br>]</pre> | no |
 | <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of an existing VPC. When specified, create\_vpc and vpc\_cidr will be ignored. | `string` | `""` | no |
 
 ## Outputs

@@ -40,6 +40,12 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "vpc_endpoints" {
+  description = "List of AWS services to create VPC endpoints for. Ignored if an existing vpc_id is specified or create_vpc is false."
+  type        = list(string)
+  default     = ["s3"]
+}
+
 
 ################################################################################
 # DNS
@@ -55,6 +61,12 @@ variable "create_dns_zone" {
   description = "Create new public and private Route53 zones with domain name domain_name. Ignored if an existing route53_zone_id is specified."
   type        = bool
   default     = true
+}
+
+variable "dns_zone_force_destroy" {
+  description = "Force destroy the public and private Route53 zones. Ignored if an existing route53_zone_id is specified or create_dns_zone is false."
+  type        = bool
+  default     = false
 }
 
 
@@ -108,6 +120,12 @@ variable "create_s3_bucket" {
   default     = true
 }
 
+variable "s3_bucket_force_destroy" {
+  description = "Force destroy the public and private Route53 zones. Ignored if an existing s3_bucket_id is specified or create_s3_bucket is false."
+  type        = bool
+  default     = false
+}
+
 
 ################################################################################
 # ECR
@@ -128,6 +146,12 @@ variable "ecr_repositories" {
     "managed-image",
     "custom-apps-managed-image"
   ]
+}
+
+variable "ecr_repositories_force_destroy" {
+  description = "Force destroy the ECR repositories. Ignored if an existing create_ecr_repositories is false."
+  type        = bool
+  default     = false
 }
 
 
@@ -276,5 +300,5 @@ variable "create_app_irsa_role" {
 variable "kubernetes_namespace" {
   description = "Namespace where the DataRobot application will be installed. Ignored if create_app_irsa_role is false."
   type        = string
-  default     = "dr-core"
+  default     = "dr-app"
 }
