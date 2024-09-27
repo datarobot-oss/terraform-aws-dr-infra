@@ -3,6 +3,18 @@
 All notable changes are documented in this file.
 
 
+## v1.0.6
+
+### Added
+
+- eks_primary_nodegroup_name, eks_primary_nodegroup_labels, eks_gpu_nodegroup_name, eks_gpu_nodegroup_labels variables
+- nvidia_device_plugin helm chart module
+
+### Updated
+
+- Default values for eks_gpu_nodegroup_labels and eks_gpu_nodegroup_taints
+
+
 ## v1.0.5
 
 ### Added
