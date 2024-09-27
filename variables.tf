@@ -446,3 +446,21 @@ variable "ingress_nginx_variables" {
   type        = map(string)
   default     = {}
 }
+
+variable "nvidia_device_plugin" {
+  description = "Install the nvidia-device-plugin helm chart to expose node GPU resources to the EKS cluster. Ignored if create_eks_cluster is false."
+  type        = bool
+  default     = true
+}
+
+variable "nvidia_device_plugin_values" {
+  description = "Path to templatefile containing custom values for the nvidia-device-plugin helm chart."
+  type        = string
+  default     = ""
+}
+
+variable "nvidia_device_plugin_variables" {
+  description = "Variables passed to the nvidia_device_plugin_values templatefile"
+  type        = map(string)
+  default     = {}
+}

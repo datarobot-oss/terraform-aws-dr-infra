@@ -1,0 +1,8 @@
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: datarobot.com/node-capability
+              operator: In
+              values: ["gpu"]

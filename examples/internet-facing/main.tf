@@ -32,6 +32,7 @@ module "datarobot_infra" {
   external_dns                 = true
   ingress_nginx                = true
   internet_facing_ingress_lb   = true
+  nvidia_device_plugin         = true
 
   tags = {
     application = local.name

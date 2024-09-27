@@ -448,3 +448,11 @@ module "external_dns" {
 
   tags = var.tags
 }
+
+module "nvidia_device_plugin" {
+  source = "./modules/nvidia-device-plugin"
+  count  = var.create_eks_cluster && var.nvidia_device_plugin ? 1 : 0
+
+  custom_values_templatefile = var.nvidia_device_plugin_values
+  custom_values_variables    = var.nvidia_device_plugin_variables
+}
