@@ -264,22 +264,24 @@ module "eks" {
 
   eks_managed_node_groups = merge(
     {
-      primary = {
+      (var.eks_primary_nodegroup_name) = {
         ami_type       = var.eks_primary_nodegroup_ami_type
         instance_types = var.eks_primary_nodegroup_instance_types
         min_size       = var.eks_primary_nodegroup_min_size
         max_size       = var.eks_primary_nodegroup_max_size
         desired_size   = var.eks_primary_nodegroup_desired_size
+        labels         = var.eks_primary_nodegroup_labels
         taints         = var.eks_primary_nodegroup_taints
       }
     },
     var.create_eks_gpu_nodegroup ? {
-      gpu = {
+      (var.eks_gpu_nodegroup_name) = {
         ami_type       = var.eks_gpu_nodegroup_ami_type
         instance_types = var.eks_gpu_nodegroup_instance_types
         min_size       = var.eks_gpu_nodegroup_min_size
         max_size       = var.eks_gpu_nodegroup_max_size
         desired_size   = var.eks_gpu_nodegroup_desired_size
+        labels         = var.eks_gpu_nodegroup_labels
         taints         = var.eks_gpu_nodegroup_taints
       }
     } : {}

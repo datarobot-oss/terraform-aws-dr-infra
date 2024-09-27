@@ -203,6 +203,12 @@ variable "eks_cluster_access_entries" {
   default     = {}
 }
 
+variable "eks_primary_nodegroup_name" {
+  description = "Name of the primary EKS node group. Ignored if create_eks_cluster is false."
+  type        = string
+  default     = "primary"
+}
+
 variable "eks_primary_nodegroup_ami_type" {
   description = "Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values. Ignored if create_eks_cluster is false."
   type        = string
@@ -233,6 +239,12 @@ variable "eks_primary_nodegroup_desired_size" {
   default     = 5
 }
 
+variable "eks_primary_nodegroup_labels" {
+  description = "Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed. Ignored if create_eks_cluster is false."
+  type        = map(string)
+  default     = null
+}
+
 variable "eks_primary_nodegroup_taints" {
   description = "The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group"
   type        = any
@@ -243,6 +255,12 @@ variable "create_eks_gpu_nodegroup" {
   description = "Whether to create a nodegroup with GPU instances. Ignored if create_eks_cluster is false."
   type        = bool
   default     = false
+}
+
+variable "eks_gpu_nodegroup_name" {
+  description = "Name of the GPU EKS node group. Ignored if create_eks_cluster is false."
+  type        = string
+  default     = "gpu"
 }
 
 variable "eks_gpu_nodegroup_ami_type" {
@@ -275,13 +293,20 @@ variable "eks_gpu_nodegroup_desired_size" {
   default     = 1
 }
 
+variable "eks_gpu_nodegroup_labels" {
+  description = "Key-value map of Kubernetes labels to be applied to the nodes in the GPU node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed"
+  type        = map(string)
+  default = {
+    "datarobot.com/node-capability" = "gpu"
+  }
+}
+
 variable "eks_gpu_nodegroup_taints" {
   description = "The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group"
   type        = any
   default = {
-    dedicated = {
-      key    = "dedicated"
-      value  = "gpuGroup"
+    nvidia_gpu = {
+      key    = "nvidia.com/gpu"
       effect = "NO_SCHEDULE"
     }
   }
