@@ -3,6 +3,13 @@
 All notable changes are documented in this file.
 
 
+## v1.0.7
+
+### Updated
+
+- KMS key alias name as a prefix with a unique string appended
+
+
 ## v1.0.6
 
 ### Added
