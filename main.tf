@@ -158,7 +158,8 @@ module "kms" {
   key_administrators                = [data.aws_caller_identity.current.arn]
   key_service_roles_for_autoscaling = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"]
 
-  aliases = ["datarobot/ebs"]
+  aliases                 = ["datarobot/ebs"]
+  aliases_use_name_prefix = true
 
   tags = var.tags
 }
