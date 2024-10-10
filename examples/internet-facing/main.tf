@@ -3,27 +3,24 @@ provider "aws" {
 }
 
 locals {
-  name        = "datarobot"
-  domain_name = "${local.name}.yourdomain.com"
-  vpc_cidr    = "10.7.0.0/16"
+  name = "datarobot"
 }
 
 module "datarobot_infra" {
-  source = "datarobot-oss/dr-infra/aws"
+  source = "../.."
 
   name        = local.name
-  domain_name = local.domain_name
+  domain_name = "${local.name}.yourdomain.com"
 
-  create_vpc               = true
-  vpc_cidr                 = local.vpc_cidr
-  create_dns_zone          = true
-  create_acm_certificate   = true
-  create_kms_key           = true
-  create_s3_bucket         = true
-  create_ecr_repositories  = true
-  create_eks_cluster       = true
-  create_eks_gpu_nodegroup = true
-  create_app_irsa_role     = true
+  create_network            = true
+  network_address_space     = "10.7.0.0/16"
+  create_dns_zones          = true
+  create_acm_certificate    = true
+  create_encryption_key     = true
+  create_storage            = true
+  create_container_registry = true
+  create_kubernetes_cluster = true
+  create_app_identity       = true
 
   aws_load_balancer_controller = true
   cert_manager                 = true

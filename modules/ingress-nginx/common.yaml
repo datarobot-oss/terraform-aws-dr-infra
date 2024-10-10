@@ -7,6 +7,5 @@ controller:
     use-proxy-protocol: "true"
   replicaCount: 3
   service:
-    externalTrafficPolicy: Local
     targetPorts:
       https: http

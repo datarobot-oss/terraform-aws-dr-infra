@@ -1,5 +1,6 @@
 controller:
   service:
+    externalTrafficPolicy: Local
     annotations:
       service.beta.kubernetes.io/aws-load-balancer-type: external
       service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
@@ -10,3 +11,7 @@ controller:
       service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
       service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
       service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: ${tags}
+    external:
+      enabled: true
+    internal:
+      enabled: false

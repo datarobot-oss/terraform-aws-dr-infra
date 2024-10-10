@@ -9,7 +9,7 @@ storageClasses:
       csi.storage.k8s.io/fstype: ext4
       type: gp3
       encrypted: "true"
-      kmskeyid: ${kms_key_arn}
+      kmskeyid: ${encryption_key_id}
   - name: ebs-standard-retain
     volumeBindingMode: WaitForFirstConsumer
     allowVolumeExpansion: true
@@ -18,4 +18,4 @@ storageClasses:
       csi.storage.k8s.io/fstype: ext4
       type: gp3
       encrypted: "true"
-      kmskeyid: ${kms_key_arn}
+      kmskeyid: ${encryption_key_id}

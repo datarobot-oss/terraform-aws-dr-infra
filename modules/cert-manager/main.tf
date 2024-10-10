@@ -9,7 +9,7 @@ module "cert_manager_pod_identity" {
 
   associations = {
     this = {
-      cluster_name    = var.eks_cluster_name
+      cluster_name    = var.kubernetes_cluster_name
       namespace       = "cert-manager"
       service_account = "cert-manager"
     }

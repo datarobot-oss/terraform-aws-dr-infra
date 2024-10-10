@@ -8,7 +8,7 @@ module "aws_load_balancer_controller_pod_identity" {
 
   associations = {
     this = {
-      cluster_name    = var.eks_cluster_name
+      cluster_name    = var.kubernetes_cluster_name
       namespace       = "aws-load-balancer-controller"
       service_account = "aws-load-balancer-controller"
     }
@@ -39,7 +39,7 @@ module "aws_load_balancer_controller" {
   set = [
     {
       name  = "clusterName"
-      value = var.eks_cluster_name
+      value = var.kubernetes_cluster_name
     },
     {
       name  = "vpcId"

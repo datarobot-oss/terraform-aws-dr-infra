@@ -7,11 +7,11 @@ module "cluster_autoscaler_pod_identity" {
   name = "cluster-autoscaler"
 
   attach_cluster_autoscaler_policy = true
-  cluster_autoscaler_cluster_names = [var.eks_cluster_name]
+  cluster_autoscaler_cluster_names = [var.kubernetes_cluster_name]
 
   associations = {
     this = {
-      cluster_name    = var.eks_cluster_name
+      cluster_name    = var.kubernetes_cluster_name
       namespace       = "cluster-autoscaler"
       service_account = "cluster-autoscaler-aws-cluster-autoscaler"
     }
@@ -42,7 +42,7 @@ module "cluster_autoscaler" {
   set = [
     {
       name  = "autoDiscovery.clusterName"
-      value = var.eks_cluster_name
+      value = var.kubernetes_cluster_name
     },
     {
       name  = "awsRegion"
