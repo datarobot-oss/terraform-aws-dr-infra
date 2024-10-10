@@ -4,6 +4,7 @@ controller:
       enabled: false
     internal:
       enabled: true
+      externalTrafficPolicy: Local
       annotations:
         service.beta.kubernetes.io/aws-load-balancer-type: external
         service.beta.kubernetes.io/aws-load-balancer-scheme: internal

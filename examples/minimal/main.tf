@@ -3,15 +3,14 @@ provider "aws" {
 }
 
 locals {
-  name        = "datarobot"
-  domain_name = "${local.name}.yourdomain.com"
+  name = "datarobot"
 }
 
 module "datarobot_infra" {
   source = "datarobot-oss/dr-infra/aws"
 
   name        = local.name
-  domain_name = local.domain_name
+  domain_name = "${local.name}.yourdomain.com"
 
   tags = {
     application = local.name

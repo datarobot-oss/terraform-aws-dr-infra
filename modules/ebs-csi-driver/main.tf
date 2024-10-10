@@ -9,7 +9,7 @@ module "ebs_csi_driver_pod_identity" {
 
   associations = {
     this = {
-      cluster_name    = var.eks_cluster_name
+      cluster_name    = var.kubernetes_cluster_name
       namespace       = "kube-system"
       service_account = "ebs-csi-controller-sa"
     }
@@ -40,7 +40,7 @@ module "ebs_csi_driver" {
 
   values = [
     templatefile("${path.module}/values.yaml", {
-      kms_key_arn = var.aws_ebs_csi_kms_arn
+      encryption_key_id = var.aws_ebs_csi_kms_arn
     }),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
