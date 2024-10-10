@@ -52,13 +52,13 @@ variable "network_private_endpoints" {
 ################################################################################
 
 variable "existing_public_route53_zone_id" {
-  description = "ID of existing public Route53 hosted zone to use for public DNS records created by external-dns and ACM certificate validation"
+  description = "ID of existing public Route53 hosted zone to use for public DNS records created by external-dns and ACM certificate validation. This is required when create_dns_zones is false and ingress_nginx and internet_facing_ingress_lb are true or when create_acm_certificate is true."
   type        = string
   default     = ""
 }
 
 variable "existing_private_route53_zone_id" {
-  description = "ID of existing private Route53 hosted zone to use for private DNS records created by external-dns"
+  description = "ID of existing private Route53 hosted zone to use for private DNS records created by external-dns. This is required when create_dns_zones is false and ingress_nginx is true with internet_facing_ingress_lb false."
   type        = string
   default     = ""
 }
