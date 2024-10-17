@@ -8,8 +8,7 @@ locals {
 }
 
 module "datarobot_infra" {
-  # source = "datarobot-oss/dr-infra/aws"
-  source = "../.."
+  source = "datarobot-oss/dr-infra/aws"
 
   ################################################################################
   # General
