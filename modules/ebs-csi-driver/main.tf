@@ -10,7 +10,7 @@ module "ebs_csi_driver_pod_identity" {
   associations = {
     this = {
       cluster_name    = var.kubernetes_cluster_name
-      namespace       = "kube-system"
+      namespace       = "aws-ebs-csi-driver"
       service_account = "ebs-csi-controller-sa"
     }
   }
@@ -20,11 +20,10 @@ module "ebs_csi_driver_pod_identity" {
 
 
 module "ebs_csi_driver" {
-  source     = "terraform-module/release/helm"
-  version    = "2.8.1"
-  depends_on = [module.ebs_csi_driver_pod_identity]
+  source  = "terraform-module/release/helm"
+  version = "2.8.1"
 
-  namespace  = "kube-system"
+  namespace  = "aws-ebs-csi-driver"
   repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
 
   app = {
@@ -44,4 +43,6 @@ module "ebs_csi_driver" {
     }),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  depends_on = [module.ebs_csi_driver_pod_identity]
 }

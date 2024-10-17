@@ -16,6 +16,6 @@ variable "custom_values_templatefile" {
 
 variable "custom_values_variables" {
   description = "Variables for the custom values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }

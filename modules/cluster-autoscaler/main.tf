@@ -21,9 +21,8 @@ module "cluster_autoscaler_pod_identity" {
 }
 
 module "cluster_autoscaler" {
-  source     = "terraform-module/release/helm"
-  version    = "~> 2.0"
-  depends_on = [module.cluster_autoscaler_pod_identity]
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
 
   namespace  = "cluster-autoscaler"
   repository = "https://kubernetes.github.io/autoscaler"
@@ -54,4 +53,5 @@ module "cluster_autoscaler" {
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 
+  depends_on = [module.cluster_autoscaler_pod_identity]
 }

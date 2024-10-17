@@ -14,22 +14,22 @@ output "vpc_id" {
 
 output "public_route53_zone_id" {
   description = "Zone ID of the public Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_id[local.public_route53_zone_key], null)
+  value       = try(module.dns[0].route53_zone_zone_id["public"], null)
 }
 
 output "public_route53_zone_arn" {
   description = "Zone ARN of the public Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_arn[local.public_route53_zone_key], null)
+  value       = try(module.dns[0].route53_zone_zone_arn["public"], null)
 }
 
 output "private_route53_zone_id" {
   description = "Zone ID of the private Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_id[local.private_route53_zone_key], null)
+  value       = try(module.dns[0].route53_zone_zone_id["public"], null)
 }
 
 output "private_route53_zone_arn" {
   description = "Zone ARN of the private Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_arn[local.private_route53_zone_key], null)
+  value       = try(module.dns[0].route53_zone_zone_arn["public"], null)
 }
 
 
@@ -44,12 +44,12 @@ output "acm_certificate_arn" {
 
 
 ################################################################################
-# KMS
+# Encryption Key
 ################################################################################
 
 output "ebs_encryption_key_id" {
   description = "ARN of the EBS KMS key"
-  value       = try(module.kms[0].key_arn, null)
+  value       = try(module.encryption_key[0].key_arn, null)
 }
 
 

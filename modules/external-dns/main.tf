@@ -19,9 +19,8 @@ module "external_dns_pod_identity" {
 }
 
 module "external_dns" {
-  source     = "terraform-module/release/helm"
-  version    = "~> 2.0"
-  depends_on = [module.external_dns_pod_identity]
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
 
   namespace  = "external-dns"
   repository = "https://charts.bitnami.com/bitnami"
@@ -44,4 +43,6 @@ module "external_dns" {
     }),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  depends_on = [module.external_dns_pod_identity]
 }

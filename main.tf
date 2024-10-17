@@ -84,19 +84,15 @@ data "aws_route53_zone" "private" {
 }
 
 locals {
-  # keys used by the "dns" module. these are not the actual domain names associated with the zones.
-  public_route53_zone_key  = var.domain_name
-  private_route53_zone_key = "private.${var.domain_name}"
-
   public_zone = {
-    (local.public_route53_zone_key) = {
+    public = {
       domain_name   = var.domain_name
       comment       = "${var.domain_name} public zone"
       force_destroy = var.dns_zones_force_destroy
     }
   }
   private_zone = {
-    (local.private_route53_zone_key) = {
+    private = {
       domain_name   = var.domain_name
       vpc           = [{ vpc_id = local.vpc_id }]
       comment       = "${var.domain_name} private zone"
@@ -107,12 +103,12 @@ locals {
   # create a public zone if we're using external_dns with internet_facing LB
   # or creating a public ACM certificate
   create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == "" && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == ""))
-  public_zone_id     = local.create_public_zone ? module.dns[0].route53_zone_zone_id[local.public_route53_zone_key] : var.existing_public_route53_zone_id
-  public_zone_arn    = local.create_public_zone ? module.dns[0].route53_zone_zone_arn[local.public_route53_zone_key] : try(data.aws_route53_zone.public[0].arn, "")
+  public_zone_id     = local.create_public_zone ? module.dns[0].route53_zone_zone_id["public"] : var.existing_public_route53_zone_id
+  public_zone_arn    = local.create_public_zone ? module.dns[0].route53_zone_zone_arn["public"] : try(data.aws_route53_zone.public[0].arn, "")
 
   # create a private zone if we're using external_dns with an internal LB
   create_private_zone = var.create_dns_zones && var.existing_private_route53_zone_id == "" && (var.external_dns && !var.internet_facing_ingress_lb)
-  private_zone_arn    = local.create_private_zone ? module.dns[0].route53_zone_zone_arn[local.private_route53_zone_key] : try(data.aws_route53_zone.private[0].arn, "")
+  private_zone_arn    = local.create_private_zone ? module.dns[0].route53_zone_zone_arn["private"] : try(data.aws_route53_zone.private[0].arn, "")
 }
 
 module "dns" {
@@ -159,14 +155,14 @@ module "acm" {
 
 
 ################################################################################
-# KMS
+# Encryption Key
 ################################################################################
 
 locals {
-  encryption_key_id = var.create_encryption_key && var.existing_kms_key_arn == "" ? module.kms[0].key_arn : var.existing_kms_key_arn
+  encryption_key_arn = var.create_encryption_key && var.existing_kms_key_arn == "" ? module.encryption_key[0].key_arn : var.existing_kms_key_arn
 }
 
-module "kms" {
+module "encryption_key" {
   source  = "terraform-aws-modules/kms/aws"
   version = "~> 3.0"
   count   = var.create_encryption_key && var.existing_kms_key_arn == "" ? 1 : 0
@@ -248,7 +244,6 @@ module "kubernetes" {
   vpc_id     = local.vpc_id
   subnet_ids = local.kubernetes_nodes_subnet_ids
 
-  cluster_endpoint_private_access      = var.kubernetes_cluster_endpoint_private_access
   cluster_endpoint_public_access       = var.kubernetes_cluster_endpoint_public_access
   cluster_endpoint_public_access_cidrs = var.kubernetes_cluster_endpoint_public_access_cidrs
 
@@ -271,7 +266,7 @@ module "kubernetes" {
           delete_on_termination = true
           encrypted             = var.create_encryption_key || var.existing_kms_key_arn != ""
           iops                  = 2000
-          kms_key_id            = local.encryption_key_id
+          kms_key_id            = local.encryption_key_arn
           volume_size           = 200
           volume_type           = "gp3"
         }
@@ -381,6 +376,8 @@ module "cluster_autoscaler" {
   custom_values_variables    = var.cluster_autoscaler_variables
 
   tags = var.tags
+
+  depends_on = [module.kubernetes[0].cluster_addons]
 }
 
 
@@ -389,12 +386,14 @@ module "ebs_csi_driver" {
   count  = var.create_kubernetes_cluster && var.ebs_csi_driver ? 1 : 0
 
   kubernetes_cluster_name = module.kubernetes[0].cluster_name
-  aws_ebs_csi_kms_arn     = local.encryption_key_id
+  aws_ebs_csi_kms_arn     = local.encryption_key_arn
 
   custom_values_templatefile = var.ebs_csi_driver_values
   custom_values_variables    = var.ebs_csi_driver_variables
 
   tags = var.tags
+
+  depends_on = [module.kubernetes[0].cluster_addons]
 }
 
 
@@ -409,28 +408,30 @@ module "aws_load_balancer_controller" {
   custom_values_variables    = var.aws_load_balancer_controller_variables
 
   tags = var.tags
+
+  depends_on = [module.kubernetes[0].cluster_addons]
 }
 
 
 module "ingress_nginx" {
-  source     = "./modules/ingress-nginx"
-  count      = var.create_kubernetes_cluster && var.ingress_nginx ? 1 : 0
-  depends_on = [module.aws_load_balancer_controller]
+  source = "./modules/ingress-nginx"
+  count  = var.create_kubernetes_cluster && var.ingress_nginx ? 1 : 0
 
-  acm_certificate_arn = local.acm_certificate_arn
-  public              = var.internet_facing_ingress_lb
+  acm_certificate_arn        = local.acm_certificate_arn
+  internet_facing_ingress_lb = var.internet_facing_ingress_lb
 
   custom_values_templatefile = var.ingress_nginx_values
   custom_values_variables    = var.ingress_nginx_variables
 
   tags = var.tags
+
+  depends_on = [module.aws_load_balancer_controller]
 }
 
 
 module "cert_manager" {
-  source     = "./modules/cert-manager"
-  count      = var.create_kubernetes_cluster && var.cert_manager ? 1 : 0
-  depends_on = [module.ingress_nginx]
+  source = "./modules/cert-manager"
+  count  = var.create_kubernetes_cluster && var.cert_manager ? 1 : 0
 
   kubernetes_cluster_name = module.kubernetes[0].cluster_name
   route53_zone_arn        = local.public_zone_arn
@@ -439,12 +440,16 @@ module "cert_manager" {
   custom_values_variables    = var.cert_manager_variables
 
   tags = var.tags
+
+  depends_on = [
+    module.kubernetes[0].cluster_addons,
+    module.ingress_nginx
+  ]
 }
 
 module "external_dns" {
-  source     = "./modules/external-dns"
-  count      = var.create_kubernetes_cluster && var.external_dns ? 1 : 0
-  depends_on = [module.ingress_nginx]
+  source = "./modules/external-dns"
+  count  = var.create_kubernetes_cluster && var.external_dns ? 1 : 0
 
   kubernetes_cluster_name = module.kubernetes[0].cluster_name
   route53_zone_arn        = var.internet_facing_ingress_lb ? local.public_zone_arn : local.private_zone_arn
@@ -454,6 +459,11 @@ module "external_dns" {
   custom_values_variables    = var.external_dns_variables
 
   tags = var.tags
+
+  depends_on = [
+    module.kubernetes[0].cluster_addons,
+    module.ingress_nginx
+  ]
 }
 
 module "nvidia_device_plugin" {

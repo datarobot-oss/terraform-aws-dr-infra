@@ -174,7 +174,7 @@ variable "create_kubernetes_cluster" {
 variable "kubernetes_cluster_version" {
   description = "EKS cluster version"
   type        = string
-  default     = "1.30"
+  default     = null
 }
 
 variable "kubernetes_cluster_access_entries" {
@@ -195,12 +195,6 @@ variable "kubernetes_cluster_endpoint_public_access_cidrs" {
   default = [
     "0.0.0.0/0"
   ]
-}
-
-variable "kubernetes_cluster_endpoint_private_access" {
-  description = "Indicates whether or not the Amazon EKS private API server endpoint is enabled"
-  type        = bool
-  default     = true
 }
 
 variable "kubernetes_cluster_endpoint_private_access_cidrs" {
@@ -340,21 +334,21 @@ variable "datarobot_namespace" {
 # Helm Charts
 ################################################################################
 
-variable "aws_load_balancer_controller" {
-  description = "Install the aws-load-balancer-controller helm chart to use AWS Network Load Balancers as ingress to the EKS cluster. All other aws_load_balancer_controller variables are ignored if this variable is false."
+variable "ebs_csi_driver" {
+  description = "Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs_csi_driver variables are ignored if this variable is false"
   type        = bool
   default     = true
 }
 
-variable "aws_load_balancer_controller_values" {
-  description = "Path to templatefile containing custom values for the aws-load-balancer-controller helm chart"
+variable "ebs_csi_driver_values" {
+  description = "Path to templatefile containing custom values for the aws-ebs-csi-driver helm chart"
   type        = string
   default     = ""
 }
 
-variable "aws_load_balancer_controller_variables" {
-  description = "Variables passed to the aws_load_balancer_controller_values templatefile"
-  type        = map(string)
+variable "ebs_csi_driver_variables" {
+  description = "Variables passed to the ebs_csi_driver_values templatefile"
+  type        = any
   default     = {}
 }
 
@@ -372,25 +366,25 @@ variable "cluster_autoscaler_values" {
 
 variable "cluster_autoscaler_variables" {
   description = "Variables passed to the cluster_autoscaler_values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }
 
-variable "ebs_csi_driver" {
-  description = "Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs_csi_driver variables are ignored if this variable is false"
+variable "aws_load_balancer_controller" {
+  description = "Install the aws-load-balancer-controller helm chart to use AWS Network Load Balancers as ingress to the EKS cluster. All other aws_load_balancer_controller variables are ignored if this variable is false."
   type        = bool
   default     = true
 }
 
-variable "ebs_csi_driver_values" {
-  description = "Path to templatefile containing custom values for the aws-ebs-csi-driver helm chart"
+variable "aws_load_balancer_controller_values" {
+  description = "Path to templatefile containing custom values for the aws-load-balancer-controller helm chart"
   type        = string
   default     = ""
 }
 
-variable "ebs_csi_driver_variables" {
-  description = "Variables passed to the ebs_csi_driver_values templatefile"
-  type        = map(string)
+variable "aws_load_balancer_controller_variables" {
+  description = "Variables passed to the aws_load_balancer_controller_values templatefile"
+  type        = any
   default     = {}
 }
 
@@ -414,7 +408,7 @@ variable "ingress_nginx_values" {
 
 variable "ingress_nginx_variables" {
   description = "Variables passed to the ingress_nginx_values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }
 
@@ -432,7 +426,7 @@ variable "cert_manager_values" {
 
 variable "cert_manager_variables" {
   description = "Variables passed to the cert_manager_values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }
 
@@ -450,7 +444,7 @@ variable "external_dns_values" {
 
 variable "external_dns_variables" {
   description = "Variables passed to the external_dns_values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }
 
@@ -468,6 +462,6 @@ variable "nvidia_device_plugin_values" {
 
 variable "nvidia_device_plugin_variables" {
   description = "Variables passed to the nvidia_device_plugin_values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }

@@ -18,9 +18,8 @@ module "aws_load_balancer_controller_pod_identity" {
 }
 
 module "aws_load_balancer_controller" {
-  source     = "terraform-module/release/helm"
-  version    = "~> 2.0"
-  depends_on = [module.aws_load_balancer_controller_pod_identity]
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
 
   namespace  = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
@@ -50,4 +49,6 @@ module "aws_load_balancer_controller" {
   values = [
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  depends_on = [module.aws_load_balancer_controller_pod_identity]
 }
