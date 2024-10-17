@@ -38,9 +38,9 @@ module "datarobot_infra" {
 ```
 
 ## Examples
-- [Internet Facing Comprehensive](examples/internet-facing)
-- [Internal](examples/internal)
-- [Minimal](examples/minimal)
+- [Complete](examples/complete) - Demonstrates all input variables
+- [Partial](examples/partial) - Demonstrates the use of existing resources
+- [Minimal](examples/minimal) - Demonstrates the minimum set of input variables needed to deploy all infrastructure
 
 ### Using an example directly from source
 1. Clone the repo
@@ -502,7 +502,7 @@ This helm chart creates default `Delete` and `Retain` storage classes called `eb
 #### Description
 Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes.github.io/ingress-nginx/ingress-nginx` helm chart into the `ingress-nginx` namespace.
 
-The `ingress-nginx` helm chart will trigger the deployment of an AWS Network Load Balancer to act as ingress for the DataRobot application. When `internet_facing_ingress_lb` is `true`, the NLB will be of type `internet-facing`. When `internet_facing_ingress_lb` is `false`, the NLB will be of type `internal`. 
+The `ingress-nginx` helm chart will trigger the deployment of an AWS Network Load Balancer to act as ingress for the DataRobot application. When `internet_facing_ingress_lb` is `true`, the NLB will be of type `internet-facing`. When `internet_facing_ingress_lb` is `false`, the NLB will be of type `internal`.
 
 By default this NLB will terminate TLS using either the certificate specified with the `existing_acm_certificate_arn` variable or the certificate created in the ACM module if `create_acm_certificate` is `true`. It is possible not to use ACM at all by setting `create_acm_certificate` to `false` and overriding the `controller.service.targetPorts.https` setting as demonstrated in the [complete example](examples/complete).
 
