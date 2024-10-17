@@ -9,17 +9,17 @@ module "datarobot_infra" {
   name        = "datarobot"
   domain_name = "yourdomain.com"
 
-  create_network               = true
-  network_address_space        = "10.7.0.0/16"
-  create_dns_zones             = false
-  existing_route53_zone_id     = "Z06110132R7HO9BLI64XY"
-  create_acm_certificate       = false
-  existing_acm_certificate_arn = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
-  create_encryption_key        = true
-  create_storage               = true
-  create_container_registry    = true
-  create_kubernetes_cluster    = true
-  create_app_identity          = true
+  create_network                  = true
+  network_address_space           = "10.7.0.0/16"
+  create_dns_zones                = false
+  existing_public_route53_zone_id = "Z06110132R7HO9BLI64XY"
+  create_acm_certificate          = false
+  existing_acm_certificate_arn    = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
+  create_encryption_key           = true
+  create_storage                  = true
+  create_container_registry       = true
+  create_kubernetes_cluster       = true
+  create_app_identity             = true
 
   cluster_autoscaler           = true
   ebs_csi_driver               = true
