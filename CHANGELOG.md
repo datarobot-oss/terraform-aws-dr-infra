@@ -13,6 +13,7 @@ All notable changes are documented in this file.
 - ingress-nginx values now correctly set externalTrafficPolicy to Local for internet-facing and allow for empty variables
 - Only create public and private DNS zones when needed
 - Extensive updates to examples and README
+- Make helm charts that use pod identities depend on the kubernetes cluster_addons to ensure that the pod identity agents are installed before the helm chartrs
 
 
 ## v1.0.7
