@@ -438,7 +438,7 @@ This helm chart provisions Network Load Balancers for Kubernetes Service resourc
 - `cluster_autoscaler` to install the `cluster-autoscaler` helm chart
 
 #### Description
-Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `cluster-autoscaler-aws-cluster-autoscaler` service account in the `cluster-autoscaler` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/cluster_autoscaler.tf) that allows the creation of DNS resources within the specified DNS zone.
+Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `cluster-autoscaler-aws-cluster-autoscaler` service account in the `cluster-autoscaler` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/cluster_autoscaler.tf) that allows the creation and management of EC2 instances.
 
 Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes.github.io/autoscaler/cluster-autoscaler` helm chart into the `cluster-autoscaler` namespace.
 
@@ -502,9 +502,9 @@ This helm chart creates default `Delete` and `Retain` storage classes called `eb
 #### Description
 Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes.github.io/ingress-nginx/ingress-nginx` helm chart into the `ingress-nginx` namespace.
 
-The `ingress-nginx` helm chart will trigger the deployment of an AWS Network Load Balancer terminating TLS using either the certificate specified with the `existing_acm_certificate_arn` variable or the certificate created in the ACM module if `create_acm_certificate` is true.
+The `ingress-nginx` helm chart will trigger the deployment of an AWS Network Load Balancer to act as ingress for the DataRobot application. When `internet_facing_ingress_lb` is `true`, the NLB will be of type `internet-facing`. When `internet_facing_ingress_lb` is `false`, the NLB will be of type `internal`. 
 
-
+By default this NLB will terminate TLS using either the certificate specified with the `existing_acm_certificate_arn` variable or the certificate created in the ACM module if `create_acm_certificate` is `true`. It is possible not to use ACM at all by setting `create_acm_certificate` to `false` and overriding the `controller.service.targetPorts.https` setting as demonstrated in the [complete example](examples/complete).
 
 #### IAM Policy
 Not required
@@ -578,6 +578,8 @@ Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-
 
 #### Description
 Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://nvidia.github.io/k8s-device-plugin/nvidia-device-plugin` helm chart into the `nvidia-device-plugin` namespace.
+
+This helm chart is used to expose GPU resources on nodes intended for GPU workloads such as the default `gpu` node group.
 
 #### IAM Policy
 Not required
