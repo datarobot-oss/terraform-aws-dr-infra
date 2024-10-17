@@ -3,6 +3,19 @@
 All notable changes are documented in this file.
 
 
+## v1.1.0
+
+### Updated
+
+- Make toggle variable names more generic and consistent with modules for other cloud providers
+- Create GPU node group by default scaled to 0 nodes
+- external-dns values now only target ingress resources and use a policy of sync
+- ingress-nginx values now correctly set externalTrafficPolicy to Local for internet-facing and allow for empty variables
+- Only create public and private DNS zones when needed
+- Extensive updates to examples and README
+- Make helm charts that use pod identities depend on the kubernetes cluster_addons to ensure that the pod identity agents are installed before the helm charts
+
+
 ## v1.0.7
 
 ### Updated

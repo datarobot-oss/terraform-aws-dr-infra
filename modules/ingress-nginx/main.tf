@@ -19,7 +19,7 @@ module "ingress_nginx" {
 
   values = [
     templatefile("${path.module}/common.yaml", {}),
-    templatefile(var.public ? "${path.module}/public.yaml" : "${path.module}/private.yaml", {
+    templatefile(var.internet_facing_ingress_lb ? "${path.module}/internet_facing.tftpl" : "${path.module}/internal.tftpl", {
       acm_certificate_arn = var.acm_certificate_arn,
       tags                = join(",", [for k, v in var.tags : "${k}=${v}"])
     }),

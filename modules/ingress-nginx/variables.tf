@@ -8,7 +8,7 @@ variable "acm_certificate_arn" {
   type        = string
 }
 
-variable "public" {
+variable "internet_facing_ingress_lb" {
   description = "Connect to the DataRobot application via an internet-facing load balancer. If dns is enabled, create a public route53 zone"
   type        = bool
   default     = true
@@ -22,6 +22,6 @@ variable "custom_values_templatefile" {
 
 variable "custom_values_variables" {
   description = "Variables for the custom values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }

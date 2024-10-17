@@ -3,7 +3,7 @@ variable "tags" {
   type        = map(string)
 }
 
-variable "eks_cluster_name" {
+variable "kubernetes_cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
 }
@@ -26,7 +26,6 @@ variable "custom_values_templatefile" {
 
 variable "custom_values_variables" {
   description = "Variables for the custom values templatefile"
-  type        = map(string)
+  type        = any
   default     = {}
 }
-

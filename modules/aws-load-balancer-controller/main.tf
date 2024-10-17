@@ -8,7 +8,7 @@ module "aws_load_balancer_controller_pod_identity" {
 
   associations = {
     this = {
-      cluster_name    = var.eks_cluster_name
+      cluster_name    = var.kubernetes_cluster_name
       namespace       = "aws-load-balancer-controller"
       service_account = "aws-load-balancer-controller"
     }
@@ -18,9 +18,8 @@ module "aws_load_balancer_controller_pod_identity" {
 }
 
 module "aws_load_balancer_controller" {
-  source     = "terraform-module/release/helm"
-  version    = "~> 2.0"
-  depends_on = [module.aws_load_balancer_controller_pod_identity]
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
 
   namespace  = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
@@ -39,7 +38,7 @@ module "aws_load_balancer_controller" {
   set = [
     {
       name  = "clusterName"
-      value = var.eks_cluster_name
+      value = var.kubernetes_cluster_name
     },
     {
       name  = "vpcId"
@@ -50,4 +49,6 @@ module "aws_load_balancer_controller" {
   values = [
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  depends_on = [module.aws_load_balancer_controller_pod_identity]
 }

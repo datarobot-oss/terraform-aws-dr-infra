@@ -9,7 +9,7 @@ module "cert_manager_pod_identity" {
 
   associations = {
     this = {
-      cluster_name    = var.eks_cluster_name
+      cluster_name    = var.kubernetes_cluster_name
       namespace       = "cert-manager"
       service_account = "cert-manager"
     }
@@ -19,9 +19,8 @@ module "cert_manager_pod_identity" {
 }
 
 module "cert_manager" {
-  source     = "terraform-module/release/helm"
-  version    = "~> 2.0"
-  depends_on = [module.cert_manager_pod_identity]
+  source  = "terraform-module/release/helm"
+  version = "~> 2.0"
 
   namespace  = "cert-manager"
   repository = "https://charts.jetstack.io"
@@ -47,4 +46,6 @@ module "cert_manager" {
   values = [
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  depends_on = [module.cert_manager_pod_identity]
 }

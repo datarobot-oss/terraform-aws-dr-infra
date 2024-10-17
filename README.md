@@ -9,26 +9,25 @@ module "datarobot_infra" {
   name        = "datarobot"
   domain_name = "yourdomain.com"
 
-  create_vpc               = true
-  vpc_cidr                 = "10.7.0.0/16"
-  create_dns_zone          = false
-  route53_zone_id          = "Z06110132R7HO9BLI64XY"
-  create_acm_certificate   = false
-  acm_certificate_arn      = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
-  create_kms_key           = true
-  create_s3_bucket         = true
-  create_ecr_repositories  = true
-  create_eks_cluster       = true
-  create_eks_gpu_nodegroup = true
-  create_app_irsa_role     = true
+  create_network                  = true
+  network_address_space           = "10.7.0.0/16"
+  create_dns_zones                = false
+  existing_public_route53_zone_id = "Z06110132R7HO9BLI64XY"
+  create_acm_certificate          = false
+  existing_acm_certificate_arn    = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
+  create_encryption_key           = true
+  create_storage                  = true
+  create_container_registry       = true
+  create_kubernetes_cluster       = true
+  create_app_identity             = true
 
-  aws_load_balancer_controller = true
-  cert_manager                 = true
   cluster_autoscaler           = true
   ebs_csi_driver               = true
-  external_dns                 = true
+  aws_load_balancer_controller = true
   ingress_nginx                = true
   internet_facing_ingress_lb   = true
+  cert_manager                 = true
+  external_dns                 = true
 
   tags = {
     application   = "datarobot"
@@ -50,9 +49,9 @@ git clone https://github.com/datarobot-oss/terraform-aws-dr-infra.git
 ```
 2. Change directories into the example that best suits your needs
 ```bash
-cd terraform-aws-dr-infra/examples/internal
+cd terraform-aws-dr-infra/examples/minimal
 ```
-3. Modify `main.tf` as needed
+3. Modify `main.tf` as needed with any changes to the input variables passed to the `datarobot_infra` module
 4. Run terraform commands
 ```bash
 terraform init
@@ -61,11 +60,20 @@ terraform apply
 terraform destroy
 ```
 
-## Permissions Requirements
-_Disclaimer: These lists are meant to be used as guidelines. All possible configurations have not been tested and required permissions are subject to change._
 
-### Modules
-#### vpc
+## Module Descriptions
+
+### Network
+#### Toggle
+- `create_network` to create a new VPC
+- `existing_vpc_id` to use an existing VPC
+
+#### Description
+Uses the [terraform-aws-vpc](https://github.com/terraform-aws-modules/terraform-aws-vpc) module to create a new VPC with one public and private subnet per Availability Zone, a NAT gateway with an Elastic IP, and an Internet Gateway.
+
+An interface VPC endpoint for the S3 service is created by default. More can be specified by updating the `network_private_endpoints` input variable.
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -118,7 +126,21 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-#### dns
+
+
+### DNS
+#### Toggle
+- `create_dns_zones` to create new Route53 zones
+- `existing_public_route53_zone_id` / `existing_private_route53_zone_id` to use an existing Route53 zone
+
+#### Description
+Uses the [terraform-aws-route53](https://github.com/terraform-aws-modules/terraform-aws-route53) module to create new public and/or private Route53 hosted zone with name `domain_name`.
+
+A public Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources when `internet_facing_ingress_lb` is `true`. It is also used for DNS validation when creating a new ACM certificate.
+
+A private Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources when `internet_facing_ingress_lb` is `false`.
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -141,7 +163,19 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-#### acm
+
+
+### ACM
+#### Toggle
+- `create_acm_certificate` to create a new ACM certificate
+- `existing_acm_certificate_arn` to use an existing ACM certificate
+
+#### Description
+Uses the [terraform-aws-acm](https://github.com/terraform-aws-modules/terraform-aws-acm) module to create a new ACM certificate with SANs of `domain_name` and `*.domain_name`. Validation is performed against either an existing Route53 hosted zone id specified in the `existing_public_route53_zone_id` input variable or the public zone created by the `dns` module.
+
+This certificate will be used on the NLB deployed by the `ingress-nginx` helm chart.
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -162,7 +196,17 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-#### kms
+
+
+### Encryption Key
+#### Toggle
+- `create_encryption_key` to create a new KMS key
+- `existing_kms_key_arn` to use an existing KMS key
+
+#### Description
+Uses the [terraform-aws-kms](https://github.com/terraform-aws-modules/terraform-aws-kms) module to create a new KMS encryption key with the current caller identity as a key administrator and the autoscaling service role (`autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling`). The key is used to encrypt EBS volumes in the EKS cluster.
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -182,7 +226,19 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-#### storage
+
+
+### Storage
+#### Toggle
+- `create_storage` to create a new S3 bucket
+- `existing_s3_bucket_id` to use an existing S3 bucket
+
+#### Description
+Uses the [terraform-aws-s3](https://github.com/terraform-aws-modules/terraform-aws-s3) module to create a new S3 storage bucket.
+
+The DataRobot application will use this storage bucket for persistent file storage.
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -218,7 +274,16 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-#### ecr
+
+
+### Container Registry
+#### Toggle
+- `create_container_registry` to create a new Amazon Elastic Container Registry
+
+#### Description
+Uses the [terraform-aws-ecr](https://github.com/terraform-aws-modules/terraform-aws-ecr) module to create a new ECR repositories used by the DataRobot application to host custom images created by various services.
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -238,7 +303,32 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-#### eks
+
+
+### Kubernetes
+#### Toggle
+- `create_kubernetes_cluster` to create a new Amazon Elastic Kubernetes Service Cluster
+
+#### Description
+Uses the [terraform-aws-eks](https://github.com/terraform-aws-modules/terraform-aws-eks) module to create a new EKS cluster to host the DataRobot application and any other helm charts installed by this module.
+
+Included EKS addons:
+- `coredns`
+- `eks-pod-identity-agent`
+- `kube-proxy`
+- `vpc-cni`
+
+An access entry for the identity of the cluster creator is added as a cluster admin. More access entries can be created via the `kubernetes_cluster_access_entries` variable.
+
+Network access to the cluster's public API endpoint (via the public internet) is enabled by default. This access can be restricted to a specific set of public IP addresses using the `kubernetes_cluster_endpoint_public_access_cidrs` variable or disabled completely by setting the `kubernetes_cluster_endpoint_public_access` variable to `false`.
+
+Network access to the cluster's private API endpoint is only allowed for the Kubernetes nodes by default. If the private API endpoint needs to be accessed from other hosts (such as a provisioner or bastion within the same VPC), the IP address of that host needs to be specified in the `kubernetes_cluster_endpoint_private_access_cidrs` variable.
+
+Two node groups are created:
+- A `primary` node group intended to host the majority of the DataRobot pods
+- A `gpu` node group intended to host GPU workload pods
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -310,7 +400,20 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-#### helm charts
+
+
+### Helm Chart - aws-load-balancer-controller
+#### Toggle
+- `aws_load_balancer_controller` to install the `aws-load-balancer-controller` helm chart
+
+#### Description
+Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `aws-load-balancer-controller` service account in the `aws-load-balancer-controller` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/aws_lb_controller.tf) that allows the management of AWS load balancers.
+
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://aws.github.io/eks-charts/aws-load-balancer-controller` helm chart into the `aws-load-balancer-controller` namespace.
+
+This helm chart provisions Network Load Balancers for Kubernetes Service resources. In the default use-case, the AWS Load Balancer Controller will create a NLB directing traffic to the `ingress-nginx` Kubernetes services.
+
+#### IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -328,7 +431,161 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
     ]
 }
 ```
-### Comprehensive
+
+
+### Helm Chart - cluster-autoscaler
+#### Toggle
+- `cluster_autoscaler` to install the `cluster-autoscaler` helm chart
+
+#### Description
+Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `cluster-autoscaler-aws-cluster-autoscaler` service account in the `cluster-autoscaler` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/cluster_autoscaler.tf) that allows the creation and management of EC2 instances.
+
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes.github.io/autoscaler/cluster-autoscaler` helm chart into the `cluster-autoscaler` namespace.
+
+This helm chart allows for automatic horizontal scaling of EKS cluster nodes.
+
+#### IAM Policy
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPodIdentityActions",
+            "Effect": "Allow",
+            "Action": [
+                "eks:CreatePodIdentityAssociation",
+                "eks:DescribePodIdentityAssociation",
+                "eks:DeletePodIdentityAssociation"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+
+### Helm Chart - aws-ebs-csi-driver
+#### Toggle
+- `ebs_csi_driver` to install the `aws-ebs-csi-driver` helm chart
+
+#### Description
+Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `ebs-csi-controller-sa` service account in the `aws-ebs-csi-driver` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/aws_ebs_csi.tf) that allows the creation and management of EBS volumes.
+
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes-sigs.github.io/aws-ebs-csi-driver/aws-ebs-csi-driver` helm chart into the `aws-ebs-csi-driver` namespace.
+
+This helm chart creates default `Delete` and `Retain` storage classes called `ebs-standard` and `ebs-standard-retain`, respectively, of type `gp3` using the encryption key passed in from the `existing_kms_key_arn` variable or the KMS key created in the `encryption_key` module. These storage classes are used by the DataRobot application Persistent Volume Claims.
+
+#### IAM Policy
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPodIdentityActions",
+            "Effect": "Allow",
+            "Action": [
+                "eks:CreatePodIdentityAssociation",
+                "eks:DescribePodIdentityAssociation",
+                "eks:DeletePodIdentityAssociation"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+
+### Helm Chart - ingress-nginx
+#### Toggle
+- `ingress_nginx` to install the `ingress-nginx` helm chart
+
+#### Description
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes.github.io/ingress-nginx/ingress-nginx` helm chart into the `ingress-nginx` namespace.
+
+The `ingress-nginx` helm chart will trigger the deployment of an AWS Network Load Balancer to act as ingress for the DataRobot application. When `internet_facing_ingress_lb` is `true`, the NLB will be of type `internet-facing`. When `internet_facing_ingress_lb` is `false`, the NLB will be of type `internal`. 
+
+By default this NLB will terminate TLS using either the certificate specified with the `existing_acm_certificate_arn` variable or the certificate created in the ACM module if `create_acm_certificate` is `true`. It is possible not to use ACM at all by setting `create_acm_certificate` to `false` and overriding the `controller.service.targetPorts.https` setting as demonstrated in the [complete example](examples/complete).
+
+#### IAM Policy
+Not required
+
+
+### Helm Chart - cert-manager
+#### Toggle
+- `cert_manager` to install the `cert-manager` helm chart
+
+#### Description
+Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `cert-manager` service account in the `cert-manager` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/cert_manager.tf) that allows the creation of DNS resources within the specified DNS zone.
+
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://charts.jetstack.io/cert-manager` helm chart into the `cert-manager` namespace.
+
+`cert-manager` can be used by the DataRobot application to create and manage various certificates. When an ACM certificate is used in the ingress load balancer, `cert-manager` is typically just used to generate self-signed certificates that can be used for service to service communications.
+
+#### IAM Policy
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPodIdentityActions",
+            "Effect": "Allow",
+            "Action": [
+                "eks:CreatePodIdentityAssociation",
+                "eks:DescribePodIdentityAssociation",
+                "eks:DeletePodIdentityAssociation"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+
+### Helm Chart - external-dns
+#### Toggle
+- `external_dns` to install the `external-dns` helm chart
+
+#### Description
+Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `external-dns` service account in the `external-dns` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/external_dns.tf) that allows the creation of DNS resources within the specified DNS zone.
+
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://charts.bitnami.com/bitnami/external-dns` helm chart into the `external-dns` namespace.
+
+`external-dns` is used to automatically create DNS records for ingress resources in the Kubernetes cluster. When the DataRobot application is installed and the ingress resources are created, `external-dns` will automatically create a DNS record pointing at the ingress resource.
+
+#### IAM Policy
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowPodIdentityActions",
+            "Effect": "Allow",
+            "Action": [
+                "eks:CreatePodIdentityAssociation",
+                "eks:DescribePodIdentityAssociation",
+                "eks:DeletePodIdentityAssociation"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+
+### Helm Chart - nvidia-device-plugin
+#### Toggle
+- `nvidia_device_plugin` to install the `nvidia-device-plugin` helm chart
+
+#### Description
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://nvidia.github.io/k8s-device-plugin/nvidia-device-plugin` helm chart into the `nvidia-device-plugin` namespace.
+
+This helm chart is used to expose GPU resources on nodes intended for GPU workloads such as the default `gpu` node group.
+
+#### IAM Policy
+Not required
+
+
+### Comprehensive IAM Policy
 ```
 {
     "Version": "2012-10-17",
@@ -540,7 +797,7 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 ## DataRobot versions
 | Release | Supported DR Versions |
 |---------|-----------------------|
-| 1.0.0 | >= 10.1 |
+| ~> 1.0 | ~> 10.1 |
 
 
 <!-- BEGIN_TF_DOCS -->
@@ -563,21 +820,21 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_acm"></a> [acm](#module\_acm) | terraform-aws-modules/acm/aws | ~> 4.0 |
-| <a name="module_app_irsa_role"></a> [app\_irsa\_role](#module\_app\_irsa\_role) | terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc | ~> 5.0 |
+| <a name="module_app_identity"></a> [app\_identity](#module\_app\_identity) | terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc | ~> 5.0 |
 | <a name="module_aws_load_balancer_controller"></a> [aws\_load\_balancer\_controller](#module\_aws\_load\_balancer\_controller) | ./modules/aws-load-balancer-controller | n/a |
 | <a name="module_cert_manager"></a> [cert\_manager](#module\_cert\_manager) | ./modules/cert-manager | n/a |
 | <a name="module_cluster_autoscaler"></a> [cluster\_autoscaler](#module\_cluster\_autoscaler) | ./modules/cluster-autoscaler | n/a |
+| <a name="module_container_registry"></a> [container\_registry](#module\_container\_registry) | terraform-aws-modules/ecr/aws | ~> 2.0 |
 | <a name="module_dns"></a> [dns](#module\_dns) | terraform-aws-modules/route53/aws//modules/zones | ~> 3.0 |
 | <a name="module_ebs_csi_driver"></a> [ebs\_csi\_driver](#module\_ebs\_csi\_driver) | ./modules/ebs-csi-driver | n/a |
-| <a name="module_ecr"></a> [ecr](#module\_ecr) | terraform-aws-modules/ecr/aws | ~> 2.0 |
-| <a name="module_eks"></a> [eks](#module\_eks) | terraform-aws-modules/eks/aws | ~> 20.0 |
+| <a name="module_encryption_key"></a> [encryption\_key](#module\_encryption\_key) | terraform-aws-modules/kms/aws | ~> 3.0 |
 | <a name="module_endpoints"></a> [endpoints](#module\_endpoints) | terraform-aws-modules/vpc/aws//modules/vpc-endpoints | ~> 5.0 |
 | <a name="module_external_dns"></a> [external\_dns](#module\_external\_dns) | ./modules/external-dns | n/a |
 | <a name="module_ingress_nginx"></a> [ingress\_nginx](#module\_ingress\_nginx) | ./modules/ingress-nginx | n/a |
-| <a name="module_kms"></a> [kms](#module\_kms) | terraform-aws-modules/kms/aws | ~> 3.0 |
+| <a name="module_kubernetes"></a> [kubernetes](#module\_kubernetes) | terraform-aws-modules/eks/aws | ~> 20.0 |
+| <a name="module_network"></a> [network](#module\_network) | terraform-aws-modules/vpc/aws | ~> 5.0 |
 | <a name="module_nvidia_device_plugin"></a> [nvidia\_device\_plugin](#module\_nvidia\_device\_plugin) | ./modules/nvidia-device-plugin | n/a |
 | <a name="module_storage"></a> [storage](#module\_storage) | terraform-aws-modules/s3-bucket/aws | ~> 4.0 |
-| <a name="module_vpc"></a> [vpc](#module\_vpc) | terraform-aws-modules/vpc/aws | ~> 5.0 |
 
 ## Resources
 
@@ -586,80 +843,81 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_eks_cluster_auth.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
-| [aws_route53_zone.provided](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
+| [aws_route53_zone.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
+| [aws_route53_zone.public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_acm_certificate_arn"></a> [acm\_certificate\_arn](#input\_acm\_certificate\_arn) | ARN of existing ACM certificate to use with the ingress load balancer created by the ingress\_nginx module. When specified, create\_acm\_certificate will be ignored. | `string` | `""` | no |
-| <a name="input_aws_load_balancer_controller"></a> [aws\_load\_balancer\_controller](#input\_aws\_load\_balancer\_controller) | Install the aws-load-balancer-controller helm chart to use AWS Network Load Balancers as ingress to the EKS cluster. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
+| <a name="input_aws_load_balancer_controller"></a> [aws\_load\_balancer\_controller](#input\_aws\_load\_balancer\_controller) | Install the aws-load-balancer-controller helm chart to use AWS Network Load Balancers as ingress to the EKS cluster. All other aws\_load\_balancer\_controller variables are ignored if this variable is false. | `bool` | `true` | no |
 | <a name="input_aws_load_balancer_controller_values"></a> [aws\_load\_balancer\_controller\_values](#input\_aws\_load\_balancer\_controller\_values) | Path to templatefile containing custom values for the aws-load-balancer-controller helm chart | `string` | `""` | no |
-| <a name="input_aws_load_balancer_controller_variables"></a> [aws\_load\_balancer\_controller\_variables](#input\_aws\_load\_balancer\_controller\_variables) | Variables passed to the aws\_load\_balancer\_controller\_values templatefile | `map(string)` | `{}` | no |
-| <a name="input_cert_manager"></a> [cert\_manager](#input\_cert\_manager) | Install the cert-manager helm chart to manage certificates within the EKS cluster. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
+| <a name="input_aws_load_balancer_controller_variables"></a> [aws\_load\_balancer\_controller\_variables](#input\_aws\_load\_balancer\_controller\_variables) | Variables passed to the aws\_load\_balancer\_controller\_values templatefile | `any` | `{}` | no |
+| <a name="input_cert_manager"></a> [cert\_manager](#input\_cert\_manager) | Install the cert-manager helm chart. All other cert\_manager variables are ignored if this variable is false. | `bool` | `true` | no |
 | <a name="input_cert_manager_values"></a> [cert\_manager\_values](#input\_cert\_manager\_values) | Path to templatefile containing custom values for the cert-manager helm chart | `string` | `""` | no |
-| <a name="input_cert_manager_variables"></a> [cert\_manager\_variables](#input\_cert\_manager\_variables) | Variables passed to the cert\_manager\_values templatefile | `map(string)` | `{}` | no |
-| <a name="input_cluster_autoscaler"></a> [cluster\_autoscaler](#input\_cluster\_autoscaler) | Install the cluster-autoscaler helm chart to enable horizontal autoscaling of the EKS cluster nodes. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
+| <a name="input_cert_manager_variables"></a> [cert\_manager\_variables](#input\_cert\_manager\_variables) | Variables passed to the cert\_manager\_values templatefile | `any` | `{}` | no |
+| <a name="input_cluster_autoscaler"></a> [cluster\_autoscaler](#input\_cluster\_autoscaler) | Install the cluster-autoscaler helm chart to enable horizontal autoscaling of the EKS cluster nodes. All other cluster\_autoscaler variables are ignored if this variable is false | `bool` | `true` | no |
 | <a name="input_cluster_autoscaler_values"></a> [cluster\_autoscaler\_values](#input\_cluster\_autoscaler\_values) | Path to templatefile containing custom values for the cluster-autoscaler helm chart | `string` | `""` | no |
-| <a name="input_cluster_autoscaler_variables"></a> [cluster\_autoscaler\_variables](#input\_cluster\_autoscaler\_variables) | Variables passed to the cluster\_autoscaler\_values templatefile | `map(string)` | `{}` | no |
-| <a name="input_create_acm_certificate"></a> [create\_acm\_certificate](#input\_create\_acm\_certificate) | Create a new ACM certificate to use with the ingress load balancer created by the ingress\_nginx module. Ignored if existing acm\_certificate\_arn is specified. DNS validation will be performed against route53\_zone\_id if specified. Otherwise, it will be performed against the public zone created by the dns module. | `bool` | `true` | no |
-| <a name="input_create_app_irsa_role"></a> [create\_app\_irsa\_role](#input\_create\_app\_irsa\_role) | Create IAM role for DataRobot application service account | `bool` | `true` | no |
-| <a name="input_create_dns_zone"></a> [create\_dns\_zone](#input\_create\_dns\_zone) | Create new public and private Route53 zones with domain name domain\_name. Ignored if an existing route53\_zone\_id is specified. | `bool` | `true` | no |
-| <a name="input_create_ecr_repositories"></a> [create\_ecr\_repositories](#input\_create\_ecr\_repositories) | Create DataRobot image builder container repositories | `bool` | `true` | no |
-| <a name="input_create_eks_cluster"></a> [create\_eks\_cluster](#input\_create\_eks\_cluster) | Create an EKS cluster | `bool` | `true` | no |
-| <a name="input_create_eks_gpu_nodegroup"></a> [create\_eks\_gpu\_nodegroup](#input\_create\_eks\_gpu\_nodegroup) | Whether to create a nodegroup with GPU instances. Ignored if create\_eks\_cluster is false. | `bool` | `false` | no |
-| <a name="input_create_kms_key"></a> [create\_kms\_key](#input\_create\_kms\_key) | Create a new KMS key used for EBS volume encryption on EKS nodes. Ignored if kms\_key\_arn is specified. | `bool` | `true` | no |
-| <a name="input_create_s3_bucket"></a> [create\_s3\_bucket](#input\_create\_s3\_bucket) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing s3\_bucket\_id is specified. | `bool` | `true` | no |
-| <a name="input_create_vpc"></a> [create\_vpc](#input\_create\_vpc) | Create a new VPC. Ignored if an existing vpc\_id is specified. | `bool` | `true` | no |
-| <a name="input_dns_zone_force_destroy"></a> [dns\_zone\_force\_destroy](#input\_dns\_zone\_force\_destroy) | Force destroy the public and private Route53 zones. Ignored if an existing route53\_zone\_id is specified or create\_dns\_zone is false. | `bool` | `false` | no |
-| <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | The domain name used in the dns and acm modules | `string` | `""` | no |
-| <a name="input_ebs_csi_driver"></a> [ebs\_csi\_driver](#input\_ebs\_csi\_driver) | Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
+| <a name="input_cluster_autoscaler_variables"></a> [cluster\_autoscaler\_variables](#input\_cluster\_autoscaler\_variables) | Variables passed to the cluster\_autoscaler\_values templatefile | `any` | `{}` | no |
+| <a name="input_create_acm_certificate"></a> [create\_acm\_certificate](#input\_create\_acm\_certificate) | Create a new ACM certificate for the ingress load balancer to use. Ignored if existing\_acm\_certificate\_arn is specified. | `bool` | `true` | no |
+| <a name="input_create_app_identity"></a> [create\_app\_identity](#input\_create\_app\_identity) | Create an IAM role for the DataRobot application service accounts | `bool` | `true` | no |
+| <a name="input_create_container_registry"></a> [create\_container\_registry](#input\_create\_container\_registry) | Create DataRobot image builder container repositories in Amazon Elastic Container Registry | `bool` | `true` | no |
+| <a name="input_create_dns_zones"></a> [create\_dns\_zones](#input\_create\_dns\_zones) | Create DNS zones for domain\_name. Ignored if existing\_public\_route53\_zone\_id and existing\_private\_route53\_zone\_id are specified. | `bool` | `true` | no |
+| <a name="input_create_encryption_key"></a> [create\_encryption\_key](#input\_create\_encryption\_key) | Create a new KMS key used for EBS volume encryption on EKS nodes. Ignored if existing\_kms\_key\_arn is specified. | `bool` | `true` | no |
+| <a name="input_create_kubernetes_cluster"></a> [create\_kubernetes\_cluster](#input\_create\_kubernetes\_cluster) | Create a new Amazon Elastic Kubernetes Cluster. All kubernetes and helm chart variables are ignored if this variable is false. | `bool` | `true` | no |
+| <a name="input_create_network"></a> [create\_network](#input\_create\_network) | Create a new Virtual Private Cloud. Ignored if an existing existing\_vpc\_id is specified. | `bool` | `true` | no |
+| <a name="input_create_storage"></a> [create\_storage](#input\_create\_storage) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing\_s3\_bucket\_id is specified. | `bool` | `true` | no |
+| <a name="input_datarobot_namespace"></a> [datarobot\_namespace](#input\_datarobot\_namespace) | Kubernetes namespace in which the DataRobot application will be installed | `string` | `"dr-app"` | no |
+| <a name="input_dns_zones_force_destroy"></a> [dns\_zones\_force\_destroy](#input\_dns\_zones\_force\_destroy) | Force destroy the public and private Route53 zones. Ignored if an existing route53\_zone\_id is specified or create\_dns\_zones is false. | `bool` | `false` | no |
+| <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | Name of the domain to use for the DataRobot application. If create\_dns\_zones is true then zones will be created for this domain. It is also used by ACM for DNS validation and as a domain filter by the external-dns helm chart. | `string` | `""` | no |
+| <a name="input_ebs_csi_driver"></a> [ebs\_csi\_driver](#input\_ebs\_csi\_driver) | Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs\_csi\_driver variables are ignored if this variable is false | `bool` | `true` | no |
 | <a name="input_ebs_csi_driver_values"></a> [ebs\_csi\_driver\_values](#input\_ebs\_csi\_driver\_values) | Path to templatefile containing custom values for the aws-ebs-csi-driver helm chart | `string` | `""` | no |
-| <a name="input_ebs_csi_driver_variables"></a> [ebs\_csi\_driver\_variables](#input\_ebs\_csi\_driver\_variables) | Variables passed to the ebs\_csi\_driver\_values templatefile | `map(string)` | `{}` | no |
+| <a name="input_ebs_csi_driver_variables"></a> [ebs\_csi\_driver\_variables](#input\_ebs\_csi\_driver\_variables) | Variables passed to the ebs\_csi\_driver\_values templatefile | `any` | `{}` | no |
 | <a name="input_ecr_repositories"></a> [ecr\_repositories](#input\_ecr\_repositories) | Repositories to create | `set(string)` | <pre>[<br>  "base-image",<br>  "ephemeral-image",<br>  "managed-image",<br>  "custom-apps-managed-image"<br>]</pre> | no |
-| <a name="input_ecr_repositories_force_destroy"></a> [ecr\_repositories\_force\_destroy](#input\_ecr\_repositories\_force\_destroy) | Force destroy the ECR repositories. Ignored if an existing create\_ecr\_repositories is false. | `bool` | `false` | no |
-| <a name="input_eks_cluster_access_entries"></a> [eks\_cluster\_access\_entries](#input\_eks\_cluster\_access\_entries) | Map of access entries to add to the cluster. Ignored if create\_eks\_cluster is false. | `any` | `{}` | no |
-| <a name="input_eks_cluster_endpoint_private_access_cidrs"></a> [eks\_cluster\_endpoint\_private\_access\_cidrs](#input\_eks\_cluster\_endpoint\_private\_access\_cidrs) | List of additional CIDR blocks allowed to access the Amazon EKS private API server endpoint. By default only the kubernetes nodes are allowed, if any other hosts such as a provisioner need to access the EKS private API endpoint they need to be added here. Ignored if create\_eks\_cluster is false. | `list(string)` | `[]` | no |
-| <a name="input_eks_cluster_endpoint_public_access"></a> [eks\_cluster\_endpoint\_public\_access](#input\_eks\_cluster\_endpoint\_public\_access) | Indicates whether or not the Amazon EKS public API server endpoint is enabled. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
-| <a name="input_eks_cluster_endpoint_public_access_cidrs"></a> [eks\_cluster\_endpoint\_public\_access\_cidrs](#input\_eks\_cluster\_endpoint\_public\_access\_cidrs) | List of CIDR blocks which can access the Amazon EKS public API server endpoint. Ignored if create\_eks\_cluster is false. | `list(string)` | <pre>[<br>  "0.0.0.0/0"<br>]</pre> | no |
-| <a name="input_eks_cluster_version"></a> [eks\_cluster\_version](#input\_eks\_cluster\_version) | EKS cluster version. Ignored if create\_eks\_cluster is false. | `string` | `"1.30"` | no |
-| <a name="input_eks_gpu_nodegroup_ami_type"></a> [eks\_gpu\_nodegroup\_ami\_type](#input\_eks\_gpu\_nodegroup\_ami\_type) | Type of Amazon Machine Image (AMI) associated with the EKS GPU Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values. Ignored if create\_eks\_cluster is false. | `string` | `"AL2_x86_64_GPU"` | no |
-| <a name="input_eks_gpu_nodegroup_desired_size"></a> [eks\_gpu\_nodegroup\_desired\_size](#input\_eks\_gpu\_nodegroup\_desired\_size) | Desired number of nodes in the GPU node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `number` | `1` | no |
-| <a name="input_eks_gpu_nodegroup_instance_types"></a> [eks\_gpu\_nodegroup\_instance\_types](#input\_eks\_gpu\_nodegroup\_instance\_types) | Instance types used for the primary node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `list(string)` | <pre>[<br>  "g4dn.2xlarge"<br>]</pre> | no |
-| <a name="input_eks_gpu_nodegroup_labels"></a> [eks\_gpu\_nodegroup\_labels](#input\_eks\_gpu\_nodegroup\_labels) | Key-value map of Kubernetes labels to be applied to the nodes in the GPU node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed | `map(string)` | <pre>{<br>  "datarobot.com/node-capability": "gpu"<br>}</pre> | no |
-| <a name="input_eks_gpu_nodegroup_max_size"></a> [eks\_gpu\_nodegroup\_max\_size](#input\_eks\_gpu\_nodegroup\_max\_size) | Maximum number of nodes in the GPU node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `number` | `3` | no |
-| <a name="input_eks_gpu_nodegroup_min_size"></a> [eks\_gpu\_nodegroup\_min\_size](#input\_eks\_gpu\_nodegroup\_min\_size) | Minimum number of nodes in the GPU node group. Ignored if create\_eks\_cluster or create\_eks\_gpu\_nodegroup is false. | `number` | `1` | no |
-| <a name="input_eks_gpu_nodegroup_name"></a> [eks\_gpu\_nodegroup\_name](#input\_eks\_gpu\_nodegroup\_name) | Name of the GPU EKS node group. Ignored if create\_eks\_cluster is false. | `string` | `"gpu"` | no |
-| <a name="input_eks_gpu_nodegroup_taints"></a> [eks\_gpu\_nodegroup\_taints](#input\_eks\_gpu\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group | `any` | <pre>{<br>  "nvidia_gpu": {<br>    "effect": "NO_SCHEDULE",<br>    "key": "nvidia.com/gpu"<br>  }<br>}</pre> | no |
-| <a name="input_eks_primary_nodegroup_ami_type"></a> [eks\_primary\_nodegroup\_ami\_type](#input\_eks\_primary\_nodegroup\_ami\_type) | Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values. Ignored if create\_eks\_cluster is false. | `string` | `"AL2023_x86_64_STANDARD"` | no |
-| <a name="input_eks_primary_nodegroup_desired_size"></a> [eks\_primary\_nodegroup\_desired\_size](#input\_eks\_primary\_nodegroup\_desired\_size) | Desired number of nodes in the primary node group. Ignored if create\_eks\_cluster is false. | `number` | `5` | no |
-| <a name="input_eks_primary_nodegroup_instance_types"></a> [eks\_primary\_nodegroup\_instance\_types](#input\_eks\_primary\_nodegroup\_instance\_types) | Instance types used for the primary node group. Ignored if create\_eks\_cluster is false. | `list(string)` | <pre>[<br>  "r6a.4xlarge"<br>]</pre> | no |
-| <a name="input_eks_primary_nodegroup_labels"></a> [eks\_primary\_nodegroup\_labels](#input\_eks\_primary\_nodegroup\_labels) | Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed. Ignored if create\_eks\_cluster is false. | `map(string)` | `null` | no |
-| <a name="input_eks_primary_nodegroup_max_size"></a> [eks\_primary\_nodegroup\_max\_size](#input\_eks\_primary\_nodegroup\_max\_size) | Maximum number of nodes in the primary node group. Ignored if create\_eks\_cluster is false. | `number` | `10` | no |
-| <a name="input_eks_primary_nodegroup_min_size"></a> [eks\_primary\_nodegroup\_min\_size](#input\_eks\_primary\_nodegroup\_min\_size) | Minimum number of nodes in the primary node group. Ignored if create\_eks\_cluster is false. | `number` | `5` | no |
-| <a name="input_eks_primary_nodegroup_name"></a> [eks\_primary\_nodegroup\_name](#input\_eks\_primary\_nodegroup\_name) | Name of the primary EKS node group. Ignored if create\_eks\_cluster is false. | `string` | `"primary"` | no |
-| <a name="input_eks_primary_nodegroup_taints"></a> [eks\_primary\_nodegroup\_taints](#input\_eks\_primary\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group | `any` | `{}` | no |
-| <a name="input_eks_subnet_ids"></a> [eks\_subnet\_ids](#input\_eks\_subnet\_ids) | List of existing subnet IDs to be used for the EKS cluster. Ignored if create\_eks\_cluster is false. Required when an existing vpc\_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `[]` | no |
-| <a name="input_external_dns"></a> [external\_dns](#input\_external\_dns) | Install the external-dns helm chart to manage DNS records for EKS ingress and service resources. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
+| <a name="input_ecr_repositories_force_destroy"></a> [ecr\_repositories\_force\_destroy](#input\_ecr\_repositories\_force\_destroy) | Force destroy the ECR repositories. Ignored if create\_container\_registry is false. | `bool` | `false` | no |
+| <a name="input_existing_acm_certificate_arn"></a> [existing\_acm\_certificate\_arn](#input\_existing\_acm\_certificate\_arn) | ARN of existing ACM certificate to use with the ingress load balancer created by the ingress\_nginx module. When specified, create\_acm\_certificate will be ignored. | `string` | `""` | no |
+| <a name="input_existing_kms_key_arn"></a> [existing\_kms\_key\_arn](#input\_existing\_kms\_key\_arn) | ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create\_encryption\_key will be ignored. | `string` | `""` | no |
+| <a name="input_existing_kubernetes_nodes_subnet_id"></a> [existing\_kubernetes\_nodes\_subnet\_id](#input\_existing\_kubernetes\_nodes\_subnet\_id) | List of existing subnet IDs to be used for the EKS cluster. Required when an existing\_network\_id is specified. Ignored if create\_network is true and no existing\_network\_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `[]` | no |
+| <a name="input_existing_private_route53_zone_id"></a> [existing\_private\_route53\_zone\_id](#input\_existing\_private\_route53\_zone\_id) | ID of existing private Route53 hosted zone to use for private DNS records created by external-dns. This is required when create\_dns\_zones is false and ingress\_nginx is true with internet\_facing\_ingress\_lb false. | `string` | `""` | no |
+| <a name="input_existing_public_route53_zone_id"></a> [existing\_public\_route53\_zone\_id](#input\_existing\_public\_route53\_zone\_id) | ID of existing public Route53 hosted zone to use for public DNS records created by external-dns and ACM certificate validation. This is required when create\_dns\_zones is false and ingress\_nginx and internet\_facing\_ingress\_lb are true or when create\_acm\_certificate is true. | `string` | `""` | no |
+| <a name="input_existing_s3_bucket_id"></a> [existing\_s3\_bucket\_id](#input\_existing\_s3\_bucket\_id) | ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, all other storage variables will be ignored. | `string` | `""` | no |
+| <a name="input_existing_vpc_id"></a> [existing\_vpc\_id](#input\_existing\_vpc\_id) | ID of an existing VPC to use. When specified, other network variables are ignored. | `string` | `""` | no |
+| <a name="input_external_dns"></a> [external\_dns](#input\_external\_dns) | Install the external\_dns helm chart to create DNS records for ingress resources matching the domain\_name variable. All other external\_dns variables are ignored if this variable is false. | `bool` | `true` | no |
 | <a name="input_external_dns_values"></a> [external\_dns\_values](#input\_external\_dns\_values) | Path to templatefile containing custom values for the external-dns helm chart | `string` | `""` | no |
-| <a name="input_external_dns_variables"></a> [external\_dns\_variables](#input\_external\_dns\_variables) | Variables passed to the external\_dns\_values templatefile | `map(string)` | `{}` | no |
-| <a name="input_ingress_nginx"></a> [ingress\_nginx](#input\_ingress\_nginx) | Install the ingress-nginx helm chart to use as the ingress controller for the EKS cluster. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
+| <a name="input_external_dns_variables"></a> [external\_dns\_variables](#input\_external\_dns\_variables) | Variables passed to the external\_dns\_values templatefile | `any` | `{}` | no |
+| <a name="input_ingress_nginx"></a> [ingress\_nginx](#input\_ingress\_nginx) | Install the ingress-nginx helm chart to use as the ingress controller for the EKS cluster. All other ingress\_nginx variables are ignored if this variable is false. | `bool` | `true` | no |
 | <a name="input_ingress_nginx_values"></a> [ingress\_nginx\_values](#input\_ingress\_nginx\_values) | Path to templatefile containing custom values for the ingress-nginx helm chart. | `string` | `""` | no |
-| <a name="input_ingress_nginx_variables"></a> [ingress\_nginx\_variables](#input\_ingress\_nginx\_variables) | Variables passed to the ingress\_nginx\_values templatefile | `map(string)` | `{}` | no |
+| <a name="input_ingress_nginx_variables"></a> [ingress\_nginx\_variables](#input\_ingress\_nginx\_variables) | Variables passed to the ingress\_nginx\_values templatefile | `any` | `{}` | no |
 | <a name="input_internet_facing_ingress_lb"></a> [internet\_facing\_ingress\_lb](#input\_internet\_facing\_ingress\_lb) | Determines the type of NLB created for EKS ingress. If true, an internet-facing NLB will be created. If false, an internal NLB will be created. Ignored when ingress\_nginx is false. | `bool` | `true` | no |
-| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create\_kms\_key will be ignored. | `string` | `""` | no |
-| <a name="input_kubernetes_namespace"></a> [kubernetes\_namespace](#input\_kubernetes\_namespace) | Namespace where the DataRobot application will be installed. Ignored if create\_app\_irsa\_role is false. | `string` | `"dr-app"` | no |
+| <a name="input_kubernetes_cluster_access_entries"></a> [kubernetes\_cluster\_access\_entries](#input\_kubernetes\_cluster\_access\_entries) | Map of access entries to add to the cluster | `any` | `{}` | no |
+| <a name="input_kubernetes_cluster_endpoint_private_access_cidrs"></a> [kubernetes\_cluster\_endpoint\_private\_access\_cidrs](#input\_kubernetes\_cluster\_endpoint\_private\_access\_cidrs) | List of additional CIDR blocks allowed to access the Amazon EKS private API server endpoint. By default only the kubernetes nodes are allowed, if any other hosts such as a provisioner need to access the EKS private API endpoint they need to be added here. | `list(string)` | `[]` | no |
+| <a name="input_kubernetes_cluster_endpoint_public_access"></a> [kubernetes\_cluster\_endpoint\_public\_access](#input\_kubernetes\_cluster\_endpoint\_public\_access) | Indicates whether or not the Amazon EKS public API server endpoint is enabled | `bool` | `true` | no |
+| <a name="input_kubernetes_cluster_endpoint_public_access_cidrs"></a> [kubernetes\_cluster\_endpoint\_public\_access\_cidrs](#input\_kubernetes\_cluster\_endpoint\_public\_access\_cidrs) | List of CIDR blocks which can access the Amazon EKS public API server endpoint | `list(string)` | <pre>[<br>  "0.0.0.0/0"<br>]</pre> | no |
+| <a name="input_kubernetes_cluster_version"></a> [kubernetes\_cluster\_version](#input\_kubernetes\_cluster\_version) | EKS cluster version | `string` | `null` | no |
+| <a name="input_kubernetes_gpu_nodegroup_ami_type"></a> [kubernetes\_gpu\_nodegroup\_ami\_type](#input\_kubernetes\_gpu\_nodegroup\_ami\_type) | Type of Amazon Machine Image (AMI) associated with the EKS GPU Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values | `string` | `"AL2_x86_64_GPU"` | no |
+| <a name="input_kubernetes_gpu_nodegroup_desired_size"></a> [kubernetes\_gpu\_nodegroup\_desired\_size](#input\_kubernetes\_gpu\_nodegroup\_desired\_size) | Desired number of nodes in the GPU node group | `number` | `0` | no |
+| <a name="input_kubernetes_gpu_nodegroup_instance_types"></a> [kubernetes\_gpu\_nodegroup\_instance\_types](#input\_kubernetes\_gpu\_nodegroup\_instance\_types) | Instance types used for the GPU node group | `list(string)` | <pre>[<br>  "g4dn.2xlarge"<br>]</pre> | no |
+| <a name="input_kubernetes_gpu_nodegroup_labels"></a> [kubernetes\_gpu\_nodegroup\_labels](#input\_kubernetes\_gpu\_nodegroup\_labels) | Key-value map of Kubernetes labels to be applied to the nodes in the GPU node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed | `map(string)` | <pre>{<br>  "datarobot.com/node-capability": "gpu"<br>}</pre> | no |
+| <a name="input_kubernetes_gpu_nodegroup_max_size"></a> [kubernetes\_gpu\_nodegroup\_max\_size](#input\_kubernetes\_gpu\_nodegroup\_max\_size) | Maximum number of nodes in the GPU node group | `number` | `10` | no |
+| <a name="input_kubernetes_gpu_nodegroup_min_size"></a> [kubernetes\_gpu\_nodegroup\_min\_size](#input\_kubernetes\_gpu\_nodegroup\_min\_size) | Minimum number of nodes in the GPU node group | `number` | `0` | no |
+| <a name="input_kubernetes_gpu_nodegroup_name"></a> [kubernetes\_gpu\_nodegroup\_name](#input\_kubernetes\_gpu\_nodegroup\_name) | Name of the GPU node group | `string` | `"gpu"` | no |
+| <a name="input_kubernetes_gpu_nodegroup_taints"></a> [kubernetes\_gpu\_nodegroup\_taints](#input\_kubernetes\_gpu\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group | `any` | <pre>{<br>  "nvidia_gpu": {<br>    "effect": "NO_SCHEDULE",<br>    "key": "nvidia.com/gpu"<br>  }<br>}</pre> | no |
+| <a name="input_kubernetes_primary_nodegroup_ami_type"></a> [kubernetes\_primary\_nodegroup\_ami\_type](#input\_kubernetes\_primary\_nodegroup\_ami\_type) | Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values | `string` | `"AL2023_x86_64_STANDARD"` | no |
+| <a name="input_kubernetes_primary_nodegroup_desired_size"></a> [kubernetes\_primary\_nodegroup\_desired\_size](#input\_kubernetes\_primary\_nodegroup\_desired\_size) | Desired number of nodes in the primary node group | `number` | `5` | no |
+| <a name="input_kubernetes_primary_nodegroup_instance_types"></a> [kubernetes\_primary\_nodegroup\_instance\_types](#input\_kubernetes\_primary\_nodegroup\_instance\_types) | Instance types used for the primary node group | `list(string)` | <pre>[<br>  "r6a.4xlarge"<br>]</pre> | no |
+| <a name="input_kubernetes_primary_nodegroup_labels"></a> [kubernetes\_primary\_nodegroup\_labels](#input\_kubernetes\_primary\_nodegroup\_labels) | Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed. | `map(string)` | `null` | no |
+| <a name="input_kubernetes_primary_nodegroup_max_size"></a> [kubernetes\_primary\_nodegroup\_max\_size](#input\_kubernetes\_primary\_nodegroup\_max\_size) | Maximum number of nodes in the primary node group | `number` | `10` | no |
+| <a name="input_kubernetes_primary_nodegroup_min_size"></a> [kubernetes\_primary\_nodegroup\_min\_size](#input\_kubernetes\_primary\_nodegroup\_min\_size) | Minimum number of nodes in the primary node group | `number` | `3` | no |
+| <a name="input_kubernetes_primary_nodegroup_name"></a> [kubernetes\_primary\_nodegroup\_name](#input\_kubernetes\_primary\_nodegroup\_name) | Name of the primary EKS node group | `string` | `"primary"` | no |
+| <a name="input_kubernetes_primary_nodegroup_taints"></a> [kubernetes\_primary\_nodegroup\_taints](#input\_kubernetes\_primary\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group | `any` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to use as a prefix for created resources | `string` | n/a | yes |
-| <a name="input_nvidia_device_plugin"></a> [nvidia\_device\_plugin](#input\_nvidia\_device\_plugin) | Install the nvidia-device-plugin helm chart to expose node GPU resources to the EKS cluster. Ignored if create\_eks\_cluster is false. | `bool` | `true` | no |
-| <a name="input_nvidia_device_plugin_values"></a> [nvidia\_device\_plugin\_values](#input\_nvidia\_device\_plugin\_values) | Path to templatefile containing custom values for the nvidia-device-plugin helm chart. | `string` | `""` | no |
-| <a name="input_nvidia_device_plugin_variables"></a> [nvidia\_device\_plugin\_variables](#input\_nvidia\_device\_plugin\_variables) | Variables passed to the nvidia\_device\_plugin\_values templatefile | `map(string)` | `{}` | no |
-| <a name="input_route53_zone_id"></a> [route53\_zone\_id](#input\_route53\_zone\_id) | ID of an existing route53 zone. When specified, create\_dns\_zone will be ignored. | `string` | `""` | no |
-| <a name="input_s3_bucket_force_destroy"></a> [s3\_bucket\_force\_destroy](#input\_s3\_bucket\_force\_destroy) | Force destroy the public and private Route53 zones. Ignored if an existing s3\_bucket\_id is specified or create\_s3\_bucket is false. | `bool` | `false` | no |
-| <a name="input_s3_bucket_id"></a> [s3\_bucket\_id](#input\_s3\_bucket\_id) | ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, create\_s3\_bucket will be ignored. | `string` | `""` | no |
+| <a name="input_network_address_space"></a> [network\_address\_space](#input\_network\_address\_space) | CIDR block to be used for the new VPC | `string` | `"10.0.0.0/16"` | no |
+| <a name="input_network_private_endpoints"></a> [network\_private\_endpoints](#input\_network\_private\_endpoints) | List of AWS services to create interface VPC endpoints for | `list(string)` | <pre>[<br>  "s3"<br>]</pre> | no |
+| <a name="input_nvidia_device_plugin"></a> [nvidia\_device\_plugin](#input\_nvidia\_device\_plugin) | Install the nvidia-device-plugin helm chart to expose node GPU resources to the EKS cluster. All other nvidia\_device\_plugin variables are ignored if this variable is false. | `bool` | `true` | no |
+| <a name="input_nvidia_device_plugin_values"></a> [nvidia\_device\_plugin\_values](#input\_nvidia\_device\_plugin\_values) | Path to templatefile containing custom values for the nvidia-device-plugin helm chart | `string` | `""` | no |
+| <a name="input_nvidia_device_plugin_variables"></a> [nvidia\_device\_plugin\_variables](#input\_nvidia\_device\_plugin\_variables) | Variables passed to the nvidia\_device\_plugin\_values templatefile | `any` | `{}` | no |
+| <a name="input_s3_bucket_force_destroy"></a> [s3\_bucket\_force\_destroy](#input\_s3\_bucket\_force\_destroy) | Force destroy the public and private Route53 zones | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all created resources | `map(string)` | <pre>{<br>  "managed-by": "terraform"<br>}</pre> | no |
-| <a name="input_vpc_cidr"></a> [vpc\_cidr](#input\_vpc\_cidr) | CIDR block to be used for the new VPC. Ignored if an existing vpc\_id is specified or create\_vpc is false. | `string` | `"10.0.0.0/16"` | no |
-| <a name="input_vpc_endpoints"></a> [vpc\_endpoints](#input\_vpc\_endpoints) | List of AWS services to create VPC endpoints for. Ignored if an existing vpc\_id is specified or create\_vpc is false. | `list(string)` | <pre>[<br>  "s3"<br>]</pre> | no |
-| <a name="input_vpc_id"></a> [vpc\_id](#input\_vpc\_id) | ID of an existing VPC. When specified, create\_vpc and vpc\_cidr will be ignored. | `string` | `""` | no |
 
 ## Outputs
 
@@ -667,11 +925,11 @@ _Disclaimer: These lists are meant to be used as guidelines. All possible config
 |------|-------------|
 | <a name="output_acm_certificate_arn"></a> [acm\_certificate\_arn](#output\_acm\_certificate\_arn) | ARN of the ACM certificate |
 | <a name="output_app_role_arn"></a> [app\_role\_arn](#output\_app\_role\_arn) | ARN of the IAM role to be assumed by the DataRobot app service accounts |
-| <a name="output_ebs_kms_key_arn"></a> [ebs\_kms\_key\_arn](#output\_ebs\_kms\_key\_arn) | ARN of the EBS KMS key |
+| <a name="output_ebs_encryption_key_id"></a> [ebs\_encryption\_key\_id](#output\_ebs\_encryption\_key\_id) | ARN of the EBS KMS key |
 | <a name="output_ecr_repository_urls"></a> [ecr\_repository\_urls](#output\_ecr\_repository\_urls) | URLs of the image builder repositories |
-| <a name="output_eks_cluster_certificate_authority_data"></a> [eks\_cluster\_certificate\_authority\_data](#output\_eks\_cluster\_certificate\_authority\_data) | Base64 encoded certificate data required to communicate with the cluster |
-| <a name="output_eks_cluster_endpoint"></a> [eks\_cluster\_endpoint](#output\_eks\_cluster\_endpoint) | Endpoint for your Kubernetes API server |
-| <a name="output_eks_cluster_name"></a> [eks\_cluster\_name](#output\_eks\_cluster\_name) | Name of the EKS cluster |
+| <a name="output_kubernetes_cluster_certificate_authority_data"></a> [kubernetes\_cluster\_certificate\_authority\_data](#output\_kubernetes\_cluster\_certificate\_authority\_data) | Base64 encoded certificate data required to communicate with the cluster |
+| <a name="output_kubernetes_cluster_endpoint"></a> [kubernetes\_cluster\_endpoint](#output\_kubernetes\_cluster\_endpoint) | Endpoint for your Kubernetes API server |
+| <a name="output_kubernetes_cluster_name"></a> [kubernetes\_cluster\_name](#output\_kubernetes\_cluster\_name) | Name of the EKS cluster |
 | <a name="output_private_route53_zone_arn"></a> [private\_route53\_zone\_arn](#output\_private\_route53\_zone\_arn) | Zone ARN of the private Route53 zone |
 | <a name="output_private_route53_zone_id"></a> [private\_route53\_zone\_id](#output\_private\_route53\_zone\_id) | Zone ID of the private Route53 zone |
 | <a name="output_public_route53_zone_arn"></a> [public\_route53\_zone\_arn](#output\_public\_route53\_zone\_arn) | Zone ARN of the public Route53 zone |
