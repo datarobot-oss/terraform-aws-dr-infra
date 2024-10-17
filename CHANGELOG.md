@@ -45,7 +45,7 @@ All notable changes are documented in this file.
 
 ### Fixed
 
-- Removed explicit module.eks dependencies from helm charts which should decrease the likelihood that the aws_kubernetes_cluster_auth token expires before helm charts can be installed
+- Removed explicit module.eks dependencies from helm charts which should decrease the likelihood that the aws_eks_cluster_auth token expires before helm charts can be installed
 
 ### Added
 
@@ -82,7 +82,7 @@ All notable changes are documented in this file.
 
 ### Added
 
-- Variable kubernetes_cluster_endpoint_private_access_cidrs for users to specify additional CIDR blocks allowed to access the EKS private API endpoint
+- Variable eks_cluster_endpoint_private_access_cidrs for users to specify additional CIDR blocks allowed to access the EKS private API endpoint
 
 ### Updated
 
