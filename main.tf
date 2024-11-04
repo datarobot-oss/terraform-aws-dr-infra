@@ -223,10 +223,22 @@ module "container_registry" {
 # Kubernetes
 ################################################################################
 
+data "aws_eks_cluster" "existing" {
+  count = var.existing_eks_cluster_name != null ? 1 : 0
+  name  = var.existing_eks_cluster_name
+}
+
+locals {
+  eks_cluster_name            = try(data.aws_eks_cluster.existing[0].name, module.kubernetes[0].cluster_name, null)
+  eks_cluster_ca_data         = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, null)
+  eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, null)
+  eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
+}
+
 module "kubernetes" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
-  count   = var.create_kubernetes_cluster ? 1 : 0
+  count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
 
   cluster_name    = var.name
   cluster_version = var.kubernetes_cluster_version
@@ -311,7 +323,7 @@ module "app_identity" {
   create_role = true
   role_name   = "${var.name}-app-irsa"
 
-  provider_url                 = replace(module.kubernetes[0].cluster_oidc_issuer_url, "https://", "")
+  provider_url                 = replace(local.eks_cluster_oidc_issuer_url, "https://", "")
   oidc_subjects_with_wildcards = ["system:serviceaccount:${var.datarobot_namespace}:*"]
 
   role_policy_arns = [
@@ -352,15 +364,15 @@ module "app_identity" {
 ################################################################################
 
 data "aws_eks_cluster_auth" "this" {
-  count = var.create_kubernetes_cluster ? 1 : 0
+  count = var.create_kubernetes_cluster || var.existing_eks_cluster_name != null ? 1 : 0
 
-  name = module.kubernetes[0].cluster_name
+  name = local.eks_cluster_name
 }
 
 provider "helm" {
   kubernetes {
-    host                   = try(module.kubernetes[0].cluster_endpoint, "")
-    cluster_ca_certificate = base64decode(try(module.kubernetes[0].cluster_certificate_authority_data, ""))
+    host                   = try(local.eks_cluster_endpoint, "")
+    cluster_ca_certificate = base64decode(try(local.eks_cluster_ca_data, ""))
     token                  = try(data.aws_eks_cluster_auth.this[0].token, "")
   }
 }
@@ -368,54 +380,48 @@ provider "helm" {
 
 module "cluster_autoscaler" {
   source = "./modules/cluster-autoscaler"
-  count  = var.create_kubernetes_cluster && var.cluster_autoscaler ? 1 : 0
+  count  = var.cluster_autoscaler ? 1 : 0
 
-  kubernetes_cluster_name = module.kubernetes[0].cluster_name
+  kubernetes_cluster_name = local.eks_cluster_name
 
   custom_values_templatefile = var.cluster_autoscaler_values
   custom_values_variables    = var.cluster_autoscaler_variables
 
   tags = var.tags
-
-  depends_on = [module.kubernetes[0].cluster_addons]
 }
 
 
 module "ebs_csi_driver" {
   source = "./modules/ebs-csi-driver"
-  count  = var.create_kubernetes_cluster && var.ebs_csi_driver ? 1 : 0
+  count  = var.ebs_csi_driver ? 1 : 0
 
-  kubernetes_cluster_name = module.kubernetes[0].cluster_name
+  kubernetes_cluster_name = local.eks_cluster_name
   aws_ebs_csi_kms_arn     = local.encryption_key_arn
 
   custom_values_templatefile = var.ebs_csi_driver_values
   custom_values_variables    = var.ebs_csi_driver_variables
 
   tags = var.tags
-
-  depends_on = [module.kubernetes[0].cluster_addons]
 }
 
 
 module "aws_load_balancer_controller" {
   source = "./modules/aws-load-balancer-controller"
-  count  = var.create_kubernetes_cluster && var.aws_load_balancer_controller ? 1 : 0
+  count  = var.aws_load_balancer_controller ? 1 : 0
 
-  kubernetes_cluster_name = module.kubernetes[0].cluster_name
+  kubernetes_cluster_name = local.eks_cluster_name
   vpc_id                  = local.vpc_id
 
   custom_values_templatefile = var.aws_load_balancer_controller_values
   custom_values_variables    = var.aws_load_balancer_controller_variables
 
   tags = var.tags
-
-  depends_on = [module.kubernetes[0].cluster_addons]
 }
 
 
 module "ingress_nginx" {
   source = "./modules/ingress-nginx"
-  count  = var.create_kubernetes_cluster && var.ingress_nginx ? 1 : 0
+  count  = var.ingress_nginx ? 1 : 0
 
   acm_certificate_arn        = local.acm_certificate_arn
   internet_facing_ingress_lb = var.internet_facing_ingress_lb
@@ -431,9 +437,9 @@ module "ingress_nginx" {
 
 module "cert_manager" {
   source = "./modules/cert-manager"
-  count  = var.create_kubernetes_cluster && var.cert_manager ? 1 : 0
+  count  = var.cert_manager ? 1 : 0
 
-  kubernetes_cluster_name = module.kubernetes[0].cluster_name
+  kubernetes_cluster_name = local.eks_cluster_name
   route53_zone_arn        = local.public_zone_arn
 
   custom_values_templatefile = var.cert_manager_values
@@ -441,17 +447,14 @@ module "cert_manager" {
 
   tags = var.tags
 
-  depends_on = [
-    module.kubernetes[0].cluster_addons,
-    module.ingress_nginx
-  ]
+  depends_on = [module.ingress_nginx]
 }
 
 module "external_dns" {
   source = "./modules/external-dns"
   count  = var.create_kubernetes_cluster && var.external_dns ? 1 : 0
 
-  kubernetes_cluster_name = module.kubernetes[0].cluster_name
+  kubernetes_cluster_name = local.eks_cluster_name
   route53_zone_arn        = var.internet_facing_ingress_lb ? local.public_zone_arn : local.private_zone_arn
   route53_zone_name       = var.domain_name
 
@@ -460,10 +463,7 @@ module "external_dns" {
 
   tags = var.tags
 
-  depends_on = [
-    module.kubernetes[0].cluster_addons,
-    module.ingress_nginx
-  ]
+  depends_on = [module.ingress_nginx]
 }
 
 module "nvidia_device_plugin" {

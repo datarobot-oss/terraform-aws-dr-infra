@@ -165,6 +165,12 @@ variable "ecr_repositories_force_destroy" {
 # Kubernetes
 ################################################################################
 
+variable "existing_eks_cluster_name" {
+  description = "Name of existing EKS cluster to use. When specified, all other kubernetes variables will be ignored."
+  type        = string
+  default     = null
+}
+
 variable "create_kubernetes_cluster" {
   description = "Create a new Amazon Elastic Kubernetes Cluster. All kubernetes and helm chart variables are ignored if this variable is false."
   type        = bool
