@@ -842,6 +842,7 @@ Not required
 |------|------|
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_eks_cluster.existing](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
 | [aws_eks_cluster_auth.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
 | [aws_route53_zone.private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 | [aws_route53_zone.public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
@@ -876,6 +877,7 @@ Not required
 | <a name="input_ecr_repositories"></a> [ecr\_repositories](#input\_ecr\_repositories) | Repositories to create | `set(string)` | <pre>[<br>  "base-image",<br>  "ephemeral-image",<br>  "managed-image",<br>  "custom-apps-managed-image"<br>]</pre> | no |
 | <a name="input_ecr_repositories_force_destroy"></a> [ecr\_repositories\_force\_destroy](#input\_ecr\_repositories\_force\_destroy) | Force destroy the ECR repositories. Ignored if create\_container\_registry is false. | `bool` | `false` | no |
 | <a name="input_existing_acm_certificate_arn"></a> [existing\_acm\_certificate\_arn](#input\_existing\_acm\_certificate\_arn) | ARN of existing ACM certificate to use with the ingress load balancer created by the ingress\_nginx module. When specified, create\_acm\_certificate will be ignored. | `string` | `""` | no |
+| <a name="input_existing_eks_cluster_name"></a> [existing\_eks\_cluster\_name](#input\_existing\_eks\_cluster\_name) | Name of existing EKS cluster to use. When specified, all other kubernetes variables will be ignored. | `string` | `null` | no |
 | <a name="input_existing_kms_key_arn"></a> [existing\_kms\_key\_arn](#input\_existing\_kms\_key\_arn) | ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create\_encryption\_key will be ignored. | `string` | `""` | no |
 | <a name="input_existing_kubernetes_nodes_subnet_id"></a> [existing\_kubernetes\_nodes\_subnet\_id](#input\_existing\_kubernetes\_nodes\_subnet\_id) | List of existing subnet IDs to be used for the EKS cluster. Required when an existing\_network\_id is specified. Ignored if create\_network is true and no existing\_network\_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `[]` | no |
 | <a name="input_existing_private_route53_zone_id"></a> [existing\_private\_route53\_zone\_id](#input\_existing\_private\_route53\_zone\_id) | ID of existing private Route53 hosted zone to use for private DNS records created by external-dns. This is required when create\_dns\_zones is false and ingress\_nginx is true with internet\_facing\_ingress\_lb false. | `string` | `""` | no |
