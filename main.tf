@@ -447,7 +447,7 @@ module "cert_manager" {
 
   tags = var.tags
 
-  depends_on = [module.ingress_nginx]
+  depends_on = [module.aws_load_balancer_controller]
 }
 
 module "external_dns" {
@@ -463,7 +463,7 @@ module "external_dns" {
 
   tags = var.tags
 
-  depends_on = [module.ingress_nginx]
+  depends_on = [module.aws_load_balancer_controller]
 }
 
 module "nvidia_device_plugin" {
