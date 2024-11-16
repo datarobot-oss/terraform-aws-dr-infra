@@ -230,19 +230,19 @@ variable "kubernetes_primary_nodegroup_ami_type" {
 variable "kubernetes_primary_nodegroup_instance_types" {
   description = "Instance types used for the primary node group"
   type        = list(string)
-  default     = ["r6a.4xlarge"]
+  default     = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
 }
 
 variable "kubernetes_primary_nodegroup_desired_size" {
   description = "Desired number of nodes in the primary node group"
   type        = number
-  default     = 5
+  default     = 1
 }
 
 variable "kubernetes_primary_nodegroup_min_size" {
   description = "Minimum number of nodes in the primary node group"
   type        = number
-  default     = 3
+  default     = 0
 }
 
 variable "kubernetes_primary_nodegroup_max_size" {
@@ -254,7 +254,9 @@ variable "kubernetes_primary_nodegroup_max_size" {
 variable "kubernetes_primary_nodegroup_labels" {
   description = "Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed."
   type        = map(string)
-  default     = null
+  default = {
+    "datarobot.com/node-capability" = "cpu"
+  }
 }
 
 variable "kubernetes_primary_nodegroup_taints" {
@@ -313,6 +315,7 @@ variable "kubernetes_gpu_nodegroup_taints" {
   default = {
     nvidia_gpu = {
       key    = "nvidia.com/gpu"
+      value  = "true"
       effect = "NO_SCHEDULE"
     }
   }
@@ -372,6 +375,24 @@ variable "cluster_autoscaler_values" {
 
 variable "cluster_autoscaler_variables" {
   description = "Variables passed to the cluster_autoscaler_values templatefile"
+  type        = any
+  default     = {}
+}
+
+variable "descheduler" {
+  description = "Install the descheduler helm chart to enable rescheduling of pods. All other descheduler variables are ignored if this variable is false"
+  type        = bool
+  default     = true
+}
+
+variable "descheduler_values" {
+  description = "Path to templatefile containing custom values for the descheduler helm chart"
+  type        = string
+  default     = ""
+}
+
+variable "descheduler_variables" {
+  description = "Variables passed to the descheduler templatefile"
   type        = any
   default     = {}
 }
@@ -468,6 +489,24 @@ variable "nvidia_device_plugin_values" {
 
 variable "nvidia_device_plugin_variables" {
   description = "Variables passed to the nvidia_device_plugin_values templatefile"
+  type        = any
+  default     = {}
+}
+
+variable "metrics_server" {
+  description = "Install the metrics-server helm chart to expose resource metrics for Kubernetes built-in autoscaling pipelines. All other metrics_server variables are ignored if this variable is false."
+  type        = bool
+  default     = true
+}
+
+variable "metrics_server_values" {
+  description = "Path to templatefile containing custom values for the metrics_server helm chart"
+  type        = string
+  default     = ""
+}
+
+variable "metrics_server_variables" {
+  description = "Variables passed to the metrics_server_values templatefile"
   type        = any
   default     = {}
 }

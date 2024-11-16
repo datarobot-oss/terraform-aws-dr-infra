@@ -22,12 +22,15 @@ module "datarobot_infra" {
   create_app_identity             = true
 
   cluster_autoscaler           = true
+  descheduler                  = true
   ebs_csi_driver               = true
   aws_load_balancer_controller = true
   ingress_nginx                = true
   internet_facing_ingress_lb   = true
   cert_manager                 = true
   external_dns                 = true
+  nvidia_device_plugin         = true
+  metrics_server               = true
 
   tags = {
     application   = "datarobot"
@@ -308,6 +311,7 @@ Uses the [terraform-aws-ecr](https://github.com/terraform-aws-modules/terraform-
 ### Kubernetes
 #### Toggle
 - `create_kubernetes_cluster` to create a new Amazon Elastic Kubernetes Service Cluster
+- `existing_eks_cluster_name` to use an existing EKS cluster
 
 #### Description
 Uses the [terraform-aws-eks](https://github.com/terraform-aws-modules/terraform-aws-eks) module to create a new EKS cluster to host the DataRobot application and any other helm charts installed by this module.
@@ -440,7 +444,7 @@ This helm chart provisions Network Load Balancers for Kubernetes Service resourc
 #### Description
 Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `cluster-autoscaler-aws-cluster-autoscaler` service account in the `cluster-autoscaler` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/cluster_autoscaler.tf) that allows the creation and management of EC2 instances.
 
-Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes.github.io/autoscaler/cluster-autoscaler` helm chart into the `cluster-autoscaler` namespace.
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `cluster-autoscaler` helm chart from the  `https://kubernetes.github.io/autoscaler` helm repo into the `cluster-autoscaler` namespace.
 
 This helm chart allows for automatic horizontal scaling of EKS cluster nodes.
 
@@ -464,6 +468,19 @@ This helm chart allows for automatic horizontal scaling of EKS cluster nodes.
 ```
 
 
+### Helm Chart - descheduler
+#### Toggle
+- `descheduler` to install the `descheduler` helm chart
+
+#### Description
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `descheduler` helm chart from the `https://kubernetes-sigs.github.io/descheduler/` helm repo into the `descheduler` namespace.
+
+This helm chart allows for automatic rescheduling of pods for optimizing resource consumption.
+
+#### IAM Policy
+Not required
+
+
 ### Helm Chart - aws-ebs-csi-driver
 #### Toggle
 - `ebs_csi_driver` to install the `aws-ebs-csi-driver` helm chart
@@ -471,7 +488,7 @@ This helm chart allows for automatic horizontal scaling of EKS cluster nodes.
 #### Description
 Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `ebs-csi-controller-sa` service account in the `aws-ebs-csi-driver` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/aws_ebs_csi.tf) that allows the creation and management of EBS volumes.
 
-Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes-sigs.github.io/aws-ebs-csi-driver/aws-ebs-csi-driver` helm chart into the `aws-ebs-csi-driver` namespace.
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `aws-ebs-csi-driver` helm chart from the `https://kubernetes-sigs.github.io/aws-ebs-csi-driver/` repo into the `aws-ebs-csi-driver` namespace.
 
 This helm chart creates default `Delete` and `Retain` storage classes called `ebs-standard` and `ebs-standard-retain`, respectively, of type `gp3` using the encryption key passed in from the `existing_kms_key_arn` variable or the KMS key created in the `encryption_key` module. These storage classes are used by the DataRobot application Persistent Volume Claims.
 
@@ -500,7 +517,7 @@ This helm chart creates default `Delete` and `Retain` storage classes called `eb
 - `ingress_nginx` to install the `ingress-nginx` helm chart
 
 #### Description
-Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://kubernetes.github.io/ingress-nginx/ingress-nginx` helm chart into the `ingress-nginx` namespace.
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `ingress-nginx` helm chart from the `https://kubernetes.github.io/ingress-nginx` repo into the `ingress-nginx` namespace.
 
 The `ingress-nginx` helm chart will trigger the deployment of an AWS Network Load Balancer to act as ingress for the DataRobot application. When `internet_facing_ingress_lb` is `true`, the NLB will be of type `internet-facing`. When `internet_facing_ingress_lb` is `false`, the NLB will be of type `internal`.
 
@@ -517,7 +534,7 @@ Not required
 #### Description
 Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `cert-manager` service account in the `cert-manager` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/cert_manager.tf) that allows the creation of DNS resources within the specified DNS zone.
 
-Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://charts.jetstack.io/cert-manager` helm chart into the `cert-manager` namespace.
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `cert-manager` helm chart from the `https://charts.jetstack.io` repo into the `cert-manager` namespace.
 
 `cert-manager` can be used by the DataRobot application to create and manage various certificates. When an ACM certificate is used in the ingress load balancer, `cert-manager` is typically just used to generate self-signed certificates that can be used for service to service communications.
 
@@ -548,7 +565,7 @@ Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-
 #### Description
 Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `external-dns` service account in the `external-dns` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/external_dns.tf) that allows the creation of DNS resources within the specified DNS zone.
 
-Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://charts.bitnami.com/bitnami/external-dns` helm chart into the `external-dns` namespace.
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `external-dns` helm chart from the `https://charts.bitnami.com/bitnami` repo into the `external-dns` namespace.
 
 `external-dns` is used to automatically create DNS records for ingress resources in the Kubernetes cluster. When the DataRobot application is installed and the ingress resources are created, `external-dns` will automatically create a DNS record pointing at the ingress resource.
 
@@ -577,12 +594,26 @@ Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-
 - `nvidia_device_plugin` to install the `nvidia-device-plugin` helm chart
 
 #### Description
-Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `https://nvidia.github.io/k8s-device-plugin/nvidia-device-plugin` helm chart into the `nvidia-device-plugin` namespace.
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `nvidia-device-plugin` helm chart from the `https://nvidia.github.io/k8s-device-plugin` repo into the `nvidia-device-plugin` namespace.
 
 This helm chart is used to expose GPU resources on nodes intended for GPU workloads such as the default `gpu` node group.
 
 #### IAM Policy
 Not required
+
+
+### Helm Chart - metrics-server
+#### Toggle
+- `metrics_server` to install the `metrics-server` helm chart
+
+#### Description
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `metrics-server` helm chart from the `https://kubernetes-sigs.github.io/metrics-server` repo into the `metrics-server` namespace.
+
+This helm chart is used to expose CPU and memory metrics to the Kubernetes cluster.
+
+#### IAM Policy
+Not required
+
 
 
 ### Comprehensive IAM Policy
@@ -822,9 +853,11 @@ Not required
 | <a name="module_acm"></a> [acm](#module\_acm) | terraform-aws-modules/acm/aws | ~> 4.0 |
 | <a name="module_app_identity"></a> [app\_identity](#module\_app\_identity) | terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc | ~> 5.0 |
 | <a name="module_aws_load_balancer_controller"></a> [aws\_load\_balancer\_controller](#module\_aws\_load\_balancer\_controller) | ./modules/aws-load-balancer-controller | n/a |
+| <a name="module_aws_vpc_cni_ipv4_pod_identity"></a> [aws\_vpc\_cni\_ipv4\_pod\_identity](#module\_aws\_vpc\_cni\_ipv4\_pod\_identity) | terraform-aws-modules/eks-pod-identity/aws | ~> 1.0 |
 | <a name="module_cert_manager"></a> [cert\_manager](#module\_cert\_manager) | ./modules/cert-manager | n/a |
 | <a name="module_cluster_autoscaler"></a> [cluster\_autoscaler](#module\_cluster\_autoscaler) | ./modules/cluster-autoscaler | n/a |
 | <a name="module_container_registry"></a> [container\_registry](#module\_container\_registry) | terraform-aws-modules/ecr/aws | ~> 2.0 |
+| <a name="module_descheduler"></a> [descheduler](#module\_descheduler) | ./modules/descheduler | n/a |
 | <a name="module_dns"></a> [dns](#module\_dns) | terraform-aws-modules/route53/aws//modules/zones | ~> 3.0 |
 | <a name="module_ebs_csi_driver"></a> [ebs\_csi\_driver](#module\_ebs\_csi\_driver) | ./modules/ebs-csi-driver | n/a |
 | <a name="module_encryption_key"></a> [encryption\_key](#module\_encryption\_key) | terraform-aws-modules/kms/aws | ~> 3.0 |
@@ -832,6 +865,7 @@ Not required
 | <a name="module_external_dns"></a> [external\_dns](#module\_external\_dns) | ./modules/external-dns | n/a |
 | <a name="module_ingress_nginx"></a> [ingress\_nginx](#module\_ingress\_nginx) | ./modules/ingress-nginx | n/a |
 | <a name="module_kubernetes"></a> [kubernetes](#module\_kubernetes) | terraform-aws-modules/eks/aws | ~> 20.0 |
+| <a name="module_metrics_server"></a> [metrics\_server](#module\_metrics\_server) | ./modules/metrics-server | n/a |
 | <a name="module_network"></a> [network](#module\_network) | terraform-aws-modules/vpc/aws | ~> 5.0 |
 | <a name="module_nvidia_device_plugin"></a> [nvidia\_device\_plugin](#module\_nvidia\_device\_plugin) | ./modules/nvidia-device-plugin | n/a |
 | <a name="module_storage"></a> [storage](#module\_storage) | terraform-aws-modules/s3-bucket/aws | ~> 4.0 |
@@ -840,6 +874,8 @@ Not required
 
 | Name | Type |
 |------|------|
+| [aws_autoscaling_group_tag.gpu](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group_tag) | resource |
+| [aws_autoscaling_group_tag.primary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group_tag) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_eks_cluster.existing](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
@@ -869,6 +905,9 @@ Not required
 | <a name="input_create_network"></a> [create\_network](#input\_create\_network) | Create a new Virtual Private Cloud. Ignored if an existing existing\_vpc\_id is specified. | `bool` | `true` | no |
 | <a name="input_create_storage"></a> [create\_storage](#input\_create\_storage) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing\_s3\_bucket\_id is specified. | `bool` | `true` | no |
 | <a name="input_datarobot_namespace"></a> [datarobot\_namespace](#input\_datarobot\_namespace) | Kubernetes namespace in which the DataRobot application will be installed | `string` | `"dr-app"` | no |
+| <a name="input_descheduler"></a> [descheduler](#input\_descheduler) | Install the descheduler helm chart to enable rescheduling of pods. All other descheduler variables are ignored if this variable is false | `bool` | `true` | no |
+| <a name="input_descheduler_values"></a> [descheduler\_values](#input\_descheduler\_values) | Path to templatefile containing custom values for the descheduler helm chart | `string` | `""` | no |
+| <a name="input_descheduler_variables"></a> [descheduler\_variables](#input\_descheduler\_variables) | Variables passed to the descheduler templatefile | `any` | `{}` | no |
 | <a name="input_dns_zones_force_destroy"></a> [dns\_zones\_force\_destroy](#input\_dns\_zones\_force\_destroy) | Force destroy the public and private Route53 zones. Ignored if an existing route53\_zone\_id is specified or create\_dns\_zones is false. | `bool` | `false` | no |
 | <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | Name of the domain to use for the DataRobot application. If create\_dns\_zones is true then zones will be created for this domain. It is also used by ACM for DNS validation and as a domain filter by the external-dns helm chart. | `string` | `""` | no |
 | <a name="input_ebs_csi_driver"></a> [ebs\_csi\_driver](#input\_ebs\_csi\_driver) | Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs\_csi\_driver variables are ignored if this variable is false | `bool` | `true` | no |
@@ -903,15 +942,18 @@ Not required
 | <a name="input_kubernetes_gpu_nodegroup_max_size"></a> [kubernetes\_gpu\_nodegroup\_max\_size](#input\_kubernetes\_gpu\_nodegroup\_max\_size) | Maximum number of nodes in the GPU node group | `number` | `10` | no |
 | <a name="input_kubernetes_gpu_nodegroup_min_size"></a> [kubernetes\_gpu\_nodegroup\_min\_size](#input\_kubernetes\_gpu\_nodegroup\_min\_size) | Minimum number of nodes in the GPU node group | `number` | `0` | no |
 | <a name="input_kubernetes_gpu_nodegroup_name"></a> [kubernetes\_gpu\_nodegroup\_name](#input\_kubernetes\_gpu\_nodegroup\_name) | Name of the GPU node group | `string` | `"gpu"` | no |
-| <a name="input_kubernetes_gpu_nodegroup_taints"></a> [kubernetes\_gpu\_nodegroup\_taints](#input\_kubernetes\_gpu\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group | `any` | <pre>{<br>  "nvidia_gpu": {<br>    "effect": "NO_SCHEDULE",<br>    "key": "nvidia.com/gpu"<br>  }<br>}</pre> | no |
+| <a name="input_kubernetes_gpu_nodegroup_taints"></a> [kubernetes\_gpu\_nodegroup\_taints](#input\_kubernetes\_gpu\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group | `any` | <pre>{<br>  "nvidia_gpu": {<br>    "effect": "NO_SCHEDULE",<br>    "key": "nvidia.com/gpu",<br>    "value": "true"<br>  }<br>}</pre> | no |
 | <a name="input_kubernetes_primary_nodegroup_ami_type"></a> [kubernetes\_primary\_nodegroup\_ami\_type](#input\_kubernetes\_primary\_nodegroup\_ami\_type) | Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values | `string` | `"AL2023_x86_64_STANDARD"` | no |
-| <a name="input_kubernetes_primary_nodegroup_desired_size"></a> [kubernetes\_primary\_nodegroup\_desired\_size](#input\_kubernetes\_primary\_nodegroup\_desired\_size) | Desired number of nodes in the primary node group | `number` | `5` | no |
-| <a name="input_kubernetes_primary_nodegroup_instance_types"></a> [kubernetes\_primary\_nodegroup\_instance\_types](#input\_kubernetes\_primary\_nodegroup\_instance\_types) | Instance types used for the primary node group | `list(string)` | <pre>[<br>  "r6a.4xlarge"<br>]</pre> | no |
-| <a name="input_kubernetes_primary_nodegroup_labels"></a> [kubernetes\_primary\_nodegroup\_labels](#input\_kubernetes\_primary\_nodegroup\_labels) | Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed. | `map(string)` | `null` | no |
+| <a name="input_kubernetes_primary_nodegroup_desired_size"></a> [kubernetes\_primary\_nodegroup\_desired\_size](#input\_kubernetes\_primary\_nodegroup\_desired\_size) | Desired number of nodes in the primary node group | `number` | `1` | no |
+| <a name="input_kubernetes_primary_nodegroup_instance_types"></a> [kubernetes\_primary\_nodegroup\_instance\_types](#input\_kubernetes\_primary\_nodegroup\_instance\_types) | Instance types used for the primary node group | `list(string)` | <pre>[<br>  "r6a.4xlarge",<br>  "r6i.4xlarge",<br>  "r5.4xlarge",<br>  "r4.4xlarge"<br>]</pre> | no |
+| <a name="input_kubernetes_primary_nodegroup_labels"></a> [kubernetes\_primary\_nodegroup\_labels](#input\_kubernetes\_primary\_nodegroup\_labels) | Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed. | `map(string)` | <pre>{<br>  "datarobot.com/node-capability": "cpu"<br>}</pre> | no |
 | <a name="input_kubernetes_primary_nodegroup_max_size"></a> [kubernetes\_primary\_nodegroup\_max\_size](#input\_kubernetes\_primary\_nodegroup\_max\_size) | Maximum number of nodes in the primary node group | `number` | `10` | no |
-| <a name="input_kubernetes_primary_nodegroup_min_size"></a> [kubernetes\_primary\_nodegroup\_min\_size](#input\_kubernetes\_primary\_nodegroup\_min\_size) | Minimum number of nodes in the primary node group | `number` | `3` | no |
+| <a name="input_kubernetes_primary_nodegroup_min_size"></a> [kubernetes\_primary\_nodegroup\_min\_size](#input\_kubernetes\_primary\_nodegroup\_min\_size) | Minimum number of nodes in the primary node group | `number` | `0` | no |
 | <a name="input_kubernetes_primary_nodegroup_name"></a> [kubernetes\_primary\_nodegroup\_name](#input\_kubernetes\_primary\_nodegroup\_name) | Name of the primary EKS node group | `string` | `"primary"` | no |
 | <a name="input_kubernetes_primary_nodegroup_taints"></a> [kubernetes\_primary\_nodegroup\_taints](#input\_kubernetes\_primary\_nodegroup\_taints) | The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group | `any` | `{}` | no |
+| <a name="input_metrics_server"></a> [metrics\_server](#input\_metrics\_server) | Install the metrics-server helm chart to expose resource metrics for Kubernetes built-in autoscaling pipelines. All other metrics\_server variables are ignored if this variable is false. | `bool` | `true` | no |
+| <a name="input_metrics_server_values"></a> [metrics\_server\_values](#input\_metrics\_server\_values) | Path to templatefile containing custom values for the metrics\_server helm chart | `string` | `""` | no |
+| <a name="input_metrics_server_variables"></a> [metrics\_server\_variables](#input\_metrics\_server\_variables) | Variables passed to the metrics\_server\_values templatefile | `any` | `{}` | no |
 | <a name="input_name"></a> [name](#input\_name) | Name to use as a prefix for created resources | `string` | n/a | yes |
 | <a name="input_network_address_space"></a> [network\_address\_space](#input\_network\_address\_space) | CIDR block to be used for the new VPC | `string` | `"10.0.0.0/16"` | no |
 | <a name="input_network_private_endpoints"></a> [network\_private\_endpoints](#input\_network\_private\_endpoints) | List of AWS services to create interface VPC endpoints for | `list(string)` | <pre>[<br>  "s3"<br>]</pre> | no |

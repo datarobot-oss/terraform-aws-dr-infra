@@ -27,7 +27,7 @@ module "cert_manager" {
 
   app = {
     name             = "cert-manager"
-    version          = "1.15.2"
+    version          = "1.16.1"
     chart            = "cert-manager"
     create_namespace = true
     wait             = true

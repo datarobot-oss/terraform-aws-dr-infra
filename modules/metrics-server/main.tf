@@ -1,14 +1,14 @@
-module "nvidia_device_plugin" {
+module "metrics_server" {
   source  = "terraform-module/release/helm"
   version = "~> 2.0"
 
-  namespace  = "nvidia-device-plugin"
-  repository = "https://nvidia.github.io/k8s-device-plugin"
+  namespace  = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
 
   app = {
-    name             = "nvidia-device-plugin"
-    version          = "v0.17.0"
-    chart            = "nvidia-device-plugin"
+    name             = "metrics-server"
+    version          = "v3.12.1"
+    chart            = "metrics-server"
     create_namespace = true
     wait             = true
     recreate_pods    = false
@@ -17,7 +17,6 @@ module "nvidia_device_plugin" {
   }
 
   values = [
-    templatefile("${path.module}/values.yaml", {}),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 

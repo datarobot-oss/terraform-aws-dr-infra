@@ -26,7 +26,7 @@ module "aws_load_balancer_controller" {
 
   app = {
     name             = "aws-load-balancer-controller"
-    version          = "1.8.2"
+    version          = "1.10.0"
     chart            = "aws-load-balancer-controller"
     create_namespace = true
     wait             = true

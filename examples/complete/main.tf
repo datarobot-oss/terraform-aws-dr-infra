@@ -8,7 +8,7 @@ locals {
 }
 
 module "datarobot_infra" {
-  source = "datarobot-oss/dr-infra/aws"
+  source = "../.."
 
   ################################################################################
   # General
@@ -39,7 +39,8 @@ module "datarobot_infra" {
   ################################################################################
   # bring your own certificate rather than using ACM by setting create_acm_certificate
   # to false and not specifying an existing_acm_certificate_arn
-  create_acm_certificate = false
+  # create_acm_certificate = false
+  create_acm_certificate = true
 
   ################################################################################
   # Encryption Key
@@ -68,11 +69,11 @@ module "datarobot_infra" {
   # Kubernetes
   ################################################################################
   create_kubernetes_cluster  = true
-  kubernetes_cluster_version = "1.30"
+  kubernetes_cluster_version = "1.31"
   kubernetes_cluster_access_entries = {
     customadmin = {
       kubernetes_groups = []
-      principal_arn     = "arn:aws:iam::12345678912:role/custom-kubernetes-admin"
+      principal_arn     = "arn:aws:iam::12345678912:role/some-other-kubernetes-admin"
 
       policy_associations = {
         cluster_admin = {
@@ -89,24 +90,27 @@ module "datarobot_infra" {
   kubernetes_cluster_endpoint_private_access_cidrs = []
   kubernetes_primary_nodegroup_name                = "primary"
   kubernetes_primary_nodegroup_ami_type            = "AL2023_x86_64_STANDARD"
-  kubernetes_primary_nodegroup_instance_types      = ["r6a.4xlarge"]
-  kubernetes_primary_nodegroup_desired_size        = 5
-  kubernetes_primary_nodegroup_min_size            = 3
+  kubernetes_primary_nodegroup_instance_types      = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
+  kubernetes_primary_nodegroup_desired_size        = 1
+  kubernetes_primary_nodegroup_min_size            = 0
   kubernetes_primary_nodegroup_max_size            = 10
-  kubernetes_primary_nodegroup_labels              = {}
-  kubernetes_primary_nodegroup_taints              = {}
-  kubernetes_gpu_nodegroup_name                    = "gpu"
-  kubernetes_gpu_nodegroup_ami_type                = "AL2_x86_64_GPU"
-  kubernetes_gpu_nodegroup_instance_types          = ["g4dn.2xlarge"]
-  kubernetes_gpu_nodegroup_desired_size            = 0
-  kubernetes_gpu_nodegroup_min_size                = 0
-  kubernetes_gpu_nodegroup_max_size                = 10
+  kubernetes_primary_nodegroup_labels = {
+    "datarobot.com/node-capability" = "cpu"
+  }
+  kubernetes_primary_nodegroup_taints     = {}
+  kubernetes_gpu_nodegroup_name           = "gpu"
+  kubernetes_gpu_nodegroup_ami_type       = "AL2_x86_64_GPU"
+  kubernetes_gpu_nodegroup_instance_types = ["g4dn.2xlarge"]
+  kubernetes_gpu_nodegroup_desired_size   = 0
+  kubernetes_gpu_nodegroup_min_size       = 0
+  kubernetes_gpu_nodegroup_max_size       = 10
   kubernetes_gpu_nodegroup_labels = {
     "datarobot.com/node-capability" = "gpu"
   }
   kubernetes_gpu_nodegroup_taints = {
     nvidia_gpu = {
       key    = "nvidia.com/gpu"
+      value  = "true"
       effect = "NO_SCHEDULE"
     }
   }
@@ -130,6 +134,13 @@ module "datarobot_infra" {
   cluster_autoscaler           = true
   cluster_autoscaler_values    = "${path.module}/templates/custom_cluster_autoscaler_values.yaml"
   cluster_autoscaler_variables = {}
+
+  ################################################################################
+  # descheduler
+  ################################################################################
+  descheduler           = true
+  descheduler_values    = "${path.module}/templates/custom_descheduler_values.yaml"
+  descheduler_variables = {}
 
   ################################################################################
   # aws-load-balancer-controller
@@ -172,4 +183,12 @@ module "datarobot_infra" {
   nvidia_device_plugin           = true
   nvidia_device_plugin_values    = "${path.module}/templates/custom_nvidia_device_plugin_values.yaml"
   nvidia_device_plugin_variables = {}
+
+
+  ################################################################################
+  # metrics-server
+  ################################################################################
+  metrics_server           = true
+  metrics_server_values    = "${path.module}/templates/custom_metrics_server_values.yaml"
+  metrics_server_variables = {}
 }

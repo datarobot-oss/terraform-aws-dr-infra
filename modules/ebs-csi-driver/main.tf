@@ -28,7 +28,7 @@ module "ebs_csi_driver" {
 
   app = {
     name             = "aws-ebs-csi-driver"
-    version          = "2.33.0"
+    version          = "2.37.0"
     chart            = "aws-ebs-csi-driver"
     create_namespace = true
     wait             = true

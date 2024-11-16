@@ -7,7 +7,7 @@ locals {
 }
 
 module "datarobot_infra" {
-  source = "datarobot-oss/dr-infra/aws"
+  source = "../.."
 
   name        = local.name
   domain_name = "${local.name}.yourdomain.com"

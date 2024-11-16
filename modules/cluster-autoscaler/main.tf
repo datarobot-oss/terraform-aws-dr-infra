@@ -29,7 +29,7 @@ module "cluster_autoscaler" {
 
   app = {
     name             = "cluster-autoscaler"
-    version          = "9.37.0"
+    version          = "9.43.2"
     chart            = "cluster-autoscaler"
     create_namespace = true
     wait             = true
@@ -50,6 +50,7 @@ module "cluster_autoscaler" {
   ]
 
   values = [
+    templatefile("${path.module}/values.yaml", {}),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 

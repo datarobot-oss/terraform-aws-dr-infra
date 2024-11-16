@@ -1,14 +1,14 @@
-module "nvidia_device_plugin" {
+module "descheduler" {
   source  = "terraform-module/release/helm"
   version = "~> 2.0"
 
-  namespace  = "nvidia-device-plugin"
-  repository = "https://nvidia.github.io/k8s-device-plugin"
+  namespace  = "descheduler"
+  repository = "https://kubernetes-sigs.github.io/descheduler/"
 
   app = {
-    name             = "nvidia-device-plugin"
-    version          = "v0.17.0"
-    chart            = "nvidia-device-plugin"
+    name             = "descheduler"
+    version          = "0.31.0"
+    chart            = "descheduler"
     create_namespace = true
     wait             = true
     recreate_pods    = false
@@ -16,9 +16,14 @@ module "nvidia_device_plugin" {
     timeout          = 600
   }
 
-  values = [
-    templatefile("${path.module}/values.yaml", {}),
-    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+  set = [
+    {
+      name  = "deschedulerPolicy.evictLocalStoragePods"
+      value = "true"
+    }
   ]
 
+  values = [
+    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+  ]
 }

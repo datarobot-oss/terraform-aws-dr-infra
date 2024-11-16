@@ -235,6 +235,19 @@ locals {
   eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
 }
 
+module "aws_vpc_cni_ipv4_pod_identity" {
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 1.0"
+  count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
+
+  name = "aws-vpc-cni-ipv4"
+
+  attach_aws_vpc_cni_policy = true
+  aws_vpc_cni_enable_ipv4   = true
+
+  tags = var.tags
+}
+
 module "kubernetes" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
@@ -244,10 +257,34 @@ module "kubernetes" {
   cluster_version = var.kubernetes_cluster_version
 
   cluster_addons = {
-    coredns                = {}
-    eks-pod-identity-agent = {}
-    kube-proxy             = {}
-    vpc-cni                = {}
+    coredns = {
+      most_recent = true
+    }
+    eks-pod-identity-agent = {
+      most_recent    = true
+      before_compute = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent    = true
+      before_compute = true
+
+      configuration_values = jsonencode({
+        enableNetworkPolicy = "true"
+        env = {
+          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
+
+      pod_identity_association = [{
+        role_arn        = module.aws_vpc_cni_ipv4_pod_identity[0].iam_role_arn
+        service_account = "aws-node"
+      }]
+    }
   }
 
   enable_cluster_creator_admin_permissions = true
@@ -308,6 +345,39 @@ module "kubernetes" {
   }
 
   tags = var.tags
+}
+
+resource "aws_autoscaling_group_tag" "primary" {
+  for_each = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? merge(
+    { for k, v in var.kubernetes_primary_nodegroup_labels : "k8s.io/cluster-autoscaler/node-template/label/${k}" => v },
+    { for k, v in var.kubernetes_primary_nodegroup_taints : "k8s.io/cluster-autoscaler/node-template/taint/${v.key}" => "${v.value}:${v.effect}" },
+    { "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" = "200G" }
+  ) : {}
+
+  autoscaling_group_name = module.kubernetes[0].eks_managed_node_groups[var.kubernetes_primary_nodegroup_name].node_group_autoscaling_group_names[0]
+
+  tag {
+    key   = each.key
+    value = each.value
+
+    propagate_at_launch = true
+  }
+}
+
+resource "aws_autoscaling_group_tag" "gpu" {
+  for_each = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? merge(
+    { for k, v in var.kubernetes_gpu_nodegroup_labels : "k8s.io/cluster-autoscaler/node-template/label/${k}" => v },
+    { for k, v in var.kubernetes_gpu_nodegroup_taints : "k8s.io/cluster-autoscaler/node-template/taint/${v.key}" => "${v.value}:${v.effect}" }
+  ) : {}
+
+  autoscaling_group_name = module.kubernetes[0].eks_managed_node_groups[var.kubernetes_gpu_nodegroup_name].node_group_autoscaling_group_names[0]
+
+  tag {
+    key   = each.key
+    value = each.value
+
+    propagate_at_launch = true
+  }
 }
 
 
@@ -390,6 +460,13 @@ module "cluster_autoscaler" {
   tags = var.tags
 }
 
+module "descheduler" {
+  source = "./modules/descheduler"
+  count  = var.descheduler ? 1 : 0
+
+  custom_values_templatefile = var.descheduler_values
+  custom_values_variables    = var.descheduler_variables
+}
 
 module "ebs_csi_driver" {
   source = "./modules/ebs-csi-driver"
@@ -452,7 +529,7 @@ module "cert_manager" {
 
 module "external_dns" {
   source = "./modules/external-dns"
-  count  = var.create_kubernetes_cluster && var.external_dns ? 1 : 0
+  count  = var.external_dns ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
   route53_zone_arn        = var.internet_facing_ingress_lb ? local.public_zone_arn : local.private_zone_arn
@@ -468,8 +545,16 @@ module "external_dns" {
 
 module "nvidia_device_plugin" {
   source = "./modules/nvidia-device-plugin"
-  count  = var.create_kubernetes_cluster && var.nvidia_device_plugin ? 1 : 0
+  count  = var.nvidia_device_plugin ? 1 : 0
 
   custom_values_templatefile = var.nvidia_device_plugin_values
   custom_values_variables    = var.nvidia_device_plugin_variables
+}
+
+module "metrics_server" {
+  source = "./modules/metrics-server"
+  count  = var.metrics_server ? 1 : 0
+
+  custom_values_templatefile = var.metrics_server_values
+  custom_values_variables    = var.metrics_server_variables
 }

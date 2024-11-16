@@ -27,7 +27,7 @@ module "external_dns" {
 
   app = {
     name             = "external-dns"
-    version          = "8.3.5"
+    version          = "8.5.1"
     chart            = "external-dns"
     create_namespace = true
     wait             = true
