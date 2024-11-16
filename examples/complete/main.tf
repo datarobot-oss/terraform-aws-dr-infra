@@ -38,9 +38,9 @@ module "datarobot_infra" {
   # ACM
   ################################################################################
   # bring your own certificate rather than using ACM by setting create_acm_certificate
-  # to false and not specifying an existing_acm_certificate_arn
-  # create_acm_certificate = false
-  create_acm_certificate = true
+  # to false, omitting existing_acm_certificate_arn, and updating ingress-nginx
+  # values with controller.service.targetPorts.https = https
+  create_acm_certificate = false
 
   ################################################################################
   # Encryption Key

@@ -3,6 +3,18 @@
 All notable changes are documented in this file.
 
 
+## v1.2.0
+
+### Added
+- Ability to use an existing EKS cluster
+- metrics-server and descheduler amenities
+- ASG tagging for improved cluster-autoscaler performance
+- EKS cluster addon configuration including enableNetworkPolicy=true
+
+### Updated
+- All amenities to latest versions
+
+
 ## v1.1.0
 
 ### Updated
