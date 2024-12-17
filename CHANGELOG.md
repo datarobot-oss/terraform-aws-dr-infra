@@ -3,6 +3,12 @@
 All notable changes are documented in this file.
 
 
+## v1.2.1
+
+### Updated
+- Create one nodegroup per AZ
+
+
 ## v1.2.0
 
 ### Added
