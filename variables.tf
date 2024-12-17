@@ -242,7 +242,7 @@ variable "kubernetes_primary_nodegroup_desired_size" {
 variable "kubernetes_primary_nodegroup_min_size" {
   description = "Minimum number of nodes in the primary node group"
   type        = number
-  default     = 0
+  default     = 1
 }
 
 variable "kubernetes_primary_nodegroup_max_size" {

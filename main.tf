@@ -233,6 +233,70 @@ locals {
   eks_cluster_ca_data         = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, null)
   eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, null)
   eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
+
+  primary_nodegroups = { for az in local.azs : "${var.kubernetes_primary_nodegroup_name}-${az}" => {
+    create_placement_group = true
+    placement_group_az     = az
+    ami_type               = var.kubernetes_primary_nodegroup_ami_type
+    instance_types         = var.kubernetes_primary_nodegroup_instance_types
+    min_size               = var.kubernetes_primary_nodegroup_min_size
+    max_size               = var.kubernetes_primary_nodegroup_max_size
+    desired_size           = var.kubernetes_primary_nodegroup_desired_size
+    labels                 = var.kubernetes_primary_nodegroup_labels
+    taints                 = var.kubernetes_primary_nodegroup_taints
+  } }
+
+  primary_nodegroup_asg_tags = flatten([
+    for nodegroup_name, nodegroup in local.primary_nodegroups : concat(
+      [
+        for k, v in var.kubernetes_primary_nodegroup_labels : {
+          nodegroup_name = nodegroup_name
+          key            = "k8s.io/cluster-autoscaler/node-template/label/${k}"
+          value          = v
+        }
+      ],
+      [
+        for k, v in var.kubernetes_primary_nodegroup_taints : {
+          nodegroup_name = nodegroup_name
+          key            = "k8s.io/cluster-autoscaler/node-template/taint/${v.key}"
+          value          = "${v.value}:${v.effect}"
+        }
+    ])
+  ])
+
+  gpu_nodegroups = { for az in local.azs : "${var.kubernetes_gpu_nodegroup_name}-${az}" => {
+    create_placement_group = true
+    placement_group_az     = az
+    ami_type               = var.kubernetes_gpu_nodegroup_ami_type
+    instance_types         = var.kubernetes_gpu_nodegroup_instance_types
+    min_size               = var.kubernetes_gpu_nodegroup_min_size
+    max_size               = var.kubernetes_gpu_nodegroup_max_size
+    desired_size           = var.kubernetes_gpu_nodegroup_desired_size
+    labels                 = var.kubernetes_gpu_nodegroup_labels
+    taints                 = var.kubernetes_gpu_nodegroup_taints
+  } }
+
+  gpu_nodegroup_asg_tags = flatten([
+    for nodegroup_name, nodegroup in local.gpu_nodegroups : concat(
+      [
+        for k, v in var.kubernetes_gpu_nodegroup_labels : {
+          nodegroup_name = nodegroup_name
+          key            = "k8s.io/cluster-autoscaler/node-template/label/${k}"
+          value          = v
+        }
+      ],
+      [
+        for k, v in var.kubernetes_gpu_nodegroup_taints : {
+          nodegroup_name = nodegroup_name
+          key            = "k8s.io/cluster-autoscaler/node-template/taint/${v.key}"
+          value          = "${v.value}:${v.effect}"
+        }
+      ]
+    )
+  ])
+
+  # list of objects in the form of {nodegroup_name, key, value}
+  asg_tags = concat(local.primary_nodegroup_asg_tags, local.gpu_nodegroup_asg_tags)
 }
 
 module "aws_vpc_cni_ipv4_pod_identity" {
@@ -323,62 +387,24 @@ module "kubernetes" {
     }
   }
 
-  eks_managed_node_groups = {
-    (var.kubernetes_primary_nodegroup_name) = {
-      ami_type       = var.kubernetes_primary_nodegroup_ami_type
-      instance_types = var.kubernetes_primary_nodegroup_instance_types
-      min_size       = var.kubernetes_primary_nodegroup_min_size
-      max_size       = var.kubernetes_primary_nodegroup_max_size
-      desired_size   = var.kubernetes_primary_nodegroup_desired_size
-      labels         = var.kubernetes_primary_nodegroup_labels
-      taints         = var.kubernetes_primary_nodegroup_taints
-    },
-    (var.kubernetes_gpu_nodegroup_name) = {
-      ami_type       = var.kubernetes_gpu_nodegroup_ami_type
-      instance_types = var.kubernetes_gpu_nodegroup_instance_types
-      min_size       = var.kubernetes_gpu_nodegroup_min_size
-      max_size       = var.kubernetes_gpu_nodegroup_max_size
-      desired_size   = var.kubernetes_gpu_nodegroup_desired_size
-      labels         = var.kubernetes_gpu_nodegroup_labels
-      taints         = var.kubernetes_gpu_nodegroup_taints
-    }
-  }
+  eks_managed_node_groups = merge(local.primary_nodegroups, local.gpu_nodegroups)
 
   tags = var.tags
 }
 
-resource "aws_autoscaling_group_tag" "primary" {
-  for_each = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? merge(
-    { for k, v in var.kubernetes_primary_nodegroup_labels : "k8s.io/cluster-autoscaler/node-template/label/${k}" => v },
-    { for k, v in var.kubernetes_primary_nodegroup_taints : "k8s.io/cluster-autoscaler/node-template/taint/${v.key}" => "${v.value}:${v.effect}" },
-    { "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage" = "200G" }
-  ) : {}
+resource "aws_autoscaling_group_tag" "this" {
+  for_each = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? { for i, asg_tag in local.asg_tags : i => asg_tag } : {}
 
-  autoscaling_group_name = module.kubernetes[0].eks_managed_node_groups[var.kubernetes_primary_nodegroup_name].node_group_autoscaling_group_names[0]
+  autoscaling_group_name = module.kubernetes[0].eks_managed_node_groups[each.value.nodegroup_name].node_group_autoscaling_group_names[0]
 
   tag {
-    key   = each.key
-    value = each.value
+    key   = each.value.key
+    value = each.value.value
 
     propagate_at_launch = true
   }
 }
 
-resource "aws_autoscaling_group_tag" "gpu" {
-  for_each = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? merge(
-    { for k, v in var.kubernetes_gpu_nodegroup_labels : "k8s.io/cluster-autoscaler/node-template/label/${k}" => v },
-    { for k, v in var.kubernetes_gpu_nodegroup_taints : "k8s.io/cluster-autoscaler/node-template/taint/${v.key}" => "${v.value}:${v.effect}" }
-  ) : {}
-
-  autoscaling_group_name = module.kubernetes[0].eks_managed_node_groups[var.kubernetes_gpu_nodegroup_name].node_group_autoscaling_group_names[0]
-
-  tag {
-    key   = each.key
-    value = each.value
-
-    propagate_at_launch = true
-  }
-}
 
 
 ################################################################################
