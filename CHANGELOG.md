@@ -3,6 +3,11 @@
 All notable changes are documented in this file.
 
 
+## v1.2.2
+
+### Updated
+- ingress-nginx helm chart version to 4.11.5
+
 ## v1.2.1
 
 ### Updated

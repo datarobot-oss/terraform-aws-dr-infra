@@ -8,7 +8,7 @@ module "ingress_nginx" {
 
   app = {
     name             = "ingress-nginx"
-    version          = "4.11.1"
+    version          = "4.11.5"
     chart            = "ingress-nginx"
     create_namespace = true
     wait             = true
