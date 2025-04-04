@@ -826,9 +826,9 @@ Not required
 
 
 ## DataRobot versions
-| Release | Supported DR Versions |
-|---------|-----------------------|
-| ~> 1.0 | ~> 10.1 |
+Currently the only thing coupling a release of this module to a DataRobot Enterprise Release is the default set of ecr_repositories. Technically, this module can be used with any DataRobot version if the user specifies the correct list of ecr_repositories for that version.
+
+The default installation supports DataRobot versions >= 10.1.
 
 
 <!-- BEGIN_TF_DOCS -->

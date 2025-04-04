@@ -148,9 +148,11 @@ variable "ecr_repositories" {
   type        = set(string)
   default = [
     "base-image",
+    "custom-apps/managed-image",
+    "custom-jobs/managed-image",
     "ephemeral-image",
     "managed-image",
-    "custom-apps-managed-image"
+    "services/custom-model-conversion"
   ]
 }
 
