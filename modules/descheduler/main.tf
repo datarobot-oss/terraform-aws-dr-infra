@@ -1,29 +1,18 @@
-module "descheduler" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
-
+resource "helm_release" "descheduler" {
+  name       = "descheduler"
   namespace  = "descheduler"
-  repository = "https://kubernetes-sigs.github.io/descheduler/"
+  repository = "https://kubernetes-sigs.github.io/descheduler"
+  chart      = "descheduler"
+  version    = "0.31.0"
 
-  app = {
-    name             = "descheduler"
-    version          = "0.31.0"
-    chart            = "descheduler"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
-
-  set = [
-    {
-      name  = "deschedulerPolicy.evictLocalStoragePods"
-      value = "true"
-    }
-  ]
+  create_namespace = true
 
   values = [
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  set {
+    name  = "deschedulerPolicy.evictLocalStoragePods"
+    value = "true"
+  }
 }

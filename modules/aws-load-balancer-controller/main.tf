@@ -17,38 +17,28 @@ module "aws_load_balancer_controller_pod_identity" {
   tags = var.tags
 }
 
-module "aws_load_balancer_controller" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
-
+resource "helm_release" "aws_load_balancer_controller" {
+  name       = "aws-load-balancer-controller"
   namespace  = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
+  chart      = "aws-load-balancer-controller"
+  version    = "1.10.0"
 
-  app = {
-    name             = "aws-load-balancer-controller"
-    version          = "1.10.0"
-    chart            = "aws-load-balancer-controller"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
-
-  set = [
-    {
-      name  = "clusterName"
-      value = var.kubernetes_cluster_name
-    },
-    {
-      name  = "vpcId"
-      value = var.vpc_id
-    }
-  ]
+  create_namespace = true
 
   values = [
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  set {
+    name  = "clusterName"
+    value = var.kubernetes_cluster_name
+  }
+
+  set {
+    name  = "vpcId"
+    value = var.vpc_id
+  }
 
   depends_on = [module.aws_load_balancer_controller_pod_identity]
 }

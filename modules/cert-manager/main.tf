@@ -18,34 +18,23 @@ module "cert_manager_pod_identity" {
   tags = var.tags
 }
 
-module "cert_manager" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
-
+resource "helm_release" "cert_manager" {
+  name       = "cert-manager"
   namespace  = "cert-manager"
   repository = "https://charts.jetstack.io"
+  chart      = "cert-manager"
+  version    = "1.16.1"
 
-  app = {
-    name             = "cert-manager"
-    version          = "1.16.1"
-    chart            = "cert-manager"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
-
-  set = [
-    {
-      name  = "crds.enabled"
-      value = "true"
-    }
-  ]
+  create_namespace = true
 
   values = [
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  set {
+    name  = "crds.enabled"
+    value = "true"
+  }
 
   depends_on = [module.cert_manager_pod_identity]
 }

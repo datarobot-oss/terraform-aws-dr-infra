@@ -20,39 +20,28 @@ module "cluster_autoscaler_pod_identity" {
   tags = var.tags
 }
 
-module "cluster_autoscaler" {
-  source  = "terraform-module/release/helm"
-  version = "~> 2.0"
-
+resource "helm_release" "cluster_autoscaler" {
+  name       = "cluster-autoscaler"
   namespace  = "cluster-autoscaler"
   repository = "https://kubernetes.github.io/autoscaler"
+  chart      = "cluster-autoscaler"
+  version    = "9.43.2"
 
-  app = {
-    name             = "cluster-autoscaler"
-    version          = "9.43.2"
-    chart            = "cluster-autoscaler"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
-
-  set = [
-    {
-      name  = "autoDiscovery.clusterName"
-      value = var.kubernetes_cluster_name
-    },
-    {
-      name  = "awsRegion"
-      value = data.aws_region.current.name
-    }
-  ]
+  create_namespace = true
 
   values = [
     templatefile("${path.module}/values.yaml", {}),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  set {
+    name  = "autoDiscovery.clusterName"
+    value = var.kubernetes_cluster_name
+  }
+  set {
+    name  = "awsRegion"
+    value = data.aws_region.current.name
+  }
 
   depends_on = [module.cluster_autoscaler_pod_identity]
 }

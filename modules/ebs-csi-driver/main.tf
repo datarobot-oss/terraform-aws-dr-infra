@@ -18,24 +18,14 @@ module "ebs_csi_driver_pod_identity" {
   tags = var.tags
 }
 
-
-module "ebs_csi_driver" {
-  source  = "terraform-module/release/helm"
-  version = "2.8.1"
-
+resource "helm_release" "ebs_csi_driver" {
+  name       = "aws-ebs-csi-driver"
   namespace  = "aws-ebs-csi-driver"
   repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
+  chart      = "aws-ebs-csi-driver"
+  version    = "2.37.0"
 
-  app = {
-    name             = "aws-ebs-csi-driver"
-    version          = "2.37.0"
-    chart            = "aws-ebs-csi-driver"
-    create_namespace = true
-    wait             = true
-    recreate_pods    = false
-    deploy           = 1
-    timeout          = 600
-  }
+  create_namespace = true
 
   values = [
     templatefile("${path.module}/values.yaml", {
