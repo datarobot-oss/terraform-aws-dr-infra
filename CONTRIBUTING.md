@@ -4,8 +4,7 @@ Guidelines for developing and contributing to this project.
 
 ## List of project maintainers
 
-- [Garrett Schultz](https://github.com/gschultz)
-- [Fagani Hajizada](https://github.com/faganihajizada)
+- [DataRobot OSS Fleet Management](https://github.com/orgs/datarobot-oss/teams/fleet-management)
 
 
 ## Opening new issues
