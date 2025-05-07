@@ -3,6 +3,12 @@
 All notable changes are documented in this file.
 
 
+## v1.2.5
+
+### Added
+- dynamic reading of AWS partition
+
+
 ## v1.2.4
 
 ### Updated

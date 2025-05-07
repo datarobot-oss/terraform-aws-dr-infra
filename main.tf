@@ -1,6 +1,6 @@
 data "aws_availability_zones" "available" {}
-
 data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
 
 
 ################################################################################
@@ -171,7 +171,7 @@ module "encryption_key" {
   key_usage   = "ENCRYPT_DECRYPT"
 
   key_administrators                = [data.aws_caller_identity.current.arn]
-  key_service_roles_for_autoscaling = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"]
+  key_service_roles_for_autoscaling = ["arn:${data.aws_partition.current.id}:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"]
 
   aliases                 = ["datarobot/ebs"]
   aliases_use_name_prefix = true
@@ -423,7 +423,7 @@ module "app_identity" {
   oidc_subjects_with_wildcards = ["system:serviceaccount:${var.datarobot_namespace}:*"]
 
   role_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+    "arn:${data.aws_partition.current.id}:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
   ]
   inline_policy_statements = [
     {
@@ -436,8 +436,8 @@ module "app_identity" {
         "s3:ListMultipartUploadParts"
       ]
       resources = [
-        "arn:aws:s3:::${local.s3_bucket_id}/*",
-        "arn:aws:s3:::${local.s3_bucket_id}"
+        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}/*",
+        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}"
       ]
     },
     {
@@ -447,7 +447,7 @@ module "app_identity" {
         "s3:ListBucketVersions",
         "s3:ListAllMyBuckets"
       ]
-      resources = ["arn:aws:s3:::*"]
+      resources = ["arn:${data.aws_partition.current.id}:s3:::*"]
     }
   ]
 
