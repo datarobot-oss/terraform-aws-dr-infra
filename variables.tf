@@ -43,7 +43,17 @@ variable "network_address_space" {
 variable "network_private_endpoints" {
   description = "List of AWS services to create interface VPC endpoints for"
   type        = list(string)
-  default     = ["s3"]
+  default = [
+    "s3",
+    "ec2",
+    "ecr.api",
+    "ecr.dkr",
+    "elasticloadbalancing",
+    "logs",
+    "sts",
+    "eks-auth",
+    "eks"
+  ]
 }
 
 

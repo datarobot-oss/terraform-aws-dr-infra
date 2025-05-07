@@ -33,9 +33,9 @@ module "datarobot_infra" {
   metrics_server               = true
 
   tags = {
-    application   = "datarobot"
-    environment   = "dev"
-    managed-by    = "terraform"
+    application = "datarobot"
+    environment = "dev"
+    managed-by  = "terraform"
   }
 }
 ```

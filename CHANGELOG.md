@@ -3,6 +3,12 @@
 All notable changes are documented in this file.
 
 
+## v1.2.6
+
+### Updated
+- default list of network_private_endpoints to s3, ec2, ecr.api, ecr.dkr, elasticloadbalancing, logs, sts, eks-auth, eks
+
+
 ## v1.2.5
 
 ### Added
