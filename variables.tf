@@ -195,6 +195,18 @@ variable "kubernetes_cluster_version" {
   default     = null
 }
 
+variable "kubernetes_iam_role_arn" {
+  description = "Existing IAM role ARN for the cluster. If not specified, a new one will be created."
+  type        = string
+  default     = null
+}
+
+variable "kubernetes_nodes_iam_role_arn" {
+  description = "Existing IAM role ARN to use for all EKS node groups. If not specified, a new one will be created for each node group."
+  type        = string
+  default     = null
+}
+
 variable "kubernetes_cluster_access_entries" {
   description = "Map of access entries to add to the cluster"
   type        = any

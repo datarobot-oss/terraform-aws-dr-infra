@@ -68,8 +68,10 @@ module "datarobot_infra" {
   ################################################################################
   # Kubernetes
   ################################################################################
-  create_kubernetes_cluster  = true
-  kubernetes_cluster_version = "1.31"
+  create_kubernetes_cluster     = true
+  kubernetes_cluster_version    = "1.31"
+  kubernetes_iam_role_arn       = null
+  kubernetes_nodes_iam_role_arn = null
   kubernetes_cluster_access_entries = {
     customadmin = {
       kubernetes_groups = []

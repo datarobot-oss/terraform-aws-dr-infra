@@ -351,6 +351,9 @@ module "kubernetes" {
     }
   }
 
+  create_iam_role = var.kubernetes_iam_role_arn == null
+  iam_role_arn    = var.kubernetes_iam_role_arn
+
   enable_cluster_creator_admin_permissions = true
   access_entries                           = var.kubernetes_cluster_access_entries
 
@@ -372,6 +375,8 @@ module "kubernetes" {
   } : {}
 
   eks_managed_node_group_defaults = {
+    create_iam_role = var.kubernetes_nodes_iam_role_arn == null
+    iam_role_arn    = var.kubernetes_nodes_iam_role_arn
     block_device_mappings = {
       xvda = {
         device_name = "/dev/xvda"

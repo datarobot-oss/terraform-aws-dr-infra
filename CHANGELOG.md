@@ -3,6 +3,12 @@
 All notable changes are documented in this file.
 
 
+## v1.2.7
+
+### Updated
+- allow use of existing IAM roles for the EKS cluster role and EKS node role
+
+
 ## v1.2.6
 
 ### Updated
