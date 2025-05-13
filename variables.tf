@@ -9,6 +9,12 @@ variable "domain_name" {
   default     = ""
 }
 
+variable "availability_zones" {
+  description = "Number of availability zones to deploy into"
+  type        = number
+  default     = 2
+}
+
 variable "tags" {
   description = "A map of tags to add to all created resources"
   type        = map(string)
@@ -239,108 +245,43 @@ variable "existing_kubernetes_nodes_subnet_id" {
   default     = []
 }
 
-variable "kubernetes_primary_nodegroup_name" {
-  description = "Name of the primary EKS node group"
-  type        = string
-  default     = "primary"
-}
-
-variable "kubernetes_primary_nodegroup_ami_type" {
-  description = "Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values"
-  type        = string
-  default     = "AL2023_x86_64_STANDARD"
-}
-
-variable "kubernetes_primary_nodegroup_instance_types" {
-  description = "Instance types used for the primary node group"
-  type        = list(string)
-  default     = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
-}
-
-variable "kubernetes_primary_nodegroup_desired_size" {
-  description = "Desired number of nodes in the primary node group"
-  type        = number
-  default     = 1
-}
-
-variable "kubernetes_primary_nodegroup_min_size" {
-  description = "Minimum number of nodes in the primary node group"
-  type        = number
-  default     = 1
-}
-
-variable "kubernetes_primary_nodegroup_max_size" {
-  description = "Maximum number of nodes in the primary node group"
-  type        = number
-  default     = 10
-}
-
-variable "kubernetes_primary_nodegroup_labels" {
-  description = "Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed."
-  type        = map(string)
-  default = {
-    "datarobot.com/node-capability" = "cpu"
-  }
-}
-
-variable "kubernetes_primary_nodegroup_taints" {
-  description = "The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group"
+variable "kubernetes_node_group_defaults" {
+  description = "Default values to use for all EKS nodegroups"
   type        = any
   default     = {}
 }
 
-variable "kubernetes_gpu_nodegroup_name" {
-  description = "Name of the GPU node group"
-  type        = string
-  default     = "gpu"
-}
-
-variable "kubernetes_gpu_nodegroup_ami_type" {
-  description = "Type of Amazon Machine Image (AMI) associated with the EKS GPU Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values"
-  type        = string
-  default     = "AL2_x86_64_GPU"
-}
-
-variable "kubernetes_gpu_nodegroup_instance_types" {
-  description = "Instance types used for the GPU node group"
-  type        = list(string)
-  default     = ["g4dn.2xlarge"]
-}
-
-variable "kubernetes_gpu_nodegroup_desired_size" {
-  description = "Desired number of nodes in the GPU node group"
-  type        = number
-  default     = 0
-}
-
-variable "kubernetes_gpu_nodegroup_min_size" {
-  description = "Minimum number of nodes in the GPU node group"
-  type        = number
-  default     = 0
-}
-
-variable "kubernetes_gpu_nodegroup_max_size" {
-  description = "Maximum number of nodes in the GPU node group"
-  type        = number
-  default     = 10
-}
-
-variable "kubernetes_gpu_nodegroup_labels" {
-  description = "Key-value map of Kubernetes labels to be applied to the nodes in the GPU node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed"
-  type        = map(string)
-  default = {
-    "datarobot.com/node-capability" = "gpu"
-  }
-}
-
-variable "kubernetes_gpu_nodegroup_taints" {
-  description = "The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group"
+variable "kubernetes_node_groups" {
+  description = "Map of EKS managed node groups. See https://github.com/terraform-aws-modules/terraform-aws-eks/tree/master/modules/eks-managed-node-group for further configuration options."
   type        = any
   default = {
-    nvidia_gpu = {
-      key    = "nvidia.com/gpu"
-      value  = "true"
-      effect = "NO_SCHEDULE"
+    datarobot-cpu = {
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
+      desired_size   = 1
+      min_size       = 1
+      max_size       = 10
+      labels = {
+        "datarobot.com/node-capability" = "cpu"
+      }
+      taints = {}
+    }
+    datarobot-gpu = {
+      ami_type       = "AL2023_x86_64_NVIDIA"
+      instance_types = ["g4dn.2xlarge"]
+      desired_size   = 0
+      min_size       = 0
+      max_size       = 10
+      labels = {
+        "datarobot.com/node-capability" = "gpu"
+      }
+      taints = {
+        nvidia_gpu = {
+          key    = "nvidia.com/gpu"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
     }
   }
 }

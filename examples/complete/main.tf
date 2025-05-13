@@ -69,53 +69,59 @@ module "datarobot_infra" {
   # Kubernetes
   ################################################################################
   create_kubernetes_cluster     = true
-  kubernetes_cluster_version    = "1.31"
+  kubernetes_cluster_version    = "1.32"
   kubernetes_iam_role_arn       = null
   kubernetes_nodes_iam_role_arn = null
-  kubernetes_cluster_access_entries = {
-    customadmin = {
-      kubernetes_groups = []
-      principal_arn     = "arn:aws:iam::12345678912:role/some-other-kubernetes-admin"
+  # kubernetes_cluster_access_entries = {
+  #   customadmin = {
+  #     kubernetes_groups = []
+  #     principal_arn     = "arn:aws:iam::12345678912:role/some-other-kubernetes-admin"
 
-      policy_associations = {
-        cluster_admin = {
-          policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-          access_scope = {
-            type = "cluster"
-          }
+  #     policy_associations = {
+  #       cluster_admin = {
+  #         policy_arn = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  #         access_scope = {
+  #           type = "cluster"
+  #         }
+  #       }
+  #     }
+  #   }
+  # }
+  kubernetes_cluster_endpoint_public_access        = true
+  kubernetes_cluster_endpoint_public_access_cidrs  = [local.provisioner_public_ip]
+  kubernetes_cluster_endpoint_private_access_cidrs = []
+  kubernetes_node_group_defaults                   = {}
+  kubernetes_node_groups = {
+    datarobot-cpu = {
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
+      desired_size   = 1
+      min_size       = 1
+      max_size       = 10
+      labels = {
+        "datarobot.com/node-capability" = "cpu"
+      }
+      taints = {}
+    }
+    datarobot-gpu = {
+      ami_type       = "AL2023_x86_64_NVIDIA"
+      instance_types = ["g4dn.2xlarge"]
+      desired_size   = 0
+      min_size       = 0
+      max_size       = 10
+      labels = {
+        "datarobot.com/node-capability" = "gpu"
+      }
+      taints = {
+        nvidia_gpu = {
+          key    = "nvidia.com/gpu"
+          value  = "true"
+          effect = "NO_SCHEDULE"
         }
       }
     }
   }
-  kubernetes_cluster_endpoint_public_access        = true
-  kubernetes_cluster_endpoint_public_access_cidrs  = [local.provisioner_public_ip]
-  kubernetes_cluster_endpoint_private_access_cidrs = []
-  kubernetes_primary_nodegroup_name                = "primary"
-  kubernetes_primary_nodegroup_ami_type            = "AL2023_x86_64_STANDARD"
-  kubernetes_primary_nodegroup_instance_types      = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
-  kubernetes_primary_nodegroup_desired_size        = 1
-  kubernetes_primary_nodegroup_min_size            = 0
-  kubernetes_primary_nodegroup_max_size            = 10
-  kubernetes_primary_nodegroup_labels = {
-    "datarobot.com/node-capability" = "cpu"
-  }
-  kubernetes_primary_nodegroup_taints     = {}
-  kubernetes_gpu_nodegroup_name           = "gpu"
-  kubernetes_gpu_nodegroup_ami_type       = "AL2_x86_64_GPU"
-  kubernetes_gpu_nodegroup_instance_types = ["g4dn.2xlarge"]
-  kubernetes_gpu_nodegroup_desired_size   = 0
-  kubernetes_gpu_nodegroup_min_size       = 0
-  kubernetes_gpu_nodegroup_max_size       = 10
-  kubernetes_gpu_nodegroup_labels = {
-    "datarobot.com/node-capability" = "gpu"
-  }
-  kubernetes_gpu_nodegroup_taints = {
-    nvidia_gpu = {
-      key    = "nvidia.com/gpu"
-      value  = "true"
-      effect = "NO_SCHEDULE"
-    }
-  }
+
 
   ################################################################################
   # App Identity
