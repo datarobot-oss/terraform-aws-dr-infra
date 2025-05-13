@@ -68,10 +68,29 @@ module "datarobot_infra" {
   ################################################################################
   # Kubernetes
   ################################################################################
-  create_kubernetes_cluster     = true
-  kubernetes_cluster_version    = "1.32"
-  kubernetes_iam_role_arn       = null
-  kubernetes_nodes_iam_role_arn = null
+  create_kubernetes_cluster                = true
+  kubernetes_cluster_version               = "1.32"
+  kubernetes_iam_role_arn                  = null
+  kubernetes_nodes_iam_role_arn            = null
+  kubernetes_bootstrap_self_managed_addons = false
+  kubernetes_cluster_addons = {
+    coredns = {
+      most_recent = true
+    }
+    eks-pod-identity-agent = {
+      most_recent    = true
+      before_compute = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent          = true
+      before_compute       = true
+      configuration_values = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+    }
+  }
+  kubernetes_enable_cluster_creator_admin_permissions = true
   # kubernetes_cluster_access_entries = {
   #   customadmin = {
   #     kubernetes_groups = []

@@ -213,6 +213,40 @@ variable "kubernetes_nodes_iam_role_arn" {
   default     = null
 }
 
+variable "kubernetes_bootstrap_self_managed_addons" {
+  description = "Indicates whether or not to bootstrap self-managed addons after the cluster has been created"
+  type        = bool
+  default     = false
+}
+
+variable "kubernetes_cluster_addons" {
+  description = "Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name`"
+  type        = any
+  default = {
+    coredns = {
+      most_recent = true
+    }
+    eks-pod-identity-agent = {
+      most_recent    = true
+      before_compute = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent          = true
+      before_compute       = true
+      configuration_values = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+    }
+  }
+}
+
+variable "kubernetes_enable_cluster_creator_admin_permissions" {
+  description = "Indicates whether or not to add the cluster creator (the identity used by Terraform) as an administrator via access entry"
+  type        = bool
+  default     = true
+}
+
 variable "kubernetes_cluster_access_entries" {
   description = "Map of access entries to add to the cluster"
   type        = any

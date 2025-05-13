@@ -295,41 +295,13 @@ module "kubernetes" {
   cluster_name    = var.name
   cluster_version = var.kubernetes_cluster_version
 
-  cluster_addons = {
-    coredns = {
-      most_recent = true
-    }
-    eks-pod-identity-agent = {
-      most_recent    = true
-      before_compute = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-    vpc-cni = {
-      most_recent    = true
-      before_compute = true
-
-      configuration_values = jsonencode({
-        enableNetworkPolicy = "true"
-        env = {
-          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
-          ENABLE_PREFIX_DELEGATION = "true"
-          WARM_PREFIX_TARGET       = "1"
-        }
-      })
-
-      pod_identity_association = [{
-        role_arn        = module.aws_vpc_cni_ipv4_pod_identity[0].iam_role_arn
-        service_account = "aws-node"
-      }]
-    }
-  }
-
   create_iam_role = var.kubernetes_iam_role_arn == null
   iam_role_arn    = var.kubernetes_iam_role_arn
 
-  enable_cluster_creator_admin_permissions = true
+  bootstrap_self_managed_addons = var.kubernetes_bootstrap_self_managed_addons
+  cluster_addons                = var.kubernetes_cluster_addons
+
+  enable_cluster_creator_admin_permissions = var.kubernetes_enable_cluster_creator_admin_permissions
   access_entries                           = var.kubernetes_cluster_access_entries
 
   vpc_id     = local.vpc_id
