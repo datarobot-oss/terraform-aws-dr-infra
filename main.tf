@@ -1,6 +1,12 @@
-data "aws_availability_zones" "available" {}
 data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
+data "aws_availability_zones" "available" {
+  state = "available"
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
 
 
 ################################################################################
@@ -8,7 +14,7 @@ data "aws_partition" "current" {}
 ################################################################################
 
 locals {
-  azs                         = slice(data.aws_availability_zones.available.names, 0, 3)
+  azs                         = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
   vpc_id                      = var.create_network && var.existing_vpc_id == "" ? module.network[0].vpc_id : var.existing_vpc_id
   kubernetes_nodes_subnet_ids = var.create_network && length(var.existing_kubernetes_nodes_subnet_id) == 0 ? module.network[0].private_subnets : var.existing_kubernetes_nodes_subnet_id
 }
@@ -234,82 +240,38 @@ locals {
   eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, null)
   eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
 
-  primary_nodegroups = { for az in local.azs : "${var.kubernetes_primary_nodegroup_name}-${az}" => {
-    create_placement_group = true
-    placement_group_az     = az
-    ami_type               = var.kubernetes_primary_nodegroup_ami_type
-    instance_types         = var.kubernetes_primary_nodegroup_instance_types
-    min_size               = var.kubernetes_primary_nodegroup_min_size
-    max_size               = var.kubernetes_primary_nodegroup_max_size
-    desired_size           = var.kubernetes_primary_nodegroup_desired_size
-    labels                 = var.kubernetes_primary_nodegroup_labels
-    taints                 = var.kubernetes_primary_nodegroup_taints
-  } }
+  # create each node group in each AZ
+  node_groups = merge([
+    for az in local.azs : {
+      for node_group_name, node_group_values in var.kubernetes_node_groups : "${node_group_name}-${substr(az, -1, -1)}" => merge(
+        {
+          create_placement_group = true
+          placement_group_az     = az
+        },
+        node_group_values
+      )
+  }]...)
 
-  primary_nodegroup_asg_tags = flatten([
-    for nodegroup_name, nodegroup in local.primary_nodegroups : concat(
+  # ASG tags for scaling to and from 0
+  # represented as a tuple of objects in the form [{node_group, tag_key, tag_value}]
+  node_group_asg_tags = flatten([
+    for node_group_name, node_group_values in local.node_groups : concat(
       [
-        for k, v in var.kubernetes_primary_nodegroup_labels : {
-          nodegroup_name = nodegroup_name
-          key            = "k8s.io/cluster-autoscaler/node-template/label/${k}"
-          value          = v
+        for k, v in node_group_values.labels : {
+          node_group = node_group_name
+          tag_key    = "k8s.io/cluster-autoscaler/node-template/label/${k}"
+          tag_value  = v
         }
       ],
       [
-        for k, v in var.kubernetes_primary_nodegroup_taints : {
-          nodegroup_name = nodegroup_name
-          key            = "k8s.io/cluster-autoscaler/node-template/taint/${v.key}"
-          value          = "${v.value}:${v.effect}"
-        }
-    ])
-  ])
-
-  gpu_nodegroups = { for az in local.azs : "${var.kubernetes_gpu_nodegroup_name}-${az}" => {
-    create_placement_group = true
-    placement_group_az     = az
-    ami_type               = var.kubernetes_gpu_nodegroup_ami_type
-    instance_types         = var.kubernetes_gpu_nodegroup_instance_types
-    min_size               = var.kubernetes_gpu_nodegroup_min_size
-    max_size               = var.kubernetes_gpu_nodegroup_max_size
-    desired_size           = var.kubernetes_gpu_nodegroup_desired_size
-    labels                 = var.kubernetes_gpu_nodegroup_labels
-    taints                 = var.kubernetes_gpu_nodegroup_taints
-  } }
-
-  gpu_nodegroup_asg_tags = flatten([
-    for nodegroup_name, nodegroup in local.gpu_nodegroups : concat(
-      [
-        for k, v in var.kubernetes_gpu_nodegroup_labels : {
-          nodegroup_name = nodegroup_name
-          key            = "k8s.io/cluster-autoscaler/node-template/label/${k}"
-          value          = v
-        }
-      ],
-      [
-        for k, v in var.kubernetes_gpu_nodegroup_taints : {
-          nodegroup_name = nodegroup_name
-          key            = "k8s.io/cluster-autoscaler/node-template/taint/${v.key}"
-          value          = "${v.value}:${v.effect}"
+        for k, v in node_group_values.taints : {
+          node_group = node_group_name
+          tag_key    = "k8s.io/cluster-autoscaler/node-template/taint/${v.key}"
+          tag_value  = "${v.value}:${v.effect}"
         }
       ]
     )
   ])
-
-  # list of objects in the form of {nodegroup_name, key, value}
-  asg_tags = concat(local.primary_nodegroup_asg_tags, local.gpu_nodegroup_asg_tags)
-}
-
-module "aws_vpc_cni_ipv4_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.0"
-  count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
-
-  name = "aws-vpc-cni-ipv4"
-
-  attach_aws_vpc_cni_policy = true
-  aws_vpc_cni_enable_ipv4   = true
-
-  tags = var.tags
 }
 
 module "kubernetes" {
@@ -317,44 +279,20 @@ module "kubernetes" {
   version = "~> 20.0"
   count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
 
-  cluster_name    = var.name
-  cluster_version = var.kubernetes_cluster_version
+  cluster_name                 = var.name
+  cluster_version              = var.kubernetes_cluster_version
+  enable_irsa                  = var.kubernetes_enable_irsa
+  cluster_encryption_config    = var.kubernetes_cluster_encryption_config
+  enable_auto_mode_custom_tags = var.kubernetes_enable_auto_mode_custom_tags
 
-  cluster_addons = {
-    coredns = {
-      most_recent = true
-    }
-    eks-pod-identity-agent = {
-      most_recent    = true
-      before_compute = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-    vpc-cni = {
-      most_recent    = true
-      before_compute = true
+  create_iam_role               = var.kubernetes_iam_role_arn == null
+  iam_role_arn                  = var.kubernetes_iam_role_arn
+  iam_role_name                 = var.kubernetes_iam_role_name
+  iam_role_use_name_prefix      = var.kubernetes_iam_role_use_name_prefix
+  iam_role_permissions_boundary = var.kubernetes_iam_role_permissions_boundary
 
-      configuration_values = jsonencode({
-        enableNetworkPolicy = "true"
-        env = {
-          # Reference docs https://docs.aws.amazon.com/eks/latest/userguide/cni-increase-ip-addresses.html
-          ENABLE_PREFIX_DELEGATION = "true"
-          WARM_PREFIX_TARGET       = "1"
-        }
-      })
-
-      pod_identity_association = [{
-        role_arn        = module.aws_vpc_cni_ipv4_pod_identity[0].iam_role_arn
-        service_account = "aws-node"
-      }]
-    }
-  }
-
-  create_iam_role = var.kubernetes_iam_role_arn == null
-  iam_role_arn    = var.kubernetes_iam_role_arn
-
-  enable_cluster_creator_admin_permissions = true
+  authentication_mode                      = var.kubernetes_authentication_mode
+  enable_cluster_creator_admin_permissions = var.kubernetes_enable_cluster_creator_admin_permissions
   access_entries                           = var.kubernetes_cluster_access_entries
 
   vpc_id     = local.vpc_id
@@ -374,37 +312,41 @@ module "kubernetes" {
     }
   } : {}
 
-  eks_managed_node_group_defaults = {
-    create_iam_role = var.kubernetes_nodes_iam_role_arn == null
-    iam_role_arn    = var.kubernetes_nodes_iam_role_arn
-    block_device_mappings = {
-      xvda = {
-        device_name = "/dev/xvda"
-        ebs = {
-          delete_on_termination = true
-          encrypted             = var.create_encryption_key || var.existing_kms_key_arn != ""
-          iops                  = 2000
-          kms_key_id            = local.encryption_key_arn
-          volume_size           = 200
-          volume_type           = "gp3"
+  bootstrap_self_managed_addons = var.kubernetes_bootstrap_self_managed_addons
+  cluster_addons                = var.kubernetes_cluster_addons
+
+  eks_managed_node_group_defaults = merge(
+    {
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            delete_on_termination = true
+            encrypted             = var.create_encryption_key || var.existing_kms_key_arn != ""
+            iops                  = 3000
+            kms_key_id            = local.encryption_key_arn
+            volume_size           = 200
+            volume_type           = "gp3"
+          }
         }
       }
-    }
-  }
+    },
+    var.kubernetes_node_group_defaults
+  )
 
-  eks_managed_node_groups = merge(local.primary_nodegroups, local.gpu_nodegroups)
+  eks_managed_node_groups = local.node_groups
 
   tags = var.tags
 }
 
 resource "aws_autoscaling_group_tag" "this" {
-  for_each = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? { for i, asg_tag in local.asg_tags : i => asg_tag } : {}
+  for_each = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? { for i, asg_tag in local.node_group_asg_tags : i => asg_tag } : {}
 
-  autoscaling_group_name = module.kubernetes[0].eks_managed_node_groups[each.value.nodegroup_name].node_group_autoscaling_group_names[0]
+  autoscaling_group_name = module.kubernetes[0].eks_managed_node_groups[each.value.node_group].node_group_autoscaling_group_names[0]
 
   tag {
-    key   = each.value.key
-    value = each.value.value
+    key   = each.value.tag_key
+    value = each.value.tag_value
 
     propagate_at_launch = true
   }

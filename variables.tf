@@ -9,6 +9,12 @@ variable "domain_name" {
   default     = ""
 }
 
+variable "availability_zones" {
+  description = "Number of availability zones to deploy into"
+  type        = number
+  default     = 2
+}
+
 variable "tags" {
   description = "A map of tags to add to all created resources"
   type        = map(string)
@@ -189,10 +195,42 @@ variable "create_kubernetes_cluster" {
   default     = true
 }
 
+variable "existing_kubernetes_nodes_subnet_id" {
+  description = "List of existing subnet IDs to be used for the EKS cluster. Required when an existing_network_id is specified. Ignored if create_network is true and no existing_network_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html."
+  type        = list(string)
+  default     = []
+}
+
 variable "kubernetes_cluster_version" {
   description = "EKS cluster version"
   type        = string
   default     = null
+}
+
+variable "kubernetes_authentication_mode" {
+  description = "The authentication mode for the cluster. Valid values are `CONFIG_MAP`, `API` or `API_AND_CONFIG_MAP`"
+  type        = string
+  default     = "API_AND_CONFIG_MAP"
+}
+
+variable "kubernetes_enable_irsa" {
+  description = "Determines whether to create an OpenID Connect Provider for EKS to enable IRSA"
+  type        = bool
+  default     = true
+}
+
+variable "kubernetes_cluster_encryption_config" {
+  description = "Configuration block with encryption configuration for the cluster. To disable secret encryption, set this value to `{}`"
+  type        = any
+  default = {
+    resources = ["secrets"]
+  }
+}
+
+variable "kubernetes_enable_auto_mode_custom_tags" {
+  description = "Determines whether to enable permissions for custom tags resources created by EKS Auto Mode"
+  type        = bool
+  default     = true
 }
 
 variable "kubernetes_iam_role_arn" {
@@ -201,10 +239,28 @@ variable "kubernetes_iam_role_arn" {
   default     = null
 }
 
-variable "kubernetes_nodes_iam_role_arn" {
-  description = "Existing IAM role ARN to use for all EKS node groups. If not specified, a new one will be created for each node group."
+variable "kubernetes_iam_role_name" {
+  description = "Name to use on IAM role created"
   type        = string
   default     = null
+}
+
+variable "kubernetes_iam_role_use_name_prefix" {
+  description = "Determines whether the IAM role name (`kubernetes_iam_role_name`) is used as a prefix"
+  type        = bool
+  default     = true
+}
+
+variable "kubernetes_iam_role_permissions_boundary" {
+  description = "ARN of the policy that is used to set the permissions boundary for the IAM role"
+  type        = string
+  default     = null
+}
+
+variable "kubernetes_enable_cluster_creator_admin_permissions" {
+  description = "Indicates whether or not to add the cluster creator (the identity used by Terraform) as an administrator via access entry"
+  type        = bool
+  default     = true
 }
 
 variable "kubernetes_cluster_access_entries" {
@@ -233,114 +289,71 @@ variable "kubernetes_cluster_endpoint_private_access_cidrs" {
   default     = []
 }
 
-variable "existing_kubernetes_nodes_subnet_id" {
-  description = "List of existing subnet IDs to be used for the EKS cluster. Required when an existing_network_id is specified. Ignored if create_network is true and no existing_network_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html."
-  type        = list(string)
-  default     = []
+variable "kubernetes_bootstrap_self_managed_addons" {
+  description = "Indicates whether or not to bootstrap self-managed addons after the cluster has been created"
+  type        = bool
+  default     = false
 }
 
-variable "kubernetes_primary_nodegroup_name" {
-  description = "Name of the primary EKS node group"
-  type        = string
-  default     = "primary"
-}
-
-variable "kubernetes_primary_nodegroup_ami_type" {
-  description = "Type of Amazon Machine Image (AMI) associated with the EKS Primary Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values"
-  type        = string
-  default     = "AL2023_x86_64_STANDARD"
-}
-
-variable "kubernetes_primary_nodegroup_instance_types" {
-  description = "Instance types used for the primary node group"
-  type        = list(string)
-  default     = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
-}
-
-variable "kubernetes_primary_nodegroup_desired_size" {
-  description = "Desired number of nodes in the primary node group"
-  type        = number
-  default     = 1
-}
-
-variable "kubernetes_primary_nodegroup_min_size" {
-  description = "Minimum number of nodes in the primary node group"
-  type        = number
-  default     = 1
-}
-
-variable "kubernetes_primary_nodegroup_max_size" {
-  description = "Maximum number of nodes in the primary node group"
-  type        = number
-  default     = 10
-}
-
-variable "kubernetes_primary_nodegroup_labels" {
-  description = "Key-value map of Kubernetes labels to be applied to the nodes in the primary node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed."
-  type        = map(string)
+variable "kubernetes_cluster_addons" {
+  description = "Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name`"
+  type        = any
   default = {
-    "datarobot.com/node-capability" = "cpu"
+    coredns = {
+      most_recent = true
+    }
+    eks-pod-identity-agent = {
+      most_recent    = true
+      before_compute = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent          = true
+      before_compute       = true
+      configuration_values = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+    }
   }
 }
 
-variable "kubernetes_primary_nodegroup_taints" {
-  description = "The Kubernetes taints to be applied to the nodes in the primary node group. Maximum of 50 taints per node group"
+variable "kubernetes_node_group_defaults" {
+  description = "Default values to use for all EKS nodegroups"
   type        = any
   default     = {}
 }
 
-variable "kubernetes_gpu_nodegroup_name" {
-  description = "Name of the GPU node group"
-  type        = string
-  default     = "gpu"
-}
-
-variable "kubernetes_gpu_nodegroup_ami_type" {
-  description = "Type of Amazon Machine Image (AMI) associated with the EKS GPU Node Group. See the [AWS documentation](https://docs.aws.amazon.com/eks/latest/APIReference/API_Nodegroup.html#AmazonEKS-Type-Nodegroup-amiType) for valid values"
-  type        = string
-  default     = "AL2_x86_64_GPU"
-}
-
-variable "kubernetes_gpu_nodegroup_instance_types" {
-  description = "Instance types used for the GPU node group"
-  type        = list(string)
-  default     = ["g4dn.2xlarge"]
-}
-
-variable "kubernetes_gpu_nodegroup_desired_size" {
-  description = "Desired number of nodes in the GPU node group"
-  type        = number
-  default     = 0
-}
-
-variable "kubernetes_gpu_nodegroup_min_size" {
-  description = "Minimum number of nodes in the GPU node group"
-  type        = number
-  default     = 0
-}
-
-variable "kubernetes_gpu_nodegroup_max_size" {
-  description = "Maximum number of nodes in the GPU node group"
-  type        = number
-  default     = 10
-}
-
-variable "kubernetes_gpu_nodegroup_labels" {
-  description = "Key-value map of Kubernetes labels to be applied to the nodes in the GPU node group. Only labels that are applied with the EKS API are managed by this argument. Other Kubernetes labels applied to the EKS Node Group will not be managed"
-  type        = map(string)
-  default = {
-    "datarobot.com/node-capability" = "gpu"
-  }
-}
-
-variable "kubernetes_gpu_nodegroup_taints" {
-  description = "The Kubernetes taints to be applied to the nodes in the GPU node group. Maximum of 50 taints per node group"
+variable "kubernetes_node_groups" {
+  description = "Map of EKS managed node groups. See https://github.com/terraform-aws-modules/terraform-aws-eks/tree/master/modules/eks-managed-node-group for further configuration options."
   type        = any
   default = {
-    nvidia_gpu = {
-      key    = "nvidia.com/gpu"
-      value  = "true"
-      effect = "NO_SCHEDULE"
+    datarobot-cpu = {
+      ami_type       = "AL2023_x86_64_STANDARD"
+      instance_types = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
+      desired_size   = 1
+      min_size       = 1
+      max_size       = 10
+      labels = {
+        "datarobot.com/node-capability" = "cpu"
+      }
+      taints = {}
+    }
+    datarobot-gpu = {
+      ami_type       = "AL2023_x86_64_NVIDIA"
+      instance_types = ["g4dn.2xlarge"]
+      desired_size   = 0
+      min_size       = 0
+      max_size       = 10
+      labels = {
+        "datarobot.com/node-capability" = "gpu"
+      }
+      taints = {
+        nvidia_gpu = {
+          key    = "nvidia.com/gpu"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
     }
   }
 }

@@ -3,6 +3,20 @@
 All notable changes are documented in this file.
 
 
+## v1.3.0
+
+### Added
+- more kubernetes variables generally related to IAM and access control: `kubernetes_enable_irsa`, `kubernetes_cluster_encryption_config`, `kubernetes_enable_auto_mode_custom_tags`, `kubernetes_iam_role_name`, `kubernetes_iam_role_use_name_prefix`, `kubernetes_iam_role_permissions_boundary`, `kubernetes_authentication_mode`, `kubernetes_enable_cluster_creator_admin_permissions`, and `kubernetes_bootstrap_self_managed_addons`
+
+### Updated
+- allow for user-specified number of availability zones in the `availability_zones` input variable. additionally, ensure we are only using `available` zones where `opt-in-not-required`
+- make kubernetes node groups fully configurable by specifying them in the `kubernetes_node_groups` input variable and specify defaults with `kubernetes_node_group_defaults`
+- make kubernetes addons fully configurable by specifying them in the `kubernetes_cluster_addons` input variable
+
+### Removed
+- explicit pod identity for VPC CNI (`aws_vpc_cni_ipv4_pod_identity`). this is not required by default because the IAM role created for the EKS managed node groups include the VPC CNI policy.
+
+
 ## v1.2.7
 
 ### Updated
