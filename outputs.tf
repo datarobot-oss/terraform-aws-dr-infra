@@ -92,6 +92,11 @@ output "kubernetes_cluster_certificate_authority_data" {
   value       = try(module.kubernetes[0].cluster_certificate_authority_data, null)
 }
 
+output "kubernetes_nodes_iam_role_arns" {
+  description = "IAM Role ARNs of each node group"
+  value       = try([for node_group in module.kubernetes[0].eks_managed_node_groups : node_group.iam_role_arn], null)
+}
+
 
 ################################################################################
 # App Identity

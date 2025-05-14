@@ -274,33 +274,24 @@ locals {
   ])
 }
 
-module "aws_vpc_cni_ipv4_pod_identity" {
-  source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.0"
-  count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
-
-  name = "aws-vpc-cni-ipv4"
-
-  attach_aws_vpc_cni_policy = true
-  aws_vpc_cni_enable_ipv4   = true
-
-  tags = var.tags
-}
-
 module "kubernetes" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 20.0"
   count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
 
-  cluster_name    = var.name
-  cluster_version = var.kubernetes_cluster_version
+  cluster_name                 = var.name
+  cluster_version              = var.kubernetes_cluster_version
+  enable_irsa                  = var.kubernetes_enable_irsa
+  cluster_encryption_config    = var.kubernetes_cluster_encryption_config
+  enable_auto_mode_custom_tags = var.kubernetes_enable_auto_mode_custom_tags
 
-  create_iam_role = var.kubernetes_iam_role_arn == null
-  iam_role_arn    = var.kubernetes_iam_role_arn
+  create_iam_role               = var.kubernetes_iam_role_arn == null
+  iam_role_arn                  = var.kubernetes_iam_role_arn
+  iam_role_name                 = var.kubernetes_iam_role_name
+  iam_role_use_name_prefix      = var.kubernetes_iam_role_use_name_prefix
+  iam_role_permissions_boundary = var.kubernetes_iam_role_permissions_boundary
 
-  bootstrap_self_managed_addons = var.kubernetes_bootstrap_self_managed_addons
-  cluster_addons                = var.kubernetes_cluster_addons
-
+  authentication_mode                      = var.kubernetes_authentication_mode
   enable_cluster_creator_admin_permissions = var.kubernetes_enable_cluster_creator_admin_permissions
   access_entries                           = var.kubernetes_cluster_access_entries
 
@@ -321,10 +312,11 @@ module "kubernetes" {
     }
   } : {}
 
+  bootstrap_self_managed_addons = var.kubernetes_bootstrap_self_managed_addons
+  cluster_addons                = var.kubernetes_cluster_addons
+
   eks_managed_node_group_defaults = merge(
     {
-      create_iam_role = var.kubernetes_nodes_iam_role_arn == null
-      iam_role_arn    = var.kubernetes_nodes_iam_role_arn
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"

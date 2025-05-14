@@ -68,28 +68,18 @@ module "datarobot_infra" {
   ################################################################################
   # Kubernetes
   ################################################################################
-  create_kubernetes_cluster                = true
-  kubernetes_cluster_version               = "1.32"
-  kubernetes_iam_role_arn                  = null
-  kubernetes_nodes_iam_role_arn            = null
-  kubernetes_bootstrap_self_managed_addons = false
-  kubernetes_cluster_addons = {
-    coredns = {
-      most_recent = true
-    }
-    eks-pod-identity-agent = {
-      most_recent    = true
-      before_compute = true
-    }
-    kube-proxy = {
-      most_recent = true
-    }
-    vpc-cni = {
-      most_recent          = true
-      before_compute       = true
-      configuration_values = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
-    }
+  create_kubernetes_cluster      = true
+  kubernetes_cluster_version     = "1.32"
+  kubernetes_authentication_mode = "API_AND_CONFIG_MAP"
+  kubernetes_enable_irsa         = true
+  kubernetes_cluster_encryption_config = {
+    resources = ["secrets"]
   }
+  kubernetes_enable_auto_mode_custom_tags             = true
+  kubernetes_iam_role_arn                             = null
+  kubernetes_iam_role_name                            = null
+  kubernetes_iam_role_use_name_prefix                 = true
+  kubernetes_iam_role_permissions_boundary            = null
   kubernetes_enable_cluster_creator_admin_permissions = true
   # kubernetes_cluster_access_entries = {
   #   customadmin = {
@@ -109,7 +99,31 @@ module "datarobot_infra" {
   kubernetes_cluster_endpoint_public_access        = true
   kubernetes_cluster_endpoint_public_access_cidrs  = [local.provisioner_public_ip]
   kubernetes_cluster_endpoint_private_access_cidrs = []
-  kubernetes_node_group_defaults                   = {}
+  kubernetes_bootstrap_self_managed_addons         = false
+  kubernetes_cluster_addons = {
+    coredns = {
+      most_recent = true
+    }
+    eks-pod-identity-agent = {
+      most_recent    = true
+      before_compute = true
+    }
+    kube-proxy = {
+      most_recent = true
+    }
+    vpc-cni = {
+      most_recent    = true
+      before_compute = true
+      configuration_values = jsonencode({
+        enableNetworkPolicy = "true"
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
+    }
+  }
+  kubernetes_node_group_defaults = {}
   kubernetes_node_groups = {
     datarobot-cpu = {
       ami_type       = "AL2023_x86_64_STANDARD"
