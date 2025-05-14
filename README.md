@@ -329,8 +329,8 @@ Network access to the cluster's public API endpoint (via the public internet) is
 Network access to the cluster's private API endpoint is only allowed for the Kubernetes nodes by default. If the private API endpoint needs to be accessed from other hosts (such as a provisioner or bastion within the same VPC), the IP address of that host needs to be specified in the `kubernetes_cluster_endpoint_private_access_cidrs` variable.
 
 Two node groups are created:
-- A `primary` node group intended to host the majority of the DataRobot pods
-- A `gpu` node group intended to host GPU workload pods
+- A `datarobot-cpu` node group intended to host the majority of the DataRobot pods
+- A `datarobot-gpu` node group intended to host GPU workload pods
 
 #### IAM Policy
 ```
