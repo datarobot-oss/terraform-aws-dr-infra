@@ -7,6 +7,21 @@ output "vpc_id" {
   value       = try(module.network[0].vpc_id, null)
 }
 
+output "vpc_cidr_block" {
+  description = "The CIDR block of the VPC"
+  value       = try(module.network[0].vpc_cidr_block, null)
+}
+
+output "vpc_public_subnets" {
+  description = "List of IDs of public subnets"
+  value       = try(module.network[0].public_subnets, null)
+}
+
+output "vpc_private_subnets" {
+  description = "List of IDs of private subnets"
+  value       = try(module.network[0].private_subnets, null)
+}
+
 
 ################################################################################
 # DNS
@@ -69,7 +84,7 @@ output "s3_bucket_id" {
 
 output "ecr_repository_urls" {
   description = "URLs of the image builder repositories"
-  value       = [for repo in module.container_registry : repo.repository_url]
+  value       = var.create_container_registry ? [for repo in module.container_registry : repo.repository_url] : null
 }
 
 
@@ -92,9 +107,9 @@ output "kubernetes_cluster_certificate_authority_data" {
   value       = try(module.kubernetes[0].cluster_certificate_authority_data, null)
 }
 
-output "kubernetes_nodes_iam_role_arns" {
-  description = "IAM Role ARNs of each node group"
-  value       = try([for node_group in module.kubernetes[0].eks_managed_node_groups : node_group.iam_role_arn], null)
+output "kubernetes_cluster_node_groups" {
+  description = "EKS cluster node groups"
+  value       = try(module.kubernetes[0].eks_managed_node_groups, null)
 }
 
 

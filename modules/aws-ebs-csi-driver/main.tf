@@ -1,4 +1,4 @@
-module "ebs_csi_driver_pod_identity" {
+module "aws_ebs_csi_driver_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "~> 1.0"
 
@@ -18,7 +18,7 @@ module "ebs_csi_driver_pod_identity" {
   tags = var.tags
 }
 
-resource "helm_release" "ebs_csi_driver" {
+resource "helm_release" "aws_ebs_csi_driver" {
   name       = "aws-ebs-csi-driver"
   namespace  = "aws-ebs-csi-driver"
   repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
@@ -34,5 +34,5 @@ resource "helm_release" "ebs_csi_driver" {
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 
-  depends_on = [module.ebs_csi_driver_pod_identity]
+  depends_on = [module.aws_ebs_csi_driver_pod_identity]
 }
