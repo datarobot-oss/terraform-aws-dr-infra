@@ -16,7 +16,7 @@ data "aws_availability_zones" "available" {
 locals {
   azs                         = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
   vpc_id                      = var.create_network && var.existing_vpc_id == "" ? module.network[0].vpc_id : var.existing_vpc_id
-  kubernetes_nodes_subnet_ids = var.create_network && length(var.existing_kubernetes_nodes_subnet_id) == 0 ? module.network[0].private_subnets : var.existing_kubernetes_nodes_subnet_id
+  kubernetes_nodes_subnet_ids = var.create_network && length(var.existing_kubernetes_nodes_subnet_ids) == 0 ? module.network[0].private_subnets : var.existing_kubernetes_nodes_subnet_ids
 }
 
 module "network" {
@@ -235,10 +235,10 @@ data "aws_eks_cluster" "existing" {
 }
 
 locals {
-  eks_cluster_name            = try(data.aws_eks_cluster.existing[0].name, module.kubernetes[0].cluster_name, null)
-  eks_cluster_ca_data         = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, null)
-  eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, null)
-  eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
+  eks_cluster_name            = try(data.aws_eks_cluster.existing[0].name, module.kubernetes[0].cluster_name, "")
+  eks_cluster_ca_data         = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, "")
+  eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
+  eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, "")
 
   # create each node group in each AZ
   node_groups = merge([
@@ -315,18 +315,18 @@ module "kubernetes" {
   bootstrap_self_managed_addons = var.kubernetes_bootstrap_self_managed_addons
   cluster_addons                = var.kubernetes_cluster_addons
 
+  node_security_group_additional_rules         = var.kubernetes_node_security_group_additional_rules
+  node_security_group_enable_recommended_rules = var.kubernetes_node_security_group_enable_recommended_rules
+
   eks_managed_node_group_defaults = merge(
     {
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
           ebs = {
-            delete_on_termination = true
-            encrypted             = var.create_encryption_key || var.existing_kms_key_arn != ""
-            iops                  = 3000
-            kms_key_id            = local.encryption_key_arn
-            volume_size           = 200
-            volume_type           = "gp3"
+            encrypted   = var.create_encryption_key || var.existing_kms_key_arn != ""
+            kms_key_id  = local.encryption_key_arn
+            volume_size = 200
           }
         }
       }
@@ -441,15 +441,15 @@ module "descheduler" {
   custom_values_variables    = var.descheduler_variables
 }
 
-module "ebs_csi_driver" {
-  source = "./modules/ebs-csi-driver"
-  count  = var.ebs_csi_driver ? 1 : 0
+module "aws_ebs_csi_driver" {
+  source = "./modules/aws-ebs-csi-driver"
+  count  = var.aws_ebs_csi_driver ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
   aws_ebs_csi_kms_arn     = local.encryption_key_arn
 
-  custom_values_templatefile = var.ebs_csi_driver_values
-  custom_values_variables    = var.ebs_csi_driver_variables
+  custom_values_templatefile = var.aws_ebs_csi_driver_values
+  custom_values_variables    = var.aws_ebs_csi_driver_variables
 
   tags = var.tags
 }

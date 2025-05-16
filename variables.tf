@@ -195,7 +195,7 @@ variable "create_kubernetes_cluster" {
   default     = true
 }
 
-variable "existing_kubernetes_nodes_subnet_id" {
+variable "existing_kubernetes_nodes_subnet_ids" {
   description = "List of existing subnet IDs to be used for the EKS cluster. Required when an existing_network_id is specified. Ignored if create_network is true and no existing_network_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html."
   type        = list(string)
   default     = []
@@ -317,6 +317,18 @@ variable "kubernetes_cluster_addons" {
   }
 }
 
+variable "kubernetes_node_security_group_additional_rules" {
+  description = "List of additional security group rules to add to the node security group created. Set `source_cluster_security_group = true` inside rules to set the `cluster_security_group` as source"
+  type        = any
+  default     = {}
+}
+
+variable "kubernetes_node_security_group_enable_recommended_rules" {
+  description = "Determines whether to enable recommended security group rules for the node security group created. This includes node-to-node TCP ingress on ephemeral ports and allows all egress traffic"
+  type        = bool
+  default     = true
+}
+
 variable "kubernetes_node_group_defaults" {
   description = "Default values to use for all EKS nodegroups"
   type        = any
@@ -380,19 +392,19 @@ variable "datarobot_namespace" {
 # Helm Charts
 ################################################################################
 
-variable "ebs_csi_driver" {
+variable "aws_ebs_csi_driver" {
   description = "Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs_csi_driver variables are ignored if this variable is false"
   type        = bool
   default     = true
 }
 
-variable "ebs_csi_driver_values" {
+variable "aws_ebs_csi_driver_values" {
   description = "Path to templatefile containing custom values for the aws-ebs-csi-driver helm chart"
   type        = string
   default     = ""
 }
 
-variable "ebs_csi_driver_variables" {
+variable "aws_ebs_csi_driver_variables" {
   description = "Variables passed to the ebs_csi_driver_values templatefile"
   type        = any
   default     = {}

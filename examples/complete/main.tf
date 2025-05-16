@@ -123,7 +123,9 @@ module "datarobot_infra" {
       })
     }
   }
-  kubernetes_node_group_defaults = {}
+  kubernetes_node_security_group_additional_rules         = {}
+  kubernetes_node_security_group_enable_recommended_rules = true
+  kubernetes_node_group_defaults                          = {}
   kubernetes_node_groups = {
     datarobot-cpu = {
       ami_type       = "AL2023_x86_64_STANDARD"
@@ -165,9 +167,9 @@ module "datarobot_infra" {
   ################################################################################
   # aws-ebs-csi-driver
   ################################################################################
-  ebs_csi_driver           = true
-  ebs_csi_driver_values    = "${path.module}/templates/custom_ebs_csi_driver_values.yaml"
-  ebs_csi_driver_variables = {}
+  aws_ebs_csi_driver           = true
+  aws_ebs_csi_driver_values    = "${path.module}/templates/custom_aws_ebs_csi_driver_values.yaml"
+  aws_ebs_csi_driver_variables = {}
 
   ################################################################################
   # cluster-autoscaler
