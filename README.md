@@ -44,6 +44,7 @@ module "datarobot_infra" {
 - [Complete](examples/complete) - Demonstrates all input variables
 - [Partial](examples/partial) - Demonstrates the use of existing resources
 - [Minimal](examples/minimal) - Demonstrates the minimum set of input variables needed to deploy all infrastructure
+- [Airgap](examples/airgap) - Demonstrates how a cluster could be built in an airgapped VPC
 
 ### Using an example directly from source
 1. Clone the repo
@@ -62,6 +63,26 @@ terraform plan
 terraform apply
 terraform destroy
 ```
+
+### Makefile
+The Makefile can be used to build a bundle containing all providers, modules, and helm charts required to run this module. This bundle can then be transferred to an airgapped environment and used.
+1. Create the bundle
+    ```bash
+    make
+    ```
+2. Copy the newly created `terraform-aws-dr-infra.tgz` bundle to the desired host
+3. Unzip the bundle
+    ```bash
+    tar -xzf terraform-aws-dr-infra.tgz
+    ```
+4. Modify the root module `main.tf` as needed
+5. Run Terraform as normal
+    ```bash
+    terraform init
+    terraform plan
+    terraform apply
+    terraform destroy
+    ```
 
 
 ## Module Descriptions

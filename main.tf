@@ -15,14 +15,14 @@ data "aws_availability_zones" "available" {
 
 locals {
   azs                         = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
-  vpc_id                      = var.create_network && var.existing_vpc_id == "" ? module.network[0].vpc_id : var.existing_vpc_id
+  vpc_id                      = var.create_network && var.existing_vpc_id == null ? module.network[0].vpc_id : var.existing_vpc_id
   kubernetes_nodes_subnet_ids = var.create_network && length(var.existing_kubernetes_nodes_subnet_ids) == 0 ? module.network[0].private_subnets : var.existing_kubernetes_nodes_subnet_ids
 }
 
 module "network" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  count   = var.create_network && var.existing_vpc_id == "" ? 1 : 0
+  count   = var.create_network && var.existing_vpc_id == null ? 1 : 0
 
   name = var.name
   cidr = var.network_address_space
@@ -47,7 +47,7 @@ module "network" {
 module "endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
   version = "~> 5.0"
-  count   = var.create_network && var.existing_vpc_id == "" && length(var.network_private_endpoints) > 0 ? 1 : 0
+  count   = var.create_network && var.existing_vpc_id == null && length(var.network_private_endpoints) > 0 ? 1 : 0
 
   vpc_id                     = local.vpc_id
   create_security_group      = true

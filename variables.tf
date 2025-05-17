@@ -31,7 +31,7 @@ variable "tags" {
 variable "existing_vpc_id" {
   description = "ID of an existing VPC to use. When specified, other network variables are ignored."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "create_network" {
