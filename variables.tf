@@ -392,6 +392,12 @@ variable "datarobot_namespace" {
 # Helm Charts
 ################################################################################
 
+variable "install_helm_charts" {
+  description = "Whether to install helm charts into the target EKS cluster. All other helm chart variables are ignored if this is `false`."
+  type        = bool
+  default     = true
+}
+
 variable "aws_ebs_csi_driver" {
   description = "Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs_csi_driver variables are ignored if this variable is false"
   type        = bool

@@ -423,7 +423,7 @@ provider "helm" {
 
 module "cluster_autoscaler" {
   source = "./modules/cluster-autoscaler"
-  count  = var.cluster_autoscaler ? 1 : 0
+  count  = var.install_helm_charts && var.cluster_autoscaler ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
 
@@ -435,7 +435,7 @@ module "cluster_autoscaler" {
 
 module "descheduler" {
   source = "./modules/descheduler"
-  count  = var.descheduler ? 1 : 0
+  count  = var.install_helm_charts && var.descheduler ? 1 : 0
 
   custom_values_templatefile = var.descheduler_values
   custom_values_variables    = var.descheduler_variables
@@ -443,7 +443,7 @@ module "descheduler" {
 
 module "aws_ebs_csi_driver" {
   source = "./modules/aws-ebs-csi-driver"
-  count  = var.aws_ebs_csi_driver ? 1 : 0
+  count  = var.install_helm_charts && var.aws_ebs_csi_driver ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
   aws_ebs_csi_kms_arn     = local.encryption_key_arn
@@ -457,7 +457,7 @@ module "aws_ebs_csi_driver" {
 
 module "aws_load_balancer_controller" {
   source = "./modules/aws-load-balancer-controller"
-  count  = var.aws_load_balancer_controller ? 1 : 0
+  count  = var.install_helm_charts && var.aws_load_balancer_controller ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
   vpc_id                  = local.vpc_id
@@ -471,7 +471,7 @@ module "aws_load_balancer_controller" {
 
 module "ingress_nginx" {
   source = "./modules/ingress-nginx"
-  count  = var.ingress_nginx ? 1 : 0
+  count  = var.install_helm_charts && var.ingress_nginx ? 1 : 0
 
   acm_certificate_arn        = local.acm_certificate_arn
   internet_facing_ingress_lb = var.internet_facing_ingress_lb
@@ -487,7 +487,7 @@ module "ingress_nginx" {
 
 module "cert_manager" {
   source = "./modules/cert-manager"
-  count  = var.cert_manager ? 1 : 0
+  count  = var.install_helm_charts && var.cert_manager ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
   route53_zone_arn        = local.public_zone_arn
@@ -502,7 +502,7 @@ module "cert_manager" {
 
 module "external_dns" {
   source = "./modules/external-dns"
-  count  = var.external_dns ? 1 : 0
+  count  = var.install_helm_charts && var.external_dns ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
   route53_zone_arn        = var.internet_facing_ingress_lb ? local.public_zone_arn : local.private_zone_arn
@@ -518,7 +518,7 @@ module "external_dns" {
 
 module "nvidia_device_plugin" {
   source = "./modules/nvidia-device-plugin"
-  count  = var.nvidia_device_plugin ? 1 : 0
+  count  = var.install_helm_charts && var.nvidia_device_plugin ? 1 : 0
 
   custom_values_templatefile = var.nvidia_device_plugin_values
   custom_values_variables    = var.nvidia_device_plugin_variables
@@ -526,7 +526,7 @@ module "nvidia_device_plugin" {
 
 module "metrics_server" {
   source = "./modules/metrics-server"
-  count  = var.metrics_server ? 1 : 0
+  count  = var.install_helm_charts && var.metrics_server ? 1 : 0
 
   custom_values_templatefile = var.metrics_server_values
   custom_values_variables    = var.metrics_server_variables
