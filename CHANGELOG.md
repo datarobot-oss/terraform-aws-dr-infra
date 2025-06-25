@@ -3,6 +3,12 @@
 All notable changes are documented in this file.
 
 
+## v1.3.2
+
+### Updated
+- `helm` provider version to `>= 3.0.2`
+
+
 ## v1.3.1
 
 ### Added

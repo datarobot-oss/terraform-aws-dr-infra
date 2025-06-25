@@ -413,7 +413,7 @@ data "aws_eks_cluster_auth" "this" {
 }
 
 provider "helm" {
-  kubernetes {
+  kubernetes = {
     host                   = try(local.eks_cluster_endpoint, "")
     cluster_ca_certificate = base64decode(try(local.eks_cluster_ca_data, ""))
     token                  = try(data.aws_eks_cluster_auth.this[0].token, "")

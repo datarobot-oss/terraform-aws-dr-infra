@@ -31,10 +31,12 @@ resource "helm_release" "cert_manager" {
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 
-  set {
-    name  = "crds.enabled"
-    value = "true"
-  }
+  set = [
+    {
+      name  = "crds.enabled"
+      value = "true"
+    }
+  ]
 
   depends_on = [module.cert_manager_pod_identity]
 }

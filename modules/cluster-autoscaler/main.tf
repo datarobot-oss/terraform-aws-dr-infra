@@ -34,14 +34,16 @@ resource "helm_release" "cluster_autoscaler" {
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 
-  set {
-    name  = "autoDiscovery.clusterName"
-    value = var.kubernetes_cluster_name
-  }
-  set {
-    name  = "awsRegion"
-    value = data.aws_region.current.name
-  }
+  set = [
+    {
+      name  = "autoDiscovery.clusterName"
+      value = var.kubernetes_cluster_name
+    },
+    {
+      name  = "awsRegion"
+      value = data.aws_region.current.name
+    }
+  ]
 
   depends_on = [module.cluster_autoscaler_pod_identity]
 }
