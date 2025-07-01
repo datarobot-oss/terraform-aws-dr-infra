@@ -30,15 +30,16 @@ resource "helm_release" "aws_load_balancer_controller" {
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 
-  set {
-    name  = "clusterName"
-    value = var.kubernetes_cluster_name
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.vpc_id
-  }
+  set = [
+    {
+      name  = "clusterName"
+      value = var.kubernetes_cluster_name
+    },
+    {
+      name  = "vpcId"
+      value = var.vpc_id
+    }
+  ]
 
   depends_on = [module.aws_load_balancer_controller_pod_identity]
 }
