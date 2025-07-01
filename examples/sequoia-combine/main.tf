@@ -12,12 +12,10 @@ data "aws_vpc" "this" {
 }
 
 locals {
-  iam_role_permissions_boundary_arn = var.eks_iam_role_permissions_boundary_name != null ? "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.eks_iam_role_permissions_boundary_name}" : null
-
-  private_ca_chain = file("${path.module}/ca-chain.cert.pem")
+  iam_role_permissions_boundary_arn = "arn:${data.aws_partition.current.partition}:iam::${data.aws_caller_identity.current.account_id}:policy/${var.eks_iam_role_permissions_boundary_name}"
 }
 
-### SSH key pair
+### SSH key pair for EKS nodes
 resource "tls_private_key" "this" {
   algorithm = "RSA"
 }
@@ -138,15 +136,15 @@ module "datarobot_infra" {
         EOT
       },
       # Add private CA to EKS node trust store
-      {
+      var.custom_ca_chain != null ? {
         content_type = "text/x-shellscript; charset=\"us-ascii\""
         content      = <<-EOT
           #!/bin/bash
 
-          sudo echo "${local.private_ca_chain}" > /etc/pki/ca-trust/source/anchors/private-ca.pem
+          sudo echo "${file(var.custom_ca_chain)}" > /etc/pki/ca-trust/source/anchors/private-ca.pem
           sudo update-ca-trust
         EOT
-      }
+      } : null
     ]
   }
 
@@ -162,22 +160,11 @@ module "datarobot_infra" {
     }
   }
 
-  create_acm_certificate    = false
-  create_dns_zones          = false
-  create_app_identity       = false
-  create_encryption_key     = false
-  create_container_registry = false
-  create_storage            = false
-
-  aws_load_balancer_controller = false
-  aws_ebs_csi_driver           = false
-  cluster_autoscaler           = false
-  descheduler                  = false
-  ingress_nginx                = false
-  cert_manager                 = false
-  external_dns                 = false
-  nvidia_device_plugin         = false
-  metrics_server               = false
+  create_acm_certificate = false
+  create_dns_zones       = false
+  create_app_identity    = false
+  create_encryption_key  = false
+  install_helm_charts    = false
 
   tags = var.tags
 }

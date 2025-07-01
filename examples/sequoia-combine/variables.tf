@@ -9,17 +9,17 @@ variable "region" {
 }
 
 variable "vpc_id" {
-  description = "ID of the VPC to deploy into"
+  description = "ID of the existing VPC to deploy into"
   type        = string
 }
 
 variable "private_subnet_ids" {
-  description = "List of subnet IDs to deploy into"
+  description = "List of subnet IDs within the existing `vpc_id` to deploy into"
   type        = list(string)
 }
 
 variable "bastion_private_ip" {
-  description = "Private IP of existing bastion host to use"
+  description = "Private IP of existing host to provide SSH access to Kubernetes nodes"
   type        = string
   default     = null
 }
@@ -42,6 +42,11 @@ variable "eks_cluster_nodes_iam_role_name" {
 
 variable "eks_iam_role_permissions_boundary_name" {
   description = "Name of IAM role permissions boundary to use for the EKS cluster and node roles"
+  type        = string
+}
+
+variable "custom_ca_chain" {
+  description = "path to PEM-formatted CA chain file to add to EKS node trust stores"
   type        = string
   default     = null
 }
