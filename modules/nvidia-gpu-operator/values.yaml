@@ -1,0 +1,4 @@
+node-feature-discovery:
+  worker:
+    tolerations:
+      - operator: Exists
