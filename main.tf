@@ -524,6 +524,14 @@ module "nvidia_device_plugin" {
   custom_values_variables    = var.nvidia_device_plugin_variables
 }
 
+module "nvidia_gpu_operator" {
+  source = "./modules/nvidia-gpu-operator"
+  count  = var.install_helm_charts && var.nvidia_gpu_operator ? 1 : 0
+
+  custom_values_templatefile = var.nvidia_gpu_operator_values
+  custom_values_variables    = var.nvidia_gpu_operator_variables
+}
+
 module "metrics_server" {
   source = "./modules/metrics-server"
   count  = var.install_helm_charts && var.metrics_server ? 1 : 0

@@ -548,6 +548,24 @@ variable "nvidia_device_plugin_variables" {
   default     = {}
 }
 
+variable "nvidia_gpu_operator" {
+  description = "Install the nvidia-gpu-operator helm chart to manage NVIDIA GPU resources in the EKS cluster. All other nvidia_gpu_operator variables are ignored if this variable is false."
+  type        = bool
+  default     = false
+}
+
+variable "nvidia_gpu_operator_values" {
+  description = "Path to templatefile containing custom values for the nvidia-gpu-operator helm chart"
+  type        = string
+  default     = ""
+}
+
+variable "nvidia_gpu_operator_variables" {
+  description = "Variables passed to the nvidia_gpu_operator_values templatefile"
+  type        = any
+  default     = {}
+}
+
 variable "metrics_server" {
   description = "Install the metrics-server helm chart to expose resource metrics for Kubernetes built-in autoscaling pipelines. All other metrics_server variables are ignored if this variable is false."
   type        = bool
