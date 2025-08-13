@@ -101,7 +101,7 @@ data "aws_route53_zone" "existing_private" {
 locals {
   # create a public zone if we're using external_dns with internet_facing LB
   # or creating a public ACM certificate
-  create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == null && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == ""))
+  create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == null && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == null))
 
   public_zone = {
     public = {
@@ -149,7 +149,7 @@ module "dns" {
 ################################################################################
 
 locals {
-  acm_certificate_arn = coalesce(var.existing_acm_certificate_arn, module.acm[0].acm_certificate_arn)
+  acm_certificate_arn = try(coalesce(var.existing_acm_certificate_arn, module.acm[0].acm_certificate_arn), null)
 }
 
 module "acm" {
@@ -178,7 +178,7 @@ module "acm" {
 ################################################################################
 
 locals {
-  encryption_key_arn = coalesce(var.existing_kms_key_arn, module.encryption_key[0].key_arn)
+  encryption_key_arn = try(coalesce(var.existing_kms_key_arn, module.encryption_key[0].key_arn), null)
 }
 
 module "encryption_key" {
@@ -204,7 +204,7 @@ module "encryption_key" {
 ################################################################################
 
 locals {
-  s3_bucket_id = coalesce(var.existing_s3_bucket_id, module.storage[0].s3_bucket_id)
+  s3_bucket_id = try(coalesce(var.existing_s3_bucket_id, module.storage[0].s3_bucket_id), null)
 }
 
 module "storage" {
@@ -365,7 +365,6 @@ resource "aws_autoscaling_group_tag" "this" {
     propagate_at_launch = true
   }
 }
-
 
 
 ################################################################################
@@ -623,8 +622,12 @@ module "ingress_nginx" {
   source = "./modules/ingress-nginx"
   count  = var.install_helm_charts && var.ingress_nginx ? 1 : 0
 
-  acm_certificate_arn        = local.acm_certificate_arn
-  internet_facing_ingress_lb = var.internet_facing_ingress_lb
+  internet_facing_ingress_lb      = var.internet_facing_ingress_lb
+  eks_cluster_name                = local.eks_cluster_name
+  acm_certificate_arn             = local.acm_certificate_arn
+  create_vpce_service             = var.create_ingress_vpce_service
+  vpce_service_allowed_principals = var.ingress_vpce_service_allowed_principals
+  vpce_service_private_dns_name   = var.domain_name
 
   custom_values_templatefile = var.ingress_nginx_values
   custom_values_variables    = var.ingress_nginx_variables

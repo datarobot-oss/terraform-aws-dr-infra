@@ -596,6 +596,8 @@ The `ingress-nginx` helm chart will trigger the deployment of an AWS Network Loa
 
 By default this NLB will terminate TLS using either the certificate specified with the `existing_acm_certificate_arn` variable or the certificate created in the ACM module if `create_acm_certificate` is `true`. It is possible not to use ACM at all by setting `create_acm_certificate` to `false` and overriding the `controller.service.targetPorts.https` setting as demonstrated in the [complete example](examples/complete).
 
+Optionally expose the `internal` NLB as a VPCE endpoint service using the `create_ingress_vpce_service` flag. A list of AWS principals may be allowed to discover the endpoint service using the `ingress_vpce_service_allowed_principals` variable.
+
 #### IAM Policy
 Not required
 

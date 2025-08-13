@@ -564,6 +564,18 @@ variable "internet_facing_ingress_lb" {
   default     = true
 }
 
+variable "create_ingress_vpce_service" {
+  description = "Expose the internal NLB created by the ingress-nginx controller as a VPC Endpoint Service. Only applies if internet_facing_ingress_lb is false."
+  type        = bool
+  default     = false
+}
+
+variable "ingress_vpce_service_allowed_principals" {
+  description = "The ARNs of one or more principals allowed to discover the endpoint service. Only applies if internet_facing_ingress_lb is false."
+  type        = list(string)
+  default     = null
+}
+
 variable "ingress_nginx_values" {
   description = "Path to templatefile containing custom values for the ingress-nginx helm chart."
   type        = string

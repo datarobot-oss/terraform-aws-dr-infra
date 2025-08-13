@@ -217,8 +217,10 @@ module "datarobot_infra" {
   ################################################################################
   # ingress-nginx
   ################################################################################
-  ingress_nginx              = true
-  internet_facing_ingress_lb = true
+  ingress_nginx                           = true
+  internet_facing_ingress_lb              = true
+  create_ingress_vpce_service             = true
+  ingress_vpce_service_allowed_principals = ["arn:aws:iam::12345678910:root"]
 
   # in this case our custom values file override is formatted as a templatefile
   # so we can pass variables like our provisioner_public_ip to it.

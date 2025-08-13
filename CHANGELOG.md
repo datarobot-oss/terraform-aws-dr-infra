@@ -2,6 +2,14 @@
 
 All notable changes are documented in this file.
 
+
+## v1.4.1
+
+### Added
+
+- VPCE endpoint service for ingress-nginx controller internal LB
+
+
 ## v1.4.0
 
 ### Added
@@ -9,11 +17,13 @@ All notable changes are documented in this file.
 - `postgres` and `redis` modules.
 - database subnets
 
+
 ## v1.3.3
 
 ### Added
 
 - nvidia_gpu_operator helm chart module
+
 
 ## v1.3.2
 
