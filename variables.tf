@@ -31,7 +31,7 @@ variable "tags" {
 variable "existing_vpc_id" {
   description = "ID of an existing VPC to use. When specified, other network variables are ignored."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "create_network" {
@@ -70,13 +70,13 @@ variable "network_private_endpoints" {
 variable "existing_public_route53_zone_id" {
   description = "ID of existing public Route53 hosted zone to use for public DNS records created by external-dns and ACM certificate validation. This is required when create_dns_zones is false and ingress_nginx and internet_facing_ingress_lb are true or when create_acm_certificate is true."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "existing_private_route53_zone_id" {
   description = "ID of existing private Route53 hosted zone to use for private DNS records created by external-dns. This is required when create_dns_zones is false and ingress_nginx is true with internet_facing_ingress_lb false."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "create_dns_zones" {
@@ -99,7 +99,7 @@ variable "dns_zones_force_destroy" {
 variable "existing_acm_certificate_arn" {
   description = "ARN of existing ACM certificate to use with the ingress load balancer created by the ingress_nginx module. When specified, create_acm_certificate will be ignored."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "create_acm_certificate" {
@@ -116,7 +116,7 @@ variable "create_acm_certificate" {
 variable "existing_kms_key_arn" {
   description = "ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create_encryption_key will be ignored."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "create_encryption_key" {
@@ -133,7 +133,7 @@ variable "create_encryption_key" {
 variable "existing_s3_bucket_id" {
   description = "ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, all other storage variables will be ignored."
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "create_storage" {
@@ -195,10 +195,10 @@ variable "create_kubernetes_cluster" {
   default     = true
 }
 
-variable "existing_kubernetes_nodes_subnet_ids" {
+variable "existing_kubernetes_node_subnets" {
   description = "List of existing subnet IDs to be used for the EKS cluster. Required when an existing_network_id is specified. Ignored if create_network is true and no existing_network_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html."
   type        = list(string)
-  default     = []
+  default     = null
 }
 
 variable "kubernetes_cluster_version" {
@@ -385,6 +385,88 @@ variable "datarobot_namespace" {
   description = "Kubernetes namespace in which the DataRobot application will be installed"
   type        = string
   default     = "dr-app"
+}
+
+
+################################################################################
+# PostgreSQL
+################################################################################
+
+variable "create_postgres" {
+  description = "Whether to create a RDS postgres instance"
+  type        = bool
+  default     = true
+}
+
+variable "existing_postgres_subnets" {
+  description = "List of existing subnet IDs to be used for the RDS postgres instance. Required when an existing_network_id is specified."
+  type        = list(string)
+  default     = null
+}
+
+variable "postgres_engine_version" {
+  description = "The engine version to use"
+  type        = string
+  default     = "13"
+}
+
+variable "postgres_instance_class" {
+  description = "The instance type of the RDS instance"
+  type        = string
+  default     = "db.m6g.large"
+}
+
+variable "postgres_allocated_storage" {
+  description = "The allocated storage in gigabytes"
+  type        = number
+  default     = 20
+}
+
+variable "postgres_max_allocated_storage" {
+  description = "Specifies the value for Storage Autoscaling"
+  type        = number
+  default     = 500
+}
+
+variable "postgres_backup_retention_period" {
+  description = "The days to retain backups for"
+  type        = number
+  default     = 7
+}
+
+variable "postgres_deletion_protection" {
+  description = "The database can't be deleted when this value is set to true"
+  type        = bool
+  default     = false
+}
+
+
+################################################################################
+# Redis
+################################################################################
+
+variable "create_redis" {
+  description = "Whether to create a Elasticache Redis instance"
+  type        = bool
+  default     = true
+}
+
+variable "existing_redis_subnets" {
+  description = "List of existing subnet IDs to be used for the Elasticache Redis instance. Required when an existing_network_id is specified."
+  type        = list(string)
+  default     = null
+}
+
+variable "redis_engine_version" {
+  description = "The Elasticache engine version to use"
+  type        = string
+  default     = "7.1"
+}
+
+variable "redis_node_type" {
+  description = "The instance type of the RDS instance"
+  type        = string
+  default     = "cache.t4g.medium"
 }
 
 

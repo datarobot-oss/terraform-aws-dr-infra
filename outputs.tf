@@ -4,12 +4,12 @@
 
 output "vpc_id" {
   description = "The ID of the VPC"
-  value       = try(module.network[0].vpc_id, null)
+  value       = local.vpc_id
 }
 
 output "vpc_cidr_block" {
   description = "The CIDR block of the VPC"
-  value       = try(module.network[0].vpc_cidr_block, null)
+  value       = local.vpc_cidr
 }
 
 output "vpc_public_subnets" {
@@ -29,22 +29,22 @@ output "vpc_private_subnets" {
 
 output "public_route53_zone_id" {
   description = "Zone ID of the public Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_id["public"], null)
+  value       = local.public_zone_id
 }
 
 output "public_route53_zone_arn" {
   description = "Zone ARN of the public Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_arn["public"], null)
+  value       = local.public_zone_arn
 }
 
 output "private_route53_zone_id" {
   description = "Zone ID of the private Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_id["public"], null)
+  value       = local.private_zone_id
 }
 
 output "private_route53_zone_arn" {
   description = "Zone ARN of the private Route53 zone"
-  value       = try(module.dns[0].route53_zone_zone_arn["public"], null)
+  value       = local.private_zone_arn
 }
 
 
@@ -120,4 +120,36 @@ output "kubernetes_cluster_node_groups" {
 output "app_role_arn" {
   description = "ARN of the IAM role to be assumed by the DataRobot app service accounts"
   value       = try(module.app_identity[0].iam_role_arn, null)
+}
+
+
+################################################################################
+# PostgreSQL
+################################################################################
+
+output "postgres_endpoint" {
+  description = "RDS postgres endpoint"
+  value       = try(module.postgres[0].db_instance_endpoint, null)
+}
+
+output "postgres_password" {
+  description = "RDS postgres master password"
+  value       = try(data.aws_secretsmanager_secret_version.postgres_password[0].secret_string)
+  sensitive   = true
+}
+
+
+################################################################################
+# Redis
+################################################################################
+
+output "redis_endpoint" {
+  description = "Elasticache redis endpoint"
+  value       = try(module.redis[0].replication_group_primary_endpoint_address, null)
+}
+
+output "redis_password" {
+  description = "Elasticache redis auth token"
+  value       = try(random_password.redis[0].result)
+  sensitive   = true
 }

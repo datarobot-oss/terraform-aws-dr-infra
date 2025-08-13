@@ -20,6 +20,8 @@ module "datarobot_infra" {
   create_container_registry       = true
   create_kubernetes_cluster       = true
   create_app_identity             = true
+  create_postgres                 = true
+  create_redis                    = true
 
   cluster_autoscaler           = true
   descheduler                  = true
@@ -30,6 +32,7 @@ module "datarobot_infra" {
   cert_manager                 = true
   external_dns                 = true
   nvidia_device_plugin         = true
+  nvidia_gpu_operator          = true
   metrics_server               = true
 
   tags = {
@@ -406,6 +409,76 @@ Two node groups are created:
 ```
 
 
+### Postgres
+#### Toggle
+- `create_postgres` to create a new Amazon RDS for PostgreSQL instance
+
+#### Description
+Uses the [terraform-aws-rds](https://github.com/terraform-aws-modules/terraform-aws-rds) module to create a new RDS postgres instance to be used by the DataRobot application.
+
+#### IAM Policy
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowRDSActions",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:ModifyDBInstance",
+                "rds:DeleteDBInstance",
+                "rds:DescribeDBInstances",
+                "rds:StartDBInstance",
+                "rds:StopDBInstance",
+                "rds:CreateDBSubnetGroup",
+                "rds:ModifyDBSubnetGroup",
+                "rds:DeleteDBSubnetGroup",
+                "rds:DescribeDBSubnetGroups",
+                "rds:CreateOptionGroup",
+                "rds:ModifyOptionGroup",
+                "rds:DeleteOptionGroup",
+                "rds:DescribeOptionGroups",
+                "rds:CreateDBParameterGroup",
+                "rds:ModifyDBParameterGroup",
+                "rds:DeleteDBParameterGroup",
+                "rds:DescribeDBParameterGroups",
+                "rds:DescribeDBParameters",
+                "rds:AddTagsToResource",
+                "rds:ListTagsForResource"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+
+### Redis
+#### Toggle
+- `create_redis` to create a new ElastiCache Redis replication group
+
+#### Description
+Uses the [terraform-aws-elasticache](https://github.com/terraform-aws-modules/terraform-aws-elasticache) module to create a new ElastiCache Redis replication group to be used by the DataRobot application.
+
+#### IAM Policy
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowElasticacheActions",
+            "Effect": "Allow",
+            "Action": [
+                "elasticache:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+
 ### Helm Chart - aws-load-balancer-controller
 #### Toggle
 - `aws_load_balancer_controller` to install the `aws-load-balancer-controller` helm chart
@@ -597,6 +670,19 @@ Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-
 Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `nvidia-device-plugin` helm chart from the `https://nvidia.github.io/k8s-device-plugin` repo into the `nvidia-device-plugin` namespace.
 
 This helm chart is used to expose GPU resources on nodes intended for GPU workloads such as the default `gpu` node group.
+
+#### IAM Policy
+Not required
+
+
+### Helm Chart - nvidia-gpu-operator
+#### Toggle
+- `nvidia_gpu_operator` to install the `nvidia-gpu-operator` helm chart
+
+#### Description
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `gpu-operator` helm chart from the `https://helm.ngc.nvidia.com/nvidia` repo into the `gpu-operator` namespace.
+
+This helm chart is used to manage NVIDIA drivers, the Kubernetes device plugin for GPUs, the NVIDIA Container Runtime, and various other NVIDIA GPU-related operations.
 
 #### IAM Policy
 Not required
@@ -817,6 +903,34 @@ Not required
                 "eks:CreatePodIdentityAssociation",
                 "eks:DescribePodIdentityAssociation",
                 "eks:DeletePodIdentityAssociation"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowRDSActions",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBInstance",
+                "rds:ModifyDBInstance",
+                "rds:DeleteDBInstance",
+                "rds:DescribeDBInstances",
+                "rds:StartDBInstance",
+                "rds:StopDBInstance",
+                "rds:CreateDBSubnetGroup",
+                "rds:ModifyDBSubnetGroup",
+                "rds:DeleteDBSubnetGroup",
+                "rds:DescribeDBSubnetGroups",
+                "rds:CreateOptionGroup",
+                "rds:ModifyOptionGroup",
+                "rds:DeleteOptionGroup",
+                "rds:DescribeOptionGroups",
+                "rds:CreateDBParameterGroup",
+                "rds:ModifyDBParameterGroup",
+                "rds:DeleteDBParameterGroup",
+                "rds:DescribeDBParameterGroups",
+                "rds:DescribeDBParameters",
+                "rds:AddTagsToResource",
+                "rds:ListTagsForResource"
             ],
             "Resource": "*"
         }

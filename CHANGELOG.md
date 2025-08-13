@@ -2,6 +2,13 @@
 
 All notable changes are documented in this file.
 
+## v1.4.0
+
+### Added
+
+- `postgres` and `redis` modules.
+- database subnets
+
 ## v1.3.3
 
 ### Added

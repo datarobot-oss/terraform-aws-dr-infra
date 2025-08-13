@@ -157,12 +157,29 @@ module "datarobot_infra" {
     }
   }
 
-
   ################################################################################
   # App Identity
   ################################################################################
   create_app_identity = true
   datarobot_namespace = "dr-app"
+
+  ################################################################################
+  # PostgreSQL
+  ################################################################################
+  create_postgres                  = true
+  postgres_engine_version          = "13"
+  postgres_instance_class          = "db.m6g.large"
+  postgres_allocated_storage       = 20
+  postgres_max_allocated_storage   = 500
+  postgres_backup_retention_period = 7
+  postgres_deletion_protection     = false
+
+  ################################################################################
+  # Redis
+  ################################################################################
+  create_redis         = true
+  redis_engine_version = "7.1"
+  redis_node_type      = "cache.t4g.medium"
 
   ################################################################################
   # Helm Charts
@@ -232,6 +249,12 @@ module "datarobot_infra" {
   nvidia_device_plugin_values    = "${path.module}/templates/custom_nvidia_device_plugin_values.yaml"
   nvidia_device_plugin_variables = {}
 
+  ################################################################################
+  # nvidia-gpu-operator
+  ################################################################################
+  nvidia_gpu_operator           = false
+  nvidia_gpu_operator_values    = "${path.module}/templates/custom_nvidia_gpu_operator_plugin_values.yaml"
+  nvidia_gpu_operator_variables = {}
 
   ################################################################################
   # metrics-server

@@ -13,23 +13,32 @@ data "aws_availability_zones" "available" {
 # Network
 ################################################################################
 
+data "aws_vpc" "existing" {
+  count = var.existing_vpc_id != null ? 1 : 0
+  id    = var.existing_vpc_id
+}
+
 locals {
-  azs                         = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
-  vpc_id                      = var.create_network && var.existing_vpc_id == "" ? module.network[0].vpc_id : var.existing_vpc_id
-  kubernetes_nodes_subnet_ids = var.create_network && length(var.existing_kubernetes_nodes_subnet_ids) == 0 ? module.network[0].private_subnets : var.existing_kubernetes_nodes_subnet_ids
+  azs      = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
+  multi_az = var.availability_zones > 1
+  vpc_id   = try(coalesce(var.existing_vpc_id, module.network[0].vpc_id), null)
+  vpc_cidr = try(data.aws_vpc.existing[0].cidr_block, var.network_address_space)
 }
 
 module "network" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 5.0"
-  count   = var.create_network && var.existing_vpc_id == "" ? 1 : 0
+  count   = var.create_network && var.existing_vpc_id == null ? 1 : 0
 
   name = var.name
   cidr = var.network_address_space
 
-  azs             = local.azs
-  private_subnets = [for k, v in local.azs : cidrsubnet(var.network_address_space, 4, k)]
-  public_subnets  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 48)]
+  azs              = local.azs
+  public_subnets   = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k)]
+  private_subnets  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 3)]
+  database_subnets = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 6)]
+
+  create_database_subnet_group = false
 
   enable_nat_gateway = true
   single_nat_gateway = true
@@ -47,7 +56,7 @@ module "network" {
 module "endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
   version = "~> 5.0"
-  count   = var.create_network && var.existing_vpc_id == "" && length(var.network_private_endpoints) > 0 ? 1 : 0
+  count   = var.create_network && var.existing_vpc_id == null && length(var.network_private_endpoints) > 0 ? 1 : 0
 
   vpc_id                     = local.vpc_id
   create_security_group      = true
@@ -56,7 +65,7 @@ module "endpoints" {
   security_group_rules = {
     ingress_https = {
       description = "HTTPS from VPC"
-      cidr_blocks = [var.network_address_space]
+      cidr_blocks = [local.vpc_cidr]
     }
   }
 
@@ -79,17 +88,21 @@ module "endpoints" {
 # DNS
 ################################################################################
 
-data "aws_route53_zone" "public" {
-  count   = var.existing_public_route53_zone_id != "" ? 1 : 0
+data "aws_route53_zone" "existing_public" {
+  count   = var.existing_public_route53_zone_id != null ? 1 : 0
   zone_id = var.existing_public_route53_zone_id
 }
 
-data "aws_route53_zone" "private" {
-  count   = var.existing_private_route53_zone_id != "" ? 1 : 0
+data "aws_route53_zone" "existing_private" {
+  count   = var.existing_private_route53_zone_id != null ? 1 : 0
   zone_id = var.existing_private_route53_zone_id
 }
 
 locals {
+  # create a public zone if we're using external_dns with internet_facing LB
+  # or creating a public ACM certificate
+  create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == null && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == ""))
+
   public_zone = {
     public = {
       domain_name   = var.domain_name
@@ -97,6 +110,13 @@ locals {
       force_destroy = var.dns_zones_force_destroy
     }
   }
+
+  public_zone_id  = try(coalesce(var.existing_public_route53_zone_id, module.dns[0].route53_zone_zone_id["public"]), null)
+  public_zone_arn = try(data.aws_route53_zone.existing_public[0].arn, module.dns[0].route53_zone_zone_arn["public"], null)
+
+  # create a private zone if we're using external_dns with an internal LB
+  create_private_zone = var.create_dns_zones && var.existing_private_route53_zone_id == null && (var.external_dns && !var.internet_facing_ingress_lb)
+
   private_zone = {
     private = {
       domain_name   = var.domain_name
@@ -106,21 +126,14 @@ locals {
     }
   }
 
-  # create a public zone if we're using external_dns with internet_facing LB
-  # or creating a public ACM certificate
-  create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == "" && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == ""))
-  public_zone_id     = local.create_public_zone ? module.dns[0].route53_zone_zone_id["public"] : var.existing_public_route53_zone_id
-  public_zone_arn    = local.create_public_zone ? module.dns[0].route53_zone_zone_arn["public"] : try(data.aws_route53_zone.public[0].arn, "")
-
-  # create a private zone if we're using external_dns with an internal LB
-  create_private_zone = var.create_dns_zones && var.existing_private_route53_zone_id == "" && (var.external_dns && !var.internet_facing_ingress_lb)
-  private_zone_arn    = local.create_private_zone ? module.dns[0].route53_zone_zone_arn["private"] : try(data.aws_route53_zone.private[0].arn, "")
+  private_zone_id  = try(coalesce(var.existing_private_route53_zone_id, module.dns[0].route53_zone_zone_id["private"]), null)
+  private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.dns[0].route53_zone_zone_arn["private"], null)
 }
 
 module "dns" {
   source  = "terraform-aws-modules/route53/aws//modules/zones"
   version = "~> 3.0"
-  count   = local.create_public_zone || local.create_private_zone == "" ? 1 : 0
+  count   = local.create_public_zone || local.create_private_zone ? 1 : 0
 
   zones = merge(
     local.create_private_zone ? local.private_zone : {},
@@ -136,13 +149,13 @@ module "dns" {
 ################################################################################
 
 locals {
-  acm_certificate_arn = var.create_acm_certificate && var.existing_acm_certificate_arn == "" ? module.acm[0].acm_certificate_arn : var.existing_acm_certificate_arn
+  acm_certificate_arn = coalesce(var.existing_acm_certificate_arn, module.acm[0].acm_certificate_arn)
 }
 
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
   version = "~> 4.0"
-  count   = var.create_acm_certificate && var.existing_acm_certificate_arn == "" ? 1 : 0
+  count   = var.create_acm_certificate && var.existing_acm_certificate_arn == null ? 1 : 0
 
   domain_name = var.domain_name
   zone_id     = local.public_zone_id
@@ -165,13 +178,13 @@ module "acm" {
 ################################################################################
 
 locals {
-  encryption_key_arn = var.create_encryption_key && var.existing_kms_key_arn == "" ? module.encryption_key[0].key_arn : var.existing_kms_key_arn
+  encryption_key_arn = coalesce(var.existing_kms_key_arn, module.encryption_key[0].key_arn)
 }
 
 module "encryption_key" {
   source  = "terraform-aws-modules/kms/aws"
   version = "~> 3.0"
-  count   = var.create_encryption_key && var.existing_kms_key_arn == "" ? 1 : 0
+  count   = var.create_encryption_key && var.existing_kms_key_arn == null ? 1 : 0
 
   description = "Ec2 AutoScaling key usage"
   key_usage   = "ENCRYPT_DECRYPT"
@@ -191,13 +204,13 @@ module "encryption_key" {
 ################################################################################
 
 locals {
-  s3_bucket_id = var.create_storage && var.existing_s3_bucket_id == "" ? module.storage[0].s3_bucket_id : var.existing_s3_bucket_id
+  s3_bucket_id = coalesce(var.existing_s3_bucket_id, module.storage[0].s3_bucket_id)
 }
 
 module "storage" {
   source  = "terraform-aws-modules/s3-bucket/aws"
   version = "~> 4.0"
-  count   = var.create_storage && var.existing_s3_bucket_id == "" ? 1 : 0
+  count   = var.create_storage && var.existing_s3_bucket_id == null ? 1 : 0
 
   bucket_prefix = replace(var.name, "_", "-")
   force_destroy = var.s3_bucket_force_destroy
@@ -239,6 +252,7 @@ locals {
   eks_cluster_ca_data         = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, "")
   eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
   eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, "")
+  kubernetes_node_subnets     = try(coalescelist(var.existing_kubernetes_node_subnets, module.network[0].private_subnets), null)
 
   # create each node group in each AZ
   node_groups = merge([
@@ -296,7 +310,7 @@ module "kubernetes" {
   access_entries                           = var.kubernetes_cluster_access_entries
 
   vpc_id     = local.vpc_id
-  subnet_ids = local.kubernetes_nodes_subnet_ids
+  subnet_ids = local.kubernetes_node_subnets
 
   cluster_endpoint_public_access       = var.kubernetes_cluster_endpoint_public_access
   cluster_endpoint_public_access_cidrs = var.kubernetes_cluster_endpoint_public_access_cidrs
@@ -403,6 +417,143 @@ module "app_identity" {
 
 
 ################################################################################
+# PostgreSQL
+################################################################################
+
+locals {
+  postgres_subnets = try(coalescelist(var.existing_postgres_subnets, module.network[0].database_subnets), null)
+}
+
+module "postgres_sg" {
+  source  = "terraform-aws-modules/security-group/aws"
+  version = "~> 5.0"
+  count   = var.create_postgres ? 1 : 0
+
+  name   = "${var.name}-postgres"
+  vpc_id = local.vpc_id
+
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 5432
+      to_port     = 5432
+      protocol    = "tcp"
+      description = "VPC postgres access"
+      cidr_blocks = local.vpc_cidr
+    }
+  ]
+
+  tags = var.tags
+}
+
+module "postgres" {
+  source  = "terraform-aws-modules/rds/aws"
+  version = "~> 6.0"
+  count   = var.create_postgres ? 1 : 0
+
+  identifier = var.name
+
+  multi_az               = local.multi_az
+  subnet_ids             = local.postgres_subnets
+  create_db_subnet_group = true
+  vpc_security_group_ids = [module.postgres_sg[0].security_group_id]
+
+  engine               = "postgres"
+  engine_version       = var.postgres_engine_version
+  family               = "postgres13"
+  major_engine_version = var.postgres_engine_version
+  apply_immediately    = true
+
+  instance_class        = var.postgres_instance_class
+  allocated_storage     = var.postgres_allocated_storage
+  max_allocated_storage = var.postgres_max_allocated_storage
+  port                  = 5432
+
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+
+  backup_retention_period = var.postgres_backup_retention_period
+  skip_final_snapshot     = true
+  deletion_protection     = var.postgres_deletion_protection
+  storage_encrypted       = true
+
+  db_name                     = "postgres"
+  username                    = "postgres"
+  manage_master_user_password = true
+
+  parameters = [
+    {
+      name  = "password_encryption"
+      value = "scram-sha-256"
+    }
+  ]
+
+  tags = var.tags
+}
+
+data "aws_secretsmanager_secret_version" "postgres_password" {
+  count = var.create_postgres ? 1 : 0
+
+  secret_id = module.postgres[0].db_instance_master_user_secret_arn
+}
+
+
+################################################################################
+# Redis
+################################################################################
+
+resource "random_password" "redis" {
+  count = var.create_redis ? 1 : 0
+
+  length           = 32
+  override_special = "!&#$^<>-"
+  min_lower        = 1
+  min_upper        = 1
+  min_numeric      = 1
+  min_special      = 1
+}
+
+locals {
+  redis_subnets = try(coalesce(var.existing_redis_subnets, module.network[0].database_subnets), null)
+}
+
+module "redis" {
+  source  = "terraform-aws-modules/elasticache/aws"
+  version = "~> 1.0"
+  count   = var.create_redis ? 1 : 0
+
+  replication_group_id    = var.name
+  multi_az_enabled        = local.multi_az
+  num_node_groups         = 1
+  replicas_per_node_group = 2
+
+  auth_token        = random_password.redis[0].result
+  engine_version    = var.redis_engine_version
+  node_type         = var.redis_node_type
+  apply_immediately = true
+
+  vpc_id     = local.vpc_id
+  subnet_ids = local.redis_subnets
+
+  security_group_rules = {
+    ingress_vpc = {
+      description = "VPC redis traffic"
+      cidr_ipv4   = local.vpc_cidr
+    }
+  }
+
+  create_parameter_group = true
+  parameter_group_family = "redis7"
+  parameters = [
+    {
+      name  = "latency-tracking"
+      value = "yes"
+    }
+  ]
+
+  tags = var.tags
+}
+
+
+################################################################################
 # Helm Charts
 ################################################################################
 
@@ -420,7 +571,6 @@ provider "helm" {
   }
 }
 
-
 module "cluster_autoscaler" {
   source = "./modules/cluster-autoscaler"
   count  = var.install_helm_charts && var.cluster_autoscaler ? 1 : 0
@@ -431,6 +581,8 @@ module "cluster_autoscaler" {
   custom_values_variables    = var.cluster_autoscaler_variables
 
   tags = var.tags
+
+  depends_on = [module.aws_load_balancer_controller]
 }
 
 module "descheduler" {
@@ -454,7 +606,6 @@ module "aws_ebs_csi_driver" {
   tags = var.tags
 }
 
-
 module "aws_load_balancer_controller" {
   source = "./modules/aws-load-balancer-controller"
   count  = var.install_helm_charts && var.aws_load_balancer_controller ? 1 : 0
@@ -467,7 +618,6 @@ module "aws_load_balancer_controller" {
 
   tags = var.tags
 }
-
 
 module "ingress_nginx" {
   source = "./modules/ingress-nginx"
@@ -483,7 +633,6 @@ module "ingress_nginx" {
 
   depends_on = [module.aws_load_balancer_controller]
 }
-
 
 module "cert_manager" {
   source = "./modules/cert-manager"
@@ -538,4 +687,6 @@ module "metrics_server" {
 
   custom_values_templatefile = var.metrics_server_values
   custom_values_variables    = var.metrics_server_variables
+
+  depends_on = [module.aws_load_balancer_controller]
 }
