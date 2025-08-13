@@ -3,6 +3,13 @@
 All notable changes are documented in this file.
 
 
+## v1.4.2
+
+### Updated
+
+- fix issues caused by using `try(coalesce())`
+
+
 ## v1.4.1
 
 ### Added

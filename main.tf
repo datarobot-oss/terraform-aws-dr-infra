@@ -21,7 +21,7 @@ data "aws_vpc" "existing" {
 locals {
   azs      = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
   multi_az = var.availability_zones > 1
-  vpc_id   = try(coalesce(var.existing_vpc_id, module.network[0].vpc_id), null)
+  vpc_id   = var.existing_vpc_id != null ? var.existing_vpc_id : try(module.network[0].vpc_id, null)
   vpc_cidr = try(data.aws_vpc.existing[0].cidr_block, var.network_address_space)
 }
 
@@ -111,7 +111,7 @@ locals {
     }
   }
 
-  public_zone_id  = try(coalesce(var.existing_public_route53_zone_id, module.dns[0].route53_zone_zone_id["public"]), null)
+  public_zone_id  = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.dns[0].route53_zone_zone_id["public"], null)
   public_zone_arn = try(data.aws_route53_zone.existing_public[0].arn, module.dns[0].route53_zone_zone_arn["public"], null)
 
   # create a private zone if we're using external_dns with an internal LB
@@ -126,7 +126,7 @@ locals {
     }
   }
 
-  private_zone_id  = try(coalesce(var.existing_private_route53_zone_id, module.dns[0].route53_zone_zone_id["private"]), null)
+  private_zone_id  = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.dns[0].route53_zone_zone_id["private"], null)
   private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.dns[0].route53_zone_zone_arn["private"], null)
 }
 
@@ -149,7 +149,7 @@ module "dns" {
 ################################################################################
 
 locals {
-  acm_certificate_arn = try(coalesce(var.existing_acm_certificate_arn, module.acm[0].acm_certificate_arn), null)
+  acm_certificate_arn = var.existing_acm_certificate_arn != null ? var.existing_acm_certificate_arn : try(module.acm[0].acm_certificate_arn, null)
 }
 
 module "acm" {
@@ -178,7 +178,7 @@ module "acm" {
 ################################################################################
 
 locals {
-  encryption_key_arn = try(coalesce(var.existing_kms_key_arn, module.encryption_key[0].key_arn), null)
+  encryption_key_arn = var.existing_kms_key_arn != null ? var.existing_kms_key_arn : try(module.encryption_key[0].key_arn, null)
 }
 
 module "encryption_key" {
@@ -204,7 +204,7 @@ module "encryption_key" {
 ################################################################################
 
 locals {
-  s3_bucket_id = try(coalesce(var.existing_s3_bucket_id, module.storage[0].s3_bucket_id), null)
+  s3_bucket_id = var.existing_s3_bucket_id != null ? var.existing_s3_bucket_id : try(module.storage[0].s3_bucket_id, null)
 }
 
 module "storage" {
@@ -252,7 +252,7 @@ locals {
   eks_cluster_ca_data         = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, "")
   eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
   eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, "")
-  kubernetes_node_subnets     = try(coalescelist(var.existing_kubernetes_node_subnets, module.network[0].private_subnets), null)
+  kubernetes_node_subnets     = var.existing_kubernetes_node_subnets != null ? var.existing_kubernetes_node_subnets : try(module.network[0].private_subnets, null)
 
   # create each node group in each AZ
   node_groups = merge([
@@ -315,7 +315,7 @@ module "kubernetes" {
   cluster_endpoint_public_access       = var.kubernetes_cluster_endpoint_public_access
   cluster_endpoint_public_access_cidrs = var.kubernetes_cluster_endpoint_public_access_cidrs
 
-  cluster_security_group_additional_rules = length(var.kubernetes_cluster_endpoint_private_access_cidrs) != 0 ? {
+  cluster_security_group_additional_rules = length(var.kubernetes_cluster_endpoint_private_access_cidrs) > 0 ? {
     ingress_custom_https = {
       description = "Custom hosts to control plane"
       protocol    = "tcp"
@@ -420,7 +420,7 @@ module "app_identity" {
 ################################################################################
 
 locals {
-  postgres_subnets = try(coalescelist(var.existing_postgres_subnets, module.network[0].database_subnets), null)
+  postgres_subnets = var.existing_postgres_subnets != null ? var.existing_postgres_subnets : try(module.network[0].database_subnets, null)
 }
 
 module "postgres_sg" {
@@ -511,7 +511,7 @@ resource "random_password" "redis" {
 }
 
 locals {
-  redis_subnets = try(coalesce(var.existing_redis_subnets, module.network[0].database_subnets), null)
+  redis_subnets = var.existing_redis_subnets != null ? var.existing_redis_subnets : try(module.network[0].database_subnets, null)
 }
 
 module "redis" {

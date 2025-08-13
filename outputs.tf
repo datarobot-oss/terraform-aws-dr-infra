@@ -153,3 +153,13 @@ output "redis_password" {
   value       = try(random_password.redis[0].result)
   sensitive   = true
 }
+
+
+################################################################################
+# ingress-nginx
+################################################################################
+
+output "ingress_vpce_service_id" {
+  description = "Ingress VPCE service ID"
+  value       = try(module.ingress_nginx[0].vpce_service_id, null)
+}
