@@ -149,7 +149,7 @@ module "dns" {
 ################################################################################
 
 locals {
-  acm_certificate_arn = var.existing_acm_certificate_arn != null ? var.existing_acm_certificate_arn : try(module.acm[0].acm_certificate_arn, null)
+  acm_certificate_arn = var.existing_acm_certificate_arn != null ? var.existing_acm_certificate_arn : try(module.acm[0].acm_certificate_arn, "")
 }
 
 module "acm" {

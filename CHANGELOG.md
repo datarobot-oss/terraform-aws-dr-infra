@@ -3,6 +3,13 @@
 All notable changes are documented in this file.
 
 
+## v1.4.3
+
+### Updated
+
+- set `local.acm_certificate_arn` to an emptry string instead of null when no existing one is passed and we are not creating one
+
+
 ## v1.4.2
 
 ### Updated
