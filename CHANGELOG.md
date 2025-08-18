@@ -3,6 +3,17 @@
 All notable changes are documented in this file.
 
 
+## v1.5.0
+
+### Added
+
+- `mongodb` module
+
+### Updated
+
+- moved `redis` and `postgres` to submodules
+
+
 ## v1.4.3
 
 ### Updated

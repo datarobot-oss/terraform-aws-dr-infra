@@ -22,6 +22,7 @@ module "datarobot_infra" {
   create_app_identity             = true
   create_postgres                 = true
   create_redis                    = true
+  create_mongodb                  = true
 
   cluster_autoscaler           = true
   descheduler                  = true
@@ -414,7 +415,7 @@ Two node groups are created:
 - `create_postgres` to create a new Amazon RDS for PostgreSQL instance
 
 #### Description
-Uses the [terraform-aws-rds](https://github.com/terraform-aws-modules/terraform-aws-rds) module to create a new RDS postgres instance to be used by the DataRobot application.
+Uses the [terraform-aws-rds](https://github.com/terraform-aws-modules/terraform-aws-rds) module to create a new RDS postgres instance for use by the DataRobot application.
 
 #### IAM Policy
 ```
@@ -459,7 +460,7 @@ Uses the [terraform-aws-rds](https://github.com/terraform-aws-modules/terraform-
 - `create_redis` to create a new ElastiCache Redis replication group
 
 #### Description
-Uses the [terraform-aws-elasticache](https://github.com/terraform-aws-modules/terraform-aws-elasticache) module to create a new ElastiCache Redis replication group to be used by the DataRobot application.
+Uses the [terraform-aws-elasticache](https://github.com/terraform-aws-modules/terraform-aws-elasticache) module to create a new ElastiCache Redis replication group for use by the DataRobot application.
 
 #### IAM Policy
 ```
@@ -477,6 +478,17 @@ Uses the [terraform-aws-elasticache](https://github.com/terraform-aws-modules/te
     ]
 }
 ```
+
+
+### MongoDB
+#### Toggle
+- `create_mongodb` to create a new MongoDB Atlas cluster
+
+#### Description
+Create a MongoDB Atlas project and cluster for use by the DataRobot application.
+
+#### IAM Policy
+Not required
 
 
 ### Helm Chart - aws-load-balancer-controller

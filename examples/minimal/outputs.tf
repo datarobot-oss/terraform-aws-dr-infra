@@ -12,3 +12,41 @@ output "s3_bucket_name" {
   description = "S3 bucket name to use for DataRobot application file storage"
   value       = module.datarobot_infra.s3_bucket_id
 }
+
+output "postgres_endpoint" {
+  description = "RDS postgres endpoint"
+  value       = split(":", module.datarobot_infra.postgres_endpoint)[0]
+}
+
+output "postgres_password" {
+  description = "RDS postgres master password"
+  value       = module.datarobot_infra.postgres_password
+  sensitive   = true
+}
+
+output "redis_endpoint" {
+  description = "Elasticache redis endpoint"
+  value       = module.datarobot_infra.redis_endpoint
+}
+
+output "redis_password" {
+  description = "Elasticache redis auth token"
+  value       = module.datarobot_infra.redis_password
+  sensitive   = true
+}
+
+output "mongo_endpoint" {
+  description = "MongoDB Atlas private endpoint SRV connection string"
+  value       = module.datarobot_infra.mongodb_endpoint
+}
+
+output "mongo_password" {
+  description = "MongoDB Atlas admin password"
+  value       = module.datarobot_infra.mongodb_password
+  sensitive   = true
+}
+
+output "ingress_vpce_service_id" {
+  description = "Ingress VPCE service ID"
+  value       = module.datarobot_infra.ingress_vpce_service_id
+}

@@ -2,6 +2,8 @@ provider "aws" {
   region = "us-west-2"
 }
 
+data "aws_caller_identity" "current" {}
+
 locals {
   name                  = "datarobot"
   provisioner_public_ip = "132.132.132.132/32"
@@ -180,6 +182,25 @@ module "datarobot_infra" {
   create_redis         = true
   redis_engine_version = "7.1"
   redis_node_type      = "cache.t4g.medium"
+
+  ################################################################################
+  # MongoDB
+  ################################################################################
+  create_mongodb                             = true
+  mongodb_version                            = "7.0"
+  mongodb_atlas_org_id                       = "1a2b3c4d5e6f7g8h9i10j"
+  mongodb_atlas_public_key                   = "atlas-public-key"
+  mongodb_atlas_private_key                  = "atlas-private-key"
+  mongodb_termination_protection_enabled     = false
+  mongodb_audit_enable                       = true
+  mongodb_admin_username                     = "pcs-mongodb"
+  mongodb_admin_arns                         = [data.aws_caller_identity.current.arn]
+  mongodb_atlas_auto_scaling_disk_gb_enabled = true
+  mongodb_atlas_disk_size                    = 20
+  mongodb_atlas_instance_type                = "M30"
+  mongodb_enable_slack_alerts                = true
+  mongodb_slack_api_token                    = "slack-api-token"
+  mongodb_slack_notification_channel         = "#mongodb-atlas-notifications"
 
   ################################################################################
   # Helm Charts

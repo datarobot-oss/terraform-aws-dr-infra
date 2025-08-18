@@ -129,12 +129,12 @@ output "app_role_arn" {
 
 output "postgres_endpoint" {
   description = "RDS postgres endpoint"
-  value       = try(module.postgres[0].db_instance_endpoint, null)
+  value       = try(module.postgres[0].endpoint, null)
 }
 
 output "postgres_password" {
   description = "RDS postgres master password"
-  value       = try(data.aws_secretsmanager_secret_version.postgres_password[0].secret_string)
+  value       = try(module.postgres[0].password, null)
   sensitive   = true
 }
 
@@ -145,12 +145,28 @@ output "postgres_password" {
 
 output "redis_endpoint" {
   description = "Elasticache redis endpoint"
-  value       = try(module.redis[0].replication_group_primary_endpoint_address, null)
+  value       = try(module.redis[0].endpoint, null)
 }
 
 output "redis_password" {
   description = "Elasticache redis auth token"
-  value       = try(random_password.redis[0].result)
+  value       = try(module.redis[0].password, null)
+  sensitive   = true
+}
+
+
+################################################################################
+# MongoDB
+################################################################################
+
+output "mongodb_endpoint" {
+  description = "MongoDB endpoint"
+  value       = try(module.mongodb[0].endpoint, null)
+}
+
+output "mongodb_password" {
+  description = "MongoDB admin password"
+  value       = try(module.mongodb[0].password, null)
   sensitive   = true
 }
 
