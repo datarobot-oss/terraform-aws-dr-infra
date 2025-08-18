@@ -34,3 +34,14 @@ output "redis_password" {
   value       = module.datarobot_infra.redis_password
   sensitive   = true
 }
+
+output "mongo_endpoint" {
+  description = "MongoDB Atlas private endpoint SRV connection string"
+  value       = module.datarobot_infra.mongodb_endpoint
+}
+
+output "mongo_password" {
+  description = "MongoDB Atlas admin password"
+  value       = module.datarobot_infra.mongodb_password
+  sensitive   = true
+}

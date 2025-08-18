@@ -5,8 +5,8 @@ provider "aws" {
 data "aws_caller_identity" "current" {}
 
 locals {
-  name                  = "datarobot"
-  provisioner_public_ip = "132.132.132.132/32"
+  name                   = "datarobot"
+  provisioner_private_ip = "10.0.0.99/32"
 }
 
 module "datarobot_infra" {
@@ -98,9 +98,9 @@ module "datarobot_infra" {
   #     }
   #   }
   # }
-  kubernetes_cluster_endpoint_public_access        = true
-  kubernetes_cluster_endpoint_public_access_cidrs  = [local.provisioner_public_ip]
-  kubernetes_cluster_endpoint_private_access_cidrs = []
+  kubernetes_cluster_endpoint_public_access        = false
+  kubernetes_cluster_endpoint_public_access_cidrs  = []
+  kubernetes_cluster_endpoint_private_access_cidrs = [local.provisioner_private_ip]
   kubernetes_bootstrap_self_managed_addons         = false
   kubernetes_cluster_addons = {
     coredns = {
@@ -239,16 +239,16 @@ module "datarobot_infra" {
   # ingress-nginx
   ################################################################################
   ingress_nginx                           = true
-  internet_facing_ingress_lb              = true
+  internet_facing_ingress_lb              = false
   create_ingress_vpce_service             = true
   ingress_vpce_service_allowed_principals = ["arn:aws:iam::12345678910:root"]
 
   # in this case our custom values file override is formatted as a templatefile
-  # so we can pass variables like our provisioner_public_ip to it.
+  # so we can pass variables like our provisioner_private_ip to it.
   # https://developer.hashicorp.com/terraform/language/functions/templatefile
   ingress_nginx_values = "${path.module}/templates/custom_ingress_nginx_values.tftpl"
   ingress_nginx_variables = {
-    lb_source_ranges = [local.provisioner_public_ip]
+    lb_source_ranges = [local.provisioner_private_ip]
   }
 
   ################################################################################
