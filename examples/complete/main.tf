@@ -2,9 +2,11 @@ provider "aws" {
   region = "us-west-2"
 }
 
+data "aws_caller_identity" "current" {}
+
 locals {
-  name                  = "datarobot"
-  provisioner_public_ip = "132.132.132.132/32"
+  name                   = "datarobot"
+  provisioner_private_ip = "10.0.0.99/32"
 }
 
 module "datarobot_infra" {
@@ -96,9 +98,9 @@ module "datarobot_infra" {
   #     }
   #   }
   # }
-  kubernetes_cluster_endpoint_public_access        = true
-  kubernetes_cluster_endpoint_public_access_cidrs  = [local.provisioner_public_ip]
-  kubernetes_cluster_endpoint_private_access_cidrs = []
+  kubernetes_cluster_endpoint_public_access        = false
+  kubernetes_cluster_endpoint_public_access_cidrs  = []
+  kubernetes_cluster_endpoint_private_access_cidrs = [local.provisioner_private_ip]
   kubernetes_bootstrap_self_managed_addons         = false
   kubernetes_cluster_addons = {
     coredns = {
@@ -182,6 +184,25 @@ module "datarobot_infra" {
   redis_node_type      = "cache.t4g.medium"
 
   ################################################################################
+  # MongoDB
+  ################################################################################
+  create_mongodb                             = true
+  mongodb_version                            = "7.0"
+  mongodb_atlas_org_id                       = "1a2b3c4d5e6f7g8h9i10j"
+  mongodb_atlas_public_key                   = "atlas-public-key"
+  mongodb_atlas_private_key                  = "atlas-private-key"
+  mongodb_termination_protection_enabled     = false
+  mongodb_audit_enable                       = true
+  mongodb_admin_username                     = "pcs-mongodb"
+  mongodb_admin_arns                         = [data.aws_caller_identity.current.arn]
+  mongodb_atlas_auto_scaling_disk_gb_enabled = true
+  mongodb_atlas_disk_size                    = 20
+  mongodb_atlas_instance_type                = "M30"
+  mongodb_enable_slack_alerts                = true
+  mongodb_slack_api_token                    = "slack-api-token"
+  mongodb_slack_notification_channel         = "#mongodb-atlas-notifications"
+
+  ################################################################################
   # Helm Charts
   ################################################################################
   install_helm_charts = true
@@ -218,16 +239,16 @@ module "datarobot_infra" {
   # ingress-nginx
   ################################################################################
   ingress_nginx                           = true
-  internet_facing_ingress_lb              = true
+  internet_facing_ingress_lb              = false
   create_ingress_vpce_service             = true
   ingress_vpce_service_allowed_principals = ["arn:aws:iam::12345678910:root"]
 
   # in this case our custom values file override is formatted as a templatefile
-  # so we can pass variables like our provisioner_public_ip to it.
+  # so we can pass variables like our provisioner_private_ip to it.
   # https://developer.hashicorp.com/terraform/language/functions/templatefile
   ingress_nginx_values = "${path.module}/templates/custom_ingress_nginx_values.tftpl"
   ingress_nginx_variables = {
-    lb_source_ranges = [local.provisioner_public_ip]
+    lb_source_ranges = [local.provisioner_private_ip]
   }
 
   ################################################################################

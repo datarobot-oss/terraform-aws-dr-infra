@@ -395,7 +395,7 @@ variable "datarobot_namespace" {
 variable "create_postgres" {
   description = "Whether to create a RDS postgres instance"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "existing_postgres_subnets" {
@@ -448,7 +448,7 @@ variable "postgres_deletion_protection" {
 variable "create_redis" {
   description = "Whether to create a Elasticache Redis instance"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "existing_redis_subnets" {
@@ -467,6 +467,107 @@ variable "redis_node_type" {
   description = "The instance type of the RDS instance"
   type        = string
   default     = "cache.t4g.medium"
+}
+
+
+################################################################################
+# MongoDB
+################################################################################
+
+variable "create_mongodb" {
+  description = "Whether to create a MongoDB Atlas instance"
+  type        = bool
+  default     = false
+}
+
+variable "existing_mongodb_subnets" {
+  description = "List of existing subnet IDs to be used for the MongoDB Atlas instance. Required when an existing_network_id is specified."
+  type        = list(string)
+  default     = null
+}
+
+variable "mongodb_version" {
+  description = "MongoDB version"
+  type        = string
+  default     = "7.0"
+}
+
+variable "mongodb_atlas_org_id" {
+  description = "Atlas organization ID"
+  type        = string
+  default     = null
+}
+
+variable "mongodb_atlas_public_key" {
+  description = "Public API key for Mongo Atlas"
+  type        = string
+  default     = ""
+}
+
+variable "mongodb_atlas_private_key" {
+  description = "Private API key for Mongo Atlas"
+  type        = string
+  default     = ""
+}
+
+variable "mongodb_termination_protection_enabled" {
+  description = "Enable protection to avoid accidental production cluster termination"
+  type        = bool
+  default     = false
+}
+
+variable "mongodb_audit_enable" {
+  type        = bool
+  description = "Enable database auditing for production instances only(cost incurred 10%)"
+  default     = false
+}
+
+variable "mongodb_atlas_auto_scaling_disk_gb_enabled" {
+  description = "Enable Atlas disk size autoscaling"
+  type        = bool
+  default     = true
+}
+
+variable "mongodb_atlas_disk_size" {
+  description = "Starting atlas disk size"
+  type        = string
+  default     = "20"
+}
+
+variable "mongodb_atlas_instance_type" {
+  description = "atlas instance type"
+  type        = string
+  default     = "M30"
+}
+
+variable "mongodb_admin_username" {
+  description = "MongoDB admin username"
+  type        = string
+  default     = "pcs-mongodb"
+}
+
+variable "mongodb_admin_arns" {
+  description = "List of AWS IAM Principal ARNs to provide admin access to"
+  type        = set(string)
+  default     = []
+}
+
+variable "mongodb_enable_slack_alerts" {
+  description = "Enable alert notifications to a Slack channel. When `true`, `slack_api_token` and `slack_notification_channel` must be set."
+  type        = string
+  default     = false
+}
+
+variable "mongodb_slack_api_token" {
+  description = "Slack API token to use for alert notifications. Required when `enable_slack_alerts` is `true`."
+  type        = string
+  default     = null
+}
+
+variable "mongodb_slack_notification_channel" {
+  description = "Slack channel to send alert notifications to. Required when `enable_slack_alerts` is `true`."
+  type        = string
+  default     = null
 }
 
 

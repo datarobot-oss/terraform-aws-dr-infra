@@ -18,7 +18,9 @@ resource "helm_release" "ingress_nginx" {
 }
 
 data "aws_lb" "internal_ingress" {
+  count      = var.internet_facing_ingress_lb ? 0 : 1
   depends_on = [helm_release.ingress_nginx]
+
   tags = {
     "elbv2.k8s.aws/cluster"    = var.eks_cluster_name
     "service.k8s.aws/resource" = "LoadBalancer"
@@ -30,7 +32,7 @@ resource "aws_vpc_endpoint_service" "internal_ingress" {
   count = var.create_vpce_service && !var.internet_facing_ingress_lb ? 1 : 0
 
   acceptance_required        = false
-  network_load_balancer_arns = [data.aws_lb.internal_ingress.arn]
+  network_load_balancer_arns = [data.aws_lb.internal_ingress[0].arn]
   allowed_principals         = var.vpce_service_allowed_principals
   private_dns_name           = var.vpce_service_private_dns_name
 

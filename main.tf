@@ -423,75 +423,24 @@ locals {
   postgres_subnets = var.existing_postgres_subnets != null ? var.existing_postgres_subnets : try(module.network[0].database_subnets, null)
 }
 
-module "postgres_sg" {
-  source  = "terraform-aws-modules/security-group/aws"
-  version = "~> 5.0"
-  count   = var.create_postgres ? 1 : 0
-
-  name   = "${var.name}-postgres"
-  vpc_id = local.vpc_id
-
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 5432
-      to_port     = 5432
-      protocol    = "tcp"
-      description = "VPC postgres access"
-      cidr_blocks = local.vpc_cidr
-    }
-  ]
-
-  tags = var.tags
-}
-
 module "postgres" {
-  source  = "terraform-aws-modules/rds/aws"
-  version = "~> 6.0"
-  count   = var.create_postgres ? 1 : 0
+  source = "./modules/postgres"
+  count  = var.create_postgres ? 1 : 0
 
-  identifier = var.name
+  name     = var.name
+  vpc_id   = local.vpc_id
+  vpc_cidr = local.vpc_cidr
+  subnets  = local.postgres_subnets
+  multi_az = local.multi_az
 
-  multi_az               = local.multi_az
-  subnet_ids             = local.postgres_subnets
-  create_db_subnet_group = true
-  vpc_security_group_ids = [module.postgres_sg[0].security_group_id]
-
-  engine               = "postgres"
-  engine_version       = var.postgres_engine_version
-  family               = "postgres13"
-  major_engine_version = var.postgres_engine_version
-  apply_immediately    = true
-
-  instance_class        = var.postgres_instance_class
-  allocated_storage     = var.postgres_allocated_storage
-  max_allocated_storage = var.postgres_max_allocated_storage
-  port                  = 5432
-
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-
-  backup_retention_period = var.postgres_backup_retention_period
-  skip_final_snapshot     = true
-  deletion_protection     = var.postgres_deletion_protection
-  storage_encrypted       = true
-
-  db_name                     = "postgres"
-  username                    = "postgres"
-  manage_master_user_password = true
-
-  parameters = [
-    {
-      name  = "password_encryption"
-      value = "scram-sha-256"
-    }
-  ]
+  postgres_engine_version          = var.postgres_engine_version
+  postgres_instance_class          = var.postgres_instance_class
+  postgres_allocated_storage       = var.postgres_allocated_storage
+  postgres_max_allocated_storage   = var.postgres_max_allocated_storage
+  postgres_backup_retention_period = var.postgres_backup_retention_period
+  postgres_deletion_protection     = var.postgres_deletion_protection
 
   tags = var.tags
-}
-
-data "aws_secretsmanager_secret_version" "postgres_password" {
-  count = var.create_postgres ? 1 : 0
-
-  secret_id = module.postgres[0].db_instance_master_user_secret_arn
 }
 
 
@@ -499,54 +448,61 @@ data "aws_secretsmanager_secret_version" "postgres_password" {
 # Redis
 ################################################################################
 
-resource "random_password" "redis" {
-  count = var.create_redis ? 1 : 0
-
-  length           = 32
-  override_special = "!&#$^<>-"
-  min_lower        = 1
-  min_upper        = 1
-  min_numeric      = 1
-  min_special      = 1
-}
-
 locals {
   redis_subnets = var.existing_redis_subnets != null ? var.existing_redis_subnets : try(module.network[0].database_subnets, null)
 }
 
 module "redis" {
-  source  = "terraform-aws-modules/elasticache/aws"
-  version = "~> 1.0"
-  count   = var.create_redis ? 1 : 0
+  source = "./modules/redis"
+  count  = var.create_redis ? 1 : 0
 
-  replication_group_id    = var.name
-  multi_az_enabled        = local.multi_az
-  num_node_groups         = 1
-  replicas_per_node_group = 2
+  name     = var.name
+  vpc_id   = local.vpc_id
+  vpc_cidr = local.vpc_cidr
+  subnets  = local.redis_subnets
+  multi_az = local.multi_az
 
-  auth_token        = random_password.redis[0].result
-  engine_version    = var.redis_engine_version
-  node_type         = var.redis_node_type
-  apply_immediately = true
+  redis_engine_version = var.redis_engine_version
+  redis_node_type      = var.redis_node_type
 
-  vpc_id     = local.vpc_id
-  subnet_ids = local.redis_subnets
+  tags = var.tags
+}
 
-  security_group_rules = {
-    ingress_vpc = {
-      description = "VPC redis traffic"
-      cidr_ipv4   = local.vpc_cidr
-    }
-  }
 
-  create_parameter_group = true
-  parameter_group_family = "redis7"
-  parameters = [
-    {
-      name  = "latency-tracking"
-      value = "yes"
-    }
-  ]
+################################################################################
+# MongoDB
+################################################################################
+
+provider "mongodbatlas" {
+  public_key  = var.mongodb_atlas_public_key
+  private_key = var.mongodb_atlas_private_key
+}
+
+locals {
+  mongodb_subnets = var.existing_mongodb_subnets != null ? var.existing_mongodb_subnets : try(module.network[0].database_subnets, null)
+}
+
+module "mongodb" {
+  source = "./modules/mongodb"
+  count  = var.create_mongodb ? 1 : 0
+
+  name     = var.name
+  vpc_id   = local.vpc_id
+  vpc_cidr = local.vpc_cidr
+  subnets  = local.mongodb_subnets
+
+  mongodb_version                    = var.mongodb_version
+  atlas_org_id                       = var.mongodb_atlas_org_id
+  termination_protection_enabled     = var.mongodb_termination_protection_enabled
+  db_audit_enable                    = var.mongodb_audit_enable
+  atlas_auto_scaling_disk_gb_enabled = var.mongodb_atlas_auto_scaling_disk_gb_enabled
+  atlas_disk_size                    = var.mongodb_atlas_disk_size
+  atlas_instance_type                = var.mongodb_atlas_instance_type
+  mongodb_admin_username             = var.mongodb_admin_username
+  mongodb_admin_arns                 = var.mongodb_admin_arns
+  enable_slack_alerts                = var.mongodb_enable_slack_alerts
+  slack_api_token                    = var.mongodb_slack_api_token
+  slack_notification_channel         = var.mongodb_slack_notification_channel
 
   tags = var.tags
 }
