@@ -85,7 +85,8 @@ resource "mongodbatlas_cloud_backup_schedule" "aws_mongo_atlas_automated_cloud_b
     ]
     region_name = local.copy_region
 
-    replication_spec_id = mongodbatlas_cluster.this.replication_specs[*].id[0]
+    # tflint-ignore: terraform_deprecated_index
+    replication_spec_id = mongodbatlas_cluster.this.replication_specs.*.id[0]
     should_copy_oplogs  = true
   }
 }

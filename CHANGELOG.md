@@ -3,6 +3,13 @@
 All notable changes are documented in this file.
 
 
+## v1.5.1
+
+### Fixed
+
+- mongodb replication_specs index error
+
+
 ## v1.5.0
 
 ### Added
