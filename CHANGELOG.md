@@ -3,6 +3,13 @@
 All notable changes are documented in this file.
 
 
+## v1.5.3
+
+### Fixed
+
+- mongodb atlas audit filter syntax
+
+
 ## v1.5.2
 
 ### Fixed
