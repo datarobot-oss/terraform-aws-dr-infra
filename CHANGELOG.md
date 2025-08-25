@@ -3,6 +3,13 @@
 All notable changes are documented in this file.
 
 
+## v1.5.2
+
+### Fixed
+
+- use `mongodbatlas_advanced_cluster`
+
+
 ## v1.5.1
 
 ### Fixed

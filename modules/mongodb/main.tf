@@ -11,31 +11,31 @@ resource "mongodbatlas_project" "this" {
   name   = var.name
 }
 
-resource "mongodbatlas_cluster" "this" {
-  project_id = mongodbatlas_project.this.id
-  name       = var.name
+resource "mongodbatlas_advanced_cluster" "this" {
+  project_id   = mongodbatlas_project.this.id
+  name         = var.name
+  cluster_type = "REPLICASET"
 
-  provider_name = "AWS"
-  cluster_type  = "REPLICASET"
-
+  mongo_db_major_version         = var.mongodb_version
+  backup_enabled                 = true
   pit_enabled                    = true
-  cloud_backup                   = true
   termination_protection_enabled = var.termination_protection_enabled
 
-  mongo_db_major_version = var.mongodb_version
-  version_release_system = "LTS"
-
-  auto_scaling_disk_gb_enabled = var.atlas_auto_scaling_disk_gb_enabled
-  disk_size_gb                 = var.atlas_disk_size
-  provider_instance_size_name  = var.atlas_instance_type
-
   replication_specs {
-    num_shards = 1
-    regions_config {
-      region_name     = local.region
-      electable_nodes = 3
-      priority        = 7
-      read_only_nodes = 0
+    region_configs {
+      provider_name = "AWS"
+      region_name   = local.region
+      priority      = 7
+
+      electable_specs {
+        instance_size = var.atlas_instance_type
+        disk_size_gb  = var.atlas_disk_size
+        node_count    = 3
+      }
+
+      auto_scaling {
+        disk_gb_enabled = var.atlas_auto_scaling_disk_gb_enabled
+      }
     }
   }
 
@@ -45,13 +45,13 @@ resource "mongodbatlas_cluster" "this" {
   }
 
   lifecycle {
-    ignore_changes = [disk_size_gb]
+    ignore_changes = [replication_specs[0].region_configs[0].electable_specs[0].disk_size_gb]
   }
 }
 
 resource "mongodbatlas_cloud_backup_schedule" "aws_mongo_atlas_automated_cloud_backup" {
   project_id   = mongodbatlas_project.this.id
-  cluster_name = mongodbatlas_cluster.this.name
+  cluster_name = mongodbatlas_advanced_cluster.this.name
 
   policy_item_hourly {
     frequency_interval = 6 #accepted values = 1, 2, 4, 6, 8, 12 -> every n hours
@@ -83,11 +83,9 @@ resource "mongodbatlas_cloud_backup_schedule" "aws_mongo_atlas_automated_cloud_b
       "MONTHLY",
       "ON_DEMAND"
     ]
-    region_name = local.copy_region
-
-    # tflint-ignore: terraform_deprecated_index
-    replication_spec_id = mongodbatlas_cluster.this.replication_specs.*.id[0]
-    should_copy_oplogs  = true
+    region_name        = local.copy_region
+    zone_id            = mongodbatlas_advanced_cluster.this.replication_specs[0].zone_id
+    should_copy_oplogs = true
   }
 }
 
@@ -103,6 +101,7 @@ resource "mongodbatlas_privatelink_endpoint" "this" {
   region        = local.region
 }
 
+# https://www.mongodb.com/docs/atlas/security-private-endpoint/#port-ranges-used-for-private-endpoints
 resource "aws_security_group" "this" {
   name        = "${var.name}-mongodb"
   description = "Allow access to mongodb atlas private endpoint"
@@ -111,7 +110,7 @@ resource "aws_security_group" "this" {
   ingress {
     description = "Allow MongoDB Atlas private endpoint port range for VPC"
     from_port   = 1024
-    to_port     = 1124
+    to_port     = 65535
     protocol    = "tcp"
     cidr_blocks = [var.vpc_cidr]
   }

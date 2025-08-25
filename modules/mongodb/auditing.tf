@@ -5,7 +5,7 @@ resource "mongodbatlas_auditing" "database_audit" {
       {
         "users" : {
           "$in" : {
-            "user" : [for arn in var.mongodb_admin_arns : "${arn}/*"]
+            "user" : var.mongodb_admin_arns
           }
         }
       },
