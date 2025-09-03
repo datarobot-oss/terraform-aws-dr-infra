@@ -11,6 +11,34 @@ resource "mongodbatlas_project" "this" {
   name   = var.name
 }
 
+resource "mongodbatlas_project_ip_access_list" "this" {
+  project_id = mongodbatlas_project.this.id
+  cidr_block = var.vpc_cidr
+  comment    = "cidr block for AWS VPC"
+}
+
+resource "mongodbatlas_privatelink_endpoint" "this" {
+  project_id    = mongodbatlas_project.this.id
+  provider_name = "AWS"
+  region        = local.region
+}
+
+resource "mongodbatlas_privatelink_endpoint_service" "this" {
+  project_id          = mongodbatlas_privatelink_endpoint.this.project_id
+  endpoint_service_id = aws_vpc_endpoint.this.id
+  private_link_id     = mongodbatlas_privatelink_endpoint.this.id
+  provider_name       = "AWS"
+}
+
+resource "aws_vpc_endpoint" "this" {
+  vpc_id             = var.vpc_id
+  service_name       = mongodbatlas_privatelink_endpoint.this.endpoint_service_name
+  vpc_endpoint_type  = "Interface"
+  subnet_ids         = var.subnets
+  security_group_ids = [aws_security_group.this.id]
+  tags               = merge(var.tags, { Name = "${var.name}-mongodb" })
+}
+
 resource "mongodbatlas_advanced_cluster" "this" {
   project_id   = mongodbatlas_project.this.id
   name         = var.name
@@ -91,18 +119,6 @@ resource "mongodbatlas_cloud_backup_schedule" "aws_mongo_atlas_automated_cloud_b
   }
 }
 
-resource "mongodbatlas_project_ip_access_list" "this" {
-  project_id = mongodbatlas_project.this.id
-  cidr_block = var.vpc_cidr
-  comment    = "cidr block for AWS VPC"
-}
-
-resource "mongodbatlas_privatelink_endpoint" "this" {
-  project_id    = mongodbatlas_project.this.id
-  provider_name = "AWS"
-  region        = local.region
-}
-
 # https://www.mongodb.com/docs/atlas/security-private-endpoint/#port-ranges-used-for-private-endpoints
 resource "aws_security_group" "this" {
   name        = "${var.name}-mongodb"
@@ -118,20 +134,4 @@ resource "aws_security_group" "this" {
   }
 
   tags = var.tags
-}
-
-resource "mongodbatlas_privatelink_endpoint_service" "this" {
-  project_id          = mongodbatlas_privatelink_endpoint.this.project_id
-  endpoint_service_id = aws_vpc_endpoint.this.id
-  private_link_id     = mongodbatlas_privatelink_endpoint.this.id
-  provider_name       = "AWS"
-}
-
-resource "aws_vpc_endpoint" "this" {
-  vpc_id             = var.vpc_id
-  service_name       = mongodbatlas_privatelink_endpoint.this.endpoint_service_name
-  vpc_endpoint_type  = "Interface"
-  subnet_ids         = var.subnets
-  security_group_ids = [aws_security_group.this.id]
-  tags               = merge(var.tags, { Name = "${var.name}-mongodb" })
 }

@@ -4,6 +4,13 @@ All notable changes are documented in this file.
 
 
 
+## v1.5.5
+
+### Updated
+
+- mongodb endpoint output follow [provider example](https://github.com/mongodb/terraform-provider-mongodbatlas/tree/master/examples/mongodbatlas_privatelink_endpoint/aws/cluster)
+
+
 ## v1.5.4
 
 ### Updated
