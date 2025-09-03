@@ -3,6 +3,14 @@
 All notable changes are documented in this file.
 
 
+
+## v1.5.4
+
+### Updated
+
+- mongodb cluster depends on endpoint service
+
+
 ## v1.5.3
 
 ### Fixed
