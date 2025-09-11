@@ -1,6 +1,6 @@
 output "endpoint" {
-  description = "RDS postgres endpoint"
-  value       = module.postgres.db_instance_endpoint
+  description = "The hostname of the RDS instance"
+  value       = module.postgres.db_instance_address
 }
 
 output "password" {

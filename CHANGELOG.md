@@ -4,6 +4,14 @@ All notable changes are documented in this file.
 
 
 
+## v1.5.6
+
+### Updated
+
+- `postgres` module `endpoint` output updated to use `address` instead of `endpoint`
+
+
+
 ## v1.5.5
 
 ### Updated
