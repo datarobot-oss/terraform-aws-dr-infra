@@ -5,6 +5,6 @@ output "endpoint" {
 
 output "password" {
   description = "RDS postgres master password"
-  value       = data.aws_secretsmanager_secret_version.postgres_password.secret_string
+  value       = random_password.postgres.result
   sensitive   = true
 }

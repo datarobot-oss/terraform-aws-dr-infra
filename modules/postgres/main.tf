@@ -1,3 +1,11 @@
+resource "random_password" "postgres" {
+  length      = 32
+  special     = false
+  min_lower   = 1
+  min_upper   = 1
+  min_numeric = 1
+}
+
 module "postgres_sg" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
@@ -49,7 +57,8 @@ module "postgres" {
 
   db_name                     = "postgres"
   username                    = "postgres"
-  manage_master_user_password = true
+  password                    = random_password.postgres.result
+  manage_master_user_password = false
 
   parameters = [
     {
@@ -59,8 +68,4 @@ module "postgres" {
   ]
 
   tags = var.tags
-}
-
-data "aws_secretsmanager_secret_version" "postgres_password" {
-  secret_id = module.postgres.db_instance_master_user_secret_arn
 }

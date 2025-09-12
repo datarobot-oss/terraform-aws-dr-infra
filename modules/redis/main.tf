@@ -1,10 +1,9 @@
 resource "random_password" "redis" {
-  length           = 32
-  override_special = "!&#$^<>-"
-  min_lower        = 1
-  min_upper        = 1
-  min_numeric      = 1
-  min_special      = 1
+  length      = 32
+  special     = false
+  min_lower   = 1
+  min_upper   = 1
+  min_numeric = 1
 }
 
 module "redis" {
@@ -41,15 +40,4 @@ module "redis" {
   ]
 
   tags = var.tags
-}
-
-resource "aws_secretsmanager_secret" "redis_password" {
-  name                    = "${var.name}-redis-password"
-  recovery_window_in_days = 0
-  tags                    = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "redis_password" {
-  secret_id     = aws_secretsmanager_secret.redis_password.id
-  secret_string = random_password.redis.result
 }
