@@ -1,6 +1,6 @@
 module "cert_manager_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.0"
+  version = "~> 2.0"
 
   name = "cert-manager"
 
@@ -23,7 +23,7 @@ resource "helm_release" "cert_manager" {
   namespace  = "cert-manager"
   repository = "https://charts.jetstack.io"
   chart      = "cert-manager"
-  version    = "1.16.1"
+  version    = "1.18.2"
 
   create_namespace = true
 

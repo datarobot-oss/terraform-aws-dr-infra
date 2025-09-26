@@ -15,7 +15,6 @@ module "datarobot_infra" {
   existing_public_route53_zone_id = "Z06110132R7HO9BLI64XY"
   create_acm_certificate          = false
   existing_acm_certificate_arn    = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
-  create_encryption_key           = true
   create_storage                  = true
   create_container_registry       = true
   create_kubernetes_cluster       = true
@@ -32,7 +31,6 @@ module "datarobot_infra" {
   internet_facing_ingress_lb   = true
   cert_manager                 = true
   external_dns                 = true
-  nvidia_device_plugin         = true
   nvidia_gpu_operator          = true
   metrics_server               = true
 
@@ -197,36 +195,6 @@ This certificate will be used on the NLB deployed by the `ingress-nginx` helm ch
                 "acm:AddTagsToCertificate",
                 "acm:ListTagsForCertificate",
                 "route53:ChangeResourceRecordSets"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
-
-
-### Encryption Key
-#### Toggle
-- `create_encryption_key` to create a new KMS key
-- `existing_kms_key_arn` to use an existing KMS key
-
-#### Description
-Uses the [terraform-aws-kms](https://github.com/terraform-aws-modules/terraform-aws-kms) module to create a new KMS encryption key with the current caller identity as a key administrator and the autoscaling service role (`autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling`). The key is used to encrypt EBS volumes in the EKS cluster.
-
-#### IAM Policy
-```
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "AllowKMSActions",
-            "Effect": "Allow",
-            "Action": [
-                "kms:TagResource",
-                "kms:CreateKey",
-                "kms:CreateAlias",
-                "kms:ListAliases",
-                "kms:DeleteAlias"
             ],
             "Resource": "*"
         }
@@ -575,7 +543,7 @@ Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modul
 
 Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `aws-ebs-csi-driver` helm chart from the `https://kubernetes-sigs.github.io/aws-ebs-csi-driver/` repo into the `aws-ebs-csi-driver` namespace.
 
-This helm chart creates default `Delete` and `Retain` storage classes called `ebs-standard` and `ebs-standard-retain`, respectively, of type `gp3` using the encryption key passed in from the `existing_kms_key_arn` variable or the KMS key created in the `encryption_key` module. These storage classes are used by the DataRobot application Persistent Volume Claims.
+This helm chart creates default EBS storage class called `ebs-gp3` of type `gp3` using with encryption enabled. These storage classes are used by the DataRobot application Persistent Volume Claims.
 
 #### IAM Policy
 ```
@@ -964,7 +932,7 @@ The default installation supports DataRobot versions >= 10.1.
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.3.2 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | >= 5.61 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.15 |
 

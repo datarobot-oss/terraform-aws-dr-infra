@@ -1,4 +1,3 @@
-data "aws_caller_identity" "current" {}
 data "aws_partition" "current" {}
 data "aws_availability_zones" "available" {
   state = "available"
@@ -27,7 +26,7 @@ locals {
 
 module "network" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 5.0"
+  version = "~> 6.0"
   count   = var.create_network && var.existing_vpc_id == null ? 1 : 0
 
   name = var.name
@@ -55,7 +54,7 @@ module "network" {
 
 module "endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-  version = "~> 5.0"
+  version = "~> 6.0"
   count   = var.create_network && var.existing_vpc_id == null && length(var.network_private_endpoints) > 0 ? 1 : 0
 
   vpc_id                     = local.vpc_id
@@ -102,43 +101,40 @@ locals {
   # create a public zone if we're using external_dns with internet_facing LB
   # or creating a public ACM certificate
   create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == null && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == null))
-
-  public_zone = {
-    public = {
-      domain_name   = var.domain_name
-      comment       = "${var.domain_name} public zone"
-      force_destroy = var.dns_zones_force_destroy
-    }
-  }
-
-  public_zone_id  = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.dns[0].route53_zone_zone_id["public"], null)
-  public_zone_arn = try(data.aws_route53_zone.existing_public[0].arn, module.dns[0].route53_zone_zone_arn["public"], null)
+  public_zone_id     = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.public_dns[0].id, null)
+  public_zone_arn    = try(data.aws_route53_zone.existing_public[0].arn, module.public_dns[0].arn, null)
 
   # create a private zone if we're using external_dns with an internal LB
   create_private_zone = var.create_dns_zones && var.existing_private_route53_zone_id == null && (var.external_dns && !var.internet_facing_ingress_lb)
-
-  private_zone = {
-    private = {
-      domain_name   = var.domain_name
-      vpc           = [{ vpc_id = local.vpc_id }]
-      comment       = "${var.domain_name} private zone"
-      force_destroy = var.dns_zones_force_destroy
-    }
-  }
-
-  private_zone_id  = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.dns[0].route53_zone_zone_id["private"], null)
-  private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.dns[0].route53_zone_zone_arn["private"], null)
+  private_zone_id     = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.private_dns[0].id, null)
+  private_zone_arn    = try(data.aws_route53_zone.existing_private[0].arn, module.private_dns[0].arn, null)
 }
 
-module "dns" {
-  source  = "terraform-aws-modules/route53/aws//modules/zones"
-  version = "~> 3.0"
-  count   = local.create_public_zone || local.create_private_zone ? 1 : 0
+module "public_dns" {
+  source  = "terraform-aws-modules/route53/aws"
+  version = "~> 6.0"
+  count   = local.create_public_zone ? 1 : 0
 
-  zones = merge(
-    local.create_private_zone ? local.private_zone : {},
-    local.create_public_zone ? local.public_zone : {}
-  )
+  name          = var.domain_name
+  comment       = "${var.domain_name} public zone"
+  force_destroy = var.dns_zones_force_destroy
+
+  tags = var.tags
+}
+
+module "private_dns" {
+  source  = "terraform-aws-modules/route53/aws"
+  version = "~> 6.0"
+  count   = local.create_private_zone ? 1 : 0
+
+  name          = var.domain_name
+  comment       = "${var.domain_name} private zone"
+  force_destroy = var.dns_zones_force_destroy
+  vpc = {
+    this = {
+      vpc_id = local.vpc_id
+    }
+  }
 
   tags = var.tags
 }
@@ -154,7 +150,7 @@ locals {
 
 module "acm" {
   source  = "terraform-aws-modules/acm/aws"
-  version = "~> 4.0"
+  version = "~> 5.0" # 6.0 requires TF >= 1.10
   count   = var.create_acm_certificate && var.existing_acm_certificate_arn == null ? 1 : 0
 
   domain_name = var.domain_name
@@ -174,32 +170,6 @@ module "acm" {
 
 
 ################################################################################
-# Encryption Key
-################################################################################
-
-locals {
-  encryption_key_arn = var.existing_kms_key_arn != null ? var.existing_kms_key_arn : try(module.encryption_key[0].key_arn, null)
-}
-
-module "encryption_key" {
-  source  = "terraform-aws-modules/kms/aws"
-  version = "~> 3.0"
-  count   = var.create_encryption_key && var.existing_kms_key_arn == null ? 1 : 0
-
-  description = "Ec2 AutoScaling key usage"
-  key_usage   = "ENCRYPT_DECRYPT"
-
-  key_administrators                = [data.aws_caller_identity.current.arn]
-  key_service_roles_for_autoscaling = ["arn:${data.aws_partition.current.id}:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/autoscaling.amazonaws.com/AWSServiceRoleForAutoScaling"]
-
-  aliases                 = ["datarobot/ebs"]
-  aliases_use_name_prefix = true
-
-  tags = var.tags
-}
-
-
-################################################################################
 # Storage
 ################################################################################
 
@@ -209,7 +179,7 @@ locals {
 
 module "storage" {
   source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "~> 4.0"
+  version = "~> 5.0"
   count   = var.create_storage && var.existing_s3_bucket_id == null ? 1 : 0
 
   bucket_prefix = replace(var.name, "_", "-")
@@ -225,7 +195,7 @@ module "storage" {
 
 module "container_registry" {
   source   = "terraform-aws-modules/ecr/aws"
-  version  = "~> 2.0"
+  version  = "~> 3.0"
   for_each = var.create_container_registry ? var.ecr_repositories : []
 
   repository_name               = "${var.name}/${each.key}"
@@ -248,28 +218,65 @@ data "aws_eks_cluster" "existing" {
 }
 
 locals {
-  eks_cluster_name            = try(data.aws_eks_cluster.existing[0].name, module.kubernetes[0].cluster_name, "")
-  eks_cluster_ca_data         = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, "")
-  eks_cluster_endpoint        = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
-  eks_cluster_oidc_issuer_url = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, "")
-  kubernetes_node_subnets     = var.existing_kubernetes_node_subnets != null ? var.existing_kubernetes_node_subnets : try(module.network[0].private_subnets, null)
+  eks_cluster_name        = try(data.aws_eks_cluster.existing[0].name, module.kubernetes[0].cluster_name, "")
+  eks_cluster_ca_data     = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, "")
+  eks_cluster_endpoint    = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
+  kubernetes_node_subnets = var.existing_kubernetes_node_subnets != null ? var.existing_kubernetes_node_subnets : try(module.network[0].private_subnets, null)
+}
 
-  # create each node group in each AZ
-  node_groups = merge([
-    for az in local.azs : {
-      for node_group_name, node_group_values in var.kubernetes_node_groups : "${node_group_name}-${substr(az, -1, -1)}" => merge(
-        {
-          create_placement_group = true
-          placement_group_az     = az
-        },
-        node_group_values
-      )
-  }]...)
+module "kubernetes" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 21.0"
+  count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
 
+  name                         = var.name
+  kubernetes_version           = var.kubernetes_cluster_version
+  enable_irsa                  = var.kubernetes_enable_irsa
+  encryption_config            = var.kubernetes_cluster_encryption_config
+  enable_auto_mode_custom_tags = var.kubernetes_enable_auto_mode_custom_tags
+
+  create_iam_role               = var.kubernetes_iam_role_arn == null
+  iam_role_arn                  = var.kubernetes_iam_role_arn
+  iam_role_name                 = var.kubernetes_iam_role_name
+  iam_role_use_name_prefix      = var.kubernetes_iam_role_use_name_prefix
+  iam_role_permissions_boundary = var.kubernetes_iam_role_permissions_boundary
+
+  authentication_mode                      = var.kubernetes_authentication_mode
+  enable_cluster_creator_admin_permissions = var.kubernetes_enable_cluster_creator_admin_permissions
+  access_entries                           = var.kubernetes_cluster_access_entries
+
+  vpc_id     = local.vpc_id
+  subnet_ids = local.kubernetes_node_subnets
+
+  endpoint_public_access       = var.kubernetes_cluster_endpoint_public_access
+  endpoint_public_access_cidrs = var.kubernetes_cluster_endpoint_public_access_cidrs
+
+  security_group_additional_rules = length(var.kubernetes_cluster_endpoint_private_access_cidrs) > 0 ? {
+    ingress_custom_https = {
+      description = "Custom hosts to control plane"
+      protocol    = "tcp"
+      from_port   = 443
+      to_port     = 443
+      type        = "ingress"
+      cidr_blocks = var.kubernetes_cluster_endpoint_private_access_cidrs
+    }
+  } : {}
+
+  addons = var.kubernetes_cluster_addons
+
+  node_security_group_additional_rules         = var.kubernetes_node_security_group_additional_rules
+  node_security_group_enable_recommended_rules = var.kubernetes_node_security_group_enable_recommended_rules
+
+  eks_managed_node_groups = var.kubernetes_node_groups
+
+  tags = var.tags
+}
+
+locals {
   # ASG tags for scaling to and from 0
   # represented as a tuple of objects in the form [{node_group, tag_key, tag_value}]
   node_group_asg_tags = flatten([
-    for node_group_name, node_group_values in local.node_groups : concat(
+    for node_group_name, node_group_values in var.kubernetes_node_groups : concat(
       [
         for k, v in node_group_values.labels : {
           node_group = node_group_name
@@ -286,71 +293,6 @@ locals {
       ]
     )
   ])
-}
-
-module "kubernetes" {
-  source  = "terraform-aws-modules/eks/aws"
-  version = "~> 20.0"
-  count   = var.create_kubernetes_cluster && var.existing_eks_cluster_name == null ? 1 : 0
-
-  cluster_name                 = var.name
-  cluster_version              = var.kubernetes_cluster_version
-  enable_irsa                  = var.kubernetes_enable_irsa
-  cluster_encryption_config    = var.kubernetes_cluster_encryption_config
-  enable_auto_mode_custom_tags = var.kubernetes_enable_auto_mode_custom_tags
-
-  create_iam_role               = var.kubernetes_iam_role_arn == null
-  iam_role_arn                  = var.kubernetes_iam_role_arn
-  iam_role_name                 = var.kubernetes_iam_role_name
-  iam_role_use_name_prefix      = var.kubernetes_iam_role_use_name_prefix
-  iam_role_permissions_boundary = var.kubernetes_iam_role_permissions_boundary
-
-  authentication_mode                      = var.kubernetes_authentication_mode
-  enable_cluster_creator_admin_permissions = var.kubernetes_enable_cluster_creator_admin_permissions
-  access_entries                           = var.kubernetes_cluster_access_entries
-
-  vpc_id     = local.vpc_id
-  subnet_ids = local.kubernetes_node_subnets
-
-  cluster_endpoint_public_access       = var.kubernetes_cluster_endpoint_public_access
-  cluster_endpoint_public_access_cidrs = var.kubernetes_cluster_endpoint_public_access_cidrs
-
-  cluster_security_group_additional_rules = length(var.kubernetes_cluster_endpoint_private_access_cidrs) > 0 ? {
-    ingress_custom_https = {
-      description = "Custom hosts to control plane"
-      protocol    = "tcp"
-      from_port   = 443
-      to_port     = 443
-      type        = "ingress"
-      cidr_blocks = var.kubernetes_cluster_endpoint_private_access_cidrs
-    }
-  } : {}
-
-  bootstrap_self_managed_addons = var.kubernetes_bootstrap_self_managed_addons
-  cluster_addons                = var.kubernetes_cluster_addons
-
-  node_security_group_additional_rules         = var.kubernetes_node_security_group_additional_rules
-  node_security_group_enable_recommended_rules = var.kubernetes_node_security_group_enable_recommended_rules
-
-  eks_managed_node_group_defaults = merge(
-    {
-      block_device_mappings = {
-        xvda = {
-          device_name = "/dev/xvda"
-          ebs = {
-            encrypted   = var.create_encryption_key || var.existing_kms_key_arn != ""
-            kms_key_id  = local.encryption_key_arn
-            volume_size = 200
-          }
-        }
-      }
-    },
-    var.kubernetes_node_group_defaults
-  )
-
-  eks_managed_node_groups = local.node_groups
-
-  tags = var.tags
 }
 
 resource "aws_autoscaling_group_tag" "this" {
@@ -371,23 +313,37 @@ resource "aws_autoscaling_group_tag" "this" {
 # App Identity
 ################################################################################
 
+data "aws_iam_openid_connect_provider" "existing" {
+  count = var.existing_eks_cluster_name != null ? 1 : 0
+  url   = data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer
+}
+
+locals {
+  oidc_provider_arn = var.existing_eks_cluster_name != null ? data.aws_iam_openid_connect_provider.existing[0].arn : try(module.kubernetes[0].oidc_provider_arn, "")
+}
+
 module "app_identity" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-assumable-role-with-oidc"
-  version = "~> 5.0"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  version = "~> 6.0"
   count   = var.create_app_identity ? 1 : 0
 
-  create_role = true
-  role_name   = "${var.name}-app-irsa"
+  name = "${var.name}-app-irsa"
 
-  provider_url                 = replace(local.eks_cluster_oidc_issuer_url, "https://", "")
-  oidc_subjects_with_wildcards = ["system:serviceaccount:${var.datarobot_namespace}:*"]
+  oidc_providers = {
+    this = {
+      provider_arn               = local.oidc_provider_arn
+      namespace_service_accounts = ["${var.datarobot_namespace}:*"]
+      trust_condition_test       = "StringLike"
+    }
+  }
 
-  role_policy_arns = [
-    "arn:${data.aws_partition.current.id}:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
-  ]
-  inline_policy_statements = [
-    {
-      sid = "AllowAccessToS3Bucket"
+  policies = {
+    ecr = "arn:${data.aws_partition.current.id}:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
+  }
+
+  create_inline_policy = true
+  inline_policy_permissions = {
+    s3bucket = {
       actions = [
         "s3:DeleteObject",
         "s3:Get*",
@@ -396,12 +352,11 @@ module "app_identity" {
         "s3:ListMultipartUploadParts"
       ]
       resources = [
-        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}/*",
-        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}"
+        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}",
+        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}/*"
       ]
-    },
-    {
-      sid = "AllowListBuckets"
+    }
+    s3list = {
       actions = [
         "s3:ListBucket",
         "s3:ListBucketVersions",
@@ -409,7 +364,7 @@ module "app_identity" {
       ]
       resources = ["arn:${data.aws_partition.current.id}:s3:::*"]
     }
-  ]
+  }
 
   tags = var.tags
 }
@@ -553,7 +508,6 @@ module "aws_ebs_csi_driver" {
   count  = var.install_helm_charts && var.aws_ebs_csi_driver ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
-  aws_ebs_csi_kms_arn     = local.encryption_key_arn
 
   custom_values_templatefile = var.aws_ebs_csi_driver_values
   custom_values_variables    = var.aws_ebs_csi_driver_variables
@@ -622,14 +576,6 @@ module "external_dns" {
   tags = var.tags
 
   depends_on = [module.aws_load_balancer_controller]
-}
-
-module "nvidia_device_plugin" {
-  source = "./modules/nvidia-device-plugin"
-  count  = var.install_helm_charts && var.nvidia_device_plugin ? 1 : 0
-
-  custom_values_templatefile = var.nvidia_device_plugin_values
-  custom_values_variables    = var.nvidia_device_plugin_variables
 }
 
 module "nvidia_gpu_operator" {

@@ -1,8 +1,6 @@
 locals {
-  private_endpoints = flatten([for cs in mongodbatlas_advanced_cluster.this.connection_strings : cs.private_endpoint])
-
   connection_strings = [
-    for pe in local.private_endpoints : pe.srv_connection_string
+    for pe in mongodbatlas_advanced_cluster.this.connection_strings.private_endpoint : pe.srv_connection_string
     if contains([for e in pe.endpoints : e.endpoint_id], aws_vpc_endpoint.this.id)
   ]
 }

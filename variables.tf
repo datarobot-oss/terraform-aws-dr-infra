@@ -110,23 +110,6 @@ variable "create_acm_certificate" {
 
 
 ################################################################################
-# Encryption Key
-################################################################################
-
-variable "existing_kms_key_arn" {
-  description = "ARN of existing KMS key used for EBS volume encryption on EKS nodes. When specified, create_encryption_key will be ignored."
-  type        = string
-  default     = null
-}
-
-variable "create_encryption_key" {
-  description = "Create a new KMS key used for EBS volume encryption on EKS nodes. Ignored if existing_kms_key_arn is specified."
-  type        = bool
-  default     = true
-}
-
-
-################################################################################
 # Storage
 ################################################################################
 
@@ -204,7 +187,7 @@ variable "existing_kubernetes_node_subnets" {
 variable "kubernetes_cluster_version" {
   description = "EKS cluster version"
   type        = string
-  default     = null
+  default     = "1.33"
 }
 
 variable "kubernetes_authentication_mode" {
@@ -289,12 +272,6 @@ variable "kubernetes_cluster_endpoint_private_access_cidrs" {
   default     = []
 }
 
-variable "kubernetes_bootstrap_self_managed_addons" {
-  description = "Indicates whether or not to bootstrap self-managed addons after the cluster has been created"
-  type        = bool
-  default     = false
-}
-
 variable "kubernetes_cluster_addons" {
   description = "Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name`"
   type        = any
@@ -329,35 +306,53 @@ variable "kubernetes_node_security_group_enable_recommended_rules" {
   default     = true
 }
 
-variable "kubernetes_node_group_defaults" {
-  description = "Default values to use for all EKS nodegroups"
-  type        = any
-  default     = {}
-}
-
 variable "kubernetes_node_groups" {
   description = "Map of EKS managed node groups. See https://github.com/terraform-aws-modules/terraform-aws-eks/tree/master/modules/eks-managed-node-group for further configuration options."
   type        = any
   default = {
-    datarobot-cpu = {
+    drcpu = {
+      create         = true
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
-      desired_size   = 1
+      desired_size   = 2
       min_size       = 1
       max_size       = 10
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_type = "gp3"
+            volume_size = 200
+            encrypted   = true
+          }
+        }
+      }
       labels = {
         "datarobot.com/node-capability" = "cpu"
       }
       taints = {}
     }
-    datarobot-gpu = {
+    drgpu = {
+      create         = true
       ami_type       = "AL2023_x86_64_NVIDIA"
       instance_types = ["g4dn.2xlarge"]
       desired_size   = 0
       min_size       = 0
       max_size       = 10
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_type = "gp3"
+            volume_size = 200
+            encrypted   = true
+          }
+        }
+      }
       labels = {
         "datarobot.com/node-capability" = "gpu"
+        "datarobot.com/node-type"       = "on-demand"
+        "datarobot.com/gpu-type"        = "nvidia-t4-2x"
       }
       taints = {
         nvidia_gpu = {
@@ -721,24 +716,6 @@ variable "external_dns_values" {
 
 variable "external_dns_variables" {
   description = "Variables passed to the external_dns_values templatefile"
-  type        = any
-  default     = {}
-}
-
-variable "nvidia_device_plugin" {
-  description = "Install the nvidia-device-plugin helm chart to expose node GPU resources to the EKS cluster. All other nvidia_device_plugin variables are ignored if this variable is false."
-  type        = bool
-  default     = true
-}
-
-variable "nvidia_device_plugin_values" {
-  description = "Path to templatefile containing custom values for the nvidia-device-plugin helm chart"
-  type        = string
-  default     = ""
-}
-
-variable "nvidia_device_plugin_variables" {
-  description = "Variables passed to the nvidia_device_plugin_values templatefile"
   type        = any
   default     = {}
 }

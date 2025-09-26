@@ -1,6 +1,6 @@
 module "aws_load_balancer_controller_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.0"
+  version = "~> 2.0"
 
   name = "aws-lbc"
 
@@ -22,7 +22,7 @@ resource "helm_release" "aws_load_balancer_controller" {
   namespace  = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
-  version    = "1.10.0"
+  version    = "1.13.4"
 
   create_namespace = true
 

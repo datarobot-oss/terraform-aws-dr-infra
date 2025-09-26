@@ -2,7 +2,7 @@ data "aws_region" "current" {}
 
 module "cluster_autoscaler_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.0"
+  version = "~> 2.0"
 
   name = "cluster-autoscaler"
 
@@ -25,7 +25,7 @@ resource "helm_release" "cluster_autoscaler" {
   namespace  = "cluster-autoscaler"
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
-  version    = "9.43.2"
+  version    = "9.50.1"
 
   create_namespace = true
 
@@ -41,7 +41,7 @@ resource "helm_release" "cluster_autoscaler" {
     },
     {
       name  = "awsRegion"
-      value = data.aws_region.current.name
+      value = data.aws_region.current.region
     }
   ]
 

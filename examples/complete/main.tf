@@ -45,11 +45,6 @@ module "datarobot_infra" {
   create_acm_certificate = false
 
   ################################################################################
-  # Encryption Key
-  ################################################################################
-  create_encryption_key = true
-
-  ################################################################################
   # Storage
   ################################################################################
   create_storage          = true
@@ -61,9 +56,11 @@ module "datarobot_infra" {
   create_container_registry = true
   ecr_repositories = [
     "base-image",
+    "custom-apps/managed-image",
+    "custom-jobs/managed-image",
     "ephemeral-image",
     "managed-image",
-    "custom-apps-managed-image"
+    "services/custom-model-conversion"
   ]
   ecr_repositories_force_destroy = true
 
@@ -71,7 +68,7 @@ module "datarobot_infra" {
   # Kubernetes
   ################################################################################
   create_kubernetes_cluster      = true
-  kubernetes_cluster_version     = "1.32"
+  kubernetes_cluster_version     = "1.33"
   kubernetes_authentication_mode = "API_AND_CONFIG_MAP"
   kubernetes_enable_irsa         = true
   kubernetes_cluster_encryption_config = {
@@ -101,7 +98,6 @@ module "datarobot_infra" {
   kubernetes_cluster_endpoint_public_access        = false
   kubernetes_cluster_endpoint_public_access_cidrs  = []
   kubernetes_cluster_endpoint_private_access_cidrs = [local.provisioner_private_ip]
-  kubernetes_bootstrap_self_managed_addons         = false
   kubernetes_cluster_addons = {
     coredns = {
       most_recent = true
@@ -127,12 +123,12 @@ module "datarobot_infra" {
   }
   kubernetes_node_security_group_additional_rules         = {}
   kubernetes_node_security_group_enable_recommended_rules = true
-  kubernetes_node_group_defaults                          = {}
   kubernetes_node_groups = {
-    datarobot-cpu = {
+    drcpu = {
+      create         = true
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
-      desired_size   = 1
+      desired_size   = 2
       min_size       = 1
       max_size       = 10
       labels = {
@@ -140,7 +136,8 @@ module "datarobot_infra" {
       }
       taints = {}
     }
-    datarobot-gpu = {
+    drgpu = {
+      create         = true
       ami_type       = "AL2023_x86_64_NVIDIA"
       instance_types = ["g4dn.2xlarge"]
       desired_size   = 0
@@ -148,6 +145,8 @@ module "datarobot_infra" {
       max_size       = 10
       labels = {
         "datarobot.com/node-capability" = "gpu"
+        "datarobot.com/node-type"       = "on-demand"
+        "datarobot.com/gpu-type"        = "nvidia-t4-2x"
       }
       taints = {
         nvidia_gpu = {
@@ -158,6 +157,7 @@ module "datarobot_infra" {
       }
     }
   }
+
 
   ################################################################################
   # App Identity
@@ -264,13 +264,6 @@ module "datarobot_infra" {
   external_dns           = true
   external_dns_values    = "${path.module}/templates/custom_external_dns_values.yaml"
   external_dns_variables = {}
-
-  ################################################################################
-  # nvidia-device-plugin
-  ################################################################################
-  nvidia_device_plugin           = true
-  nvidia_device_plugin_values    = "${path.module}/templates/custom_nvidia_device_plugin_values.yaml"
-  nvidia_device_plugin_variables = {}
 
   ################################################################################
   # nvidia-gpu-operator

@@ -3,7 +3,7 @@ resource "helm_release" "descheduler" {
   namespace  = "descheduler"
   repository = "https://kubernetes-sigs.github.io/descheduler"
   chart      = "descheduler"
-  version    = "0.31.0"
+  version    = "0.33.0"
 
   create_namespace = true
 

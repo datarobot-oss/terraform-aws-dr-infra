@@ -1,5 +1,6 @@
 extraArgs:
   expander: least-waste
+  balance-similar-node-groups: true
   skip-nodes-with-local-storage: false
   skip-nodes-with-system-pods: false
   daemonset-eviction-for-empty-nodes: true

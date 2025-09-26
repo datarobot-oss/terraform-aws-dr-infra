@@ -2,8 +2,8 @@ data "aws_region" "this" {}
 data "aws_regions" "current" {}
 
 locals {
-  region      = upper(replace(data.aws_region.this.name, "-", "_"))
-  copy_region = upper(replace(tolist(setsubtract(data.aws_regions.current.names, [data.aws_region.this.name]))[0], "-", "_"))
+  region      = upper(replace(data.aws_region.this.region, "-", "_"))
+  copy_region = upper(replace(tolist(setsubtract(data.aws_regions.current.names, [data.aws_region.this.region]))[0], "-", "_"))
 }
 
 resource "mongodbatlas_project" "this" {
@@ -49,25 +49,25 @@ resource "mongodbatlas_advanced_cluster" "this" {
   pit_enabled                    = true
   termination_protection_enabled = var.termination_protection_enabled
 
-  replication_specs {
-    region_configs {
+  replication_specs = [{
+    region_configs = [{
       provider_name = "AWS"
       region_name   = local.region
       priority      = 7
 
-      electable_specs {
+      electable_specs = {
         instance_size = var.atlas_instance_type
         disk_size_gb  = var.atlas_disk_size
         node_count    = 3
       }
 
-      auto_scaling {
+      auto_scaling = {
         disk_gb_enabled = var.atlas_auto_scaling_disk_gb_enabled
       }
-    }
-  }
+    }]
+  }]
 
-  advanced_configuration {
+  advanced_configuration = {
     javascript_enabled           = true
     minimum_enabled_tls_protocol = "TLS1_2"
   }

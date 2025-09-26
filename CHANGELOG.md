@@ -4,6 +4,21 @@ All notable changes are documented in this file.
 
 
 
+## v2.0.0
+
+### Updated
+
+- aws provider version 6.0
+- mongodb provider to version 2.0
+- updated to latest terraform-aws-module versions
+- updated to latest amenity versions
+
+### Removed
+
+- `encryption_key` module in favor of using AWS managed keys
+- `nvidia_device_plugin` in favor of `nvidia_gpu_operator`
+
+
 ## v1.5.7
 
 ### Updated

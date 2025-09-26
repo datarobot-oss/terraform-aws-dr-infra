@@ -1,11 +1,10 @@
 module "aws_ebs_csi_driver_pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
-  version = "~> 1.0"
+  version = "~> 2.0"
 
   name = "aws-ebs-csi"
 
   attach_aws_ebs_csi_policy = true
-  aws_ebs_csi_kms_arns      = [var.aws_ebs_csi_kms_arn]
 
   associations = {
     this = {
@@ -23,14 +22,12 @@ resource "helm_release" "aws_ebs_csi_driver" {
   namespace  = "aws-ebs-csi-driver"
   repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
   chart      = "aws-ebs-csi-driver"
-  version    = "2.37.0"
+  version    = "2.49.0"
 
   create_namespace = true
 
   values = [
-    templatefile("${path.module}/values.yaml", {
-      encryption_key_id = var.aws_ebs_csi_kms_arn
-    }),
+    templatefile("${path.module}/values.yaml", {}),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
 

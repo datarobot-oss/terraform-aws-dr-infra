@@ -3,15 +3,15 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = ">= 5.61"
+      version = "~> 6.0"
     }
     mongodbatlas = {
       source  = "mongodb/mongodbatlas"
-      version = ">= 1.11.0"
+      version = "~> 2.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">= 3.7.2"
+      version = "~> 3.0"
     }
   }
 }

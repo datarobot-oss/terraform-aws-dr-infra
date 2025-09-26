@@ -1,21 +1,9 @@
 storageClasses:
-  - name: ebs-standard
+  - name: ebs-gp3
     annotations:
       storageclass.kubernetes.io/is-default-class: "true"
     volumeBindingMode: WaitForFirstConsumer
-    allowVolumeExpansion: true
-    reclaimPolicy: Delete
     parameters:
       csi.storage.k8s.io/fstype: ext4
       type: gp3
       encrypted: "true"
-      kmskeyid: ${encryption_key_id}
-  - name: ebs-standard-retain
-    volumeBindingMode: WaitForFirstConsumer
-    allowVolumeExpansion: true
-    reclaimPolicy: Retain
-    parameters:
-      csi.storage.k8s.io/fstype: ext4
-      type: gp3
-      encrypted: "true"
-      kmskeyid: ${encryption_key_id}
