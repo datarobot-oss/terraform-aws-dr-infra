@@ -60,8 +60,10 @@ module "datarobot_infra" {
     "custom-jobs/managed-image",
     "ephemeral-image",
     "managed-image",
-    "services/custom-model-conversion"
+    "services/custom-model-conversion",
+    "spark-batch-image"
   ]
+  ecr_repositories_scan_on_push  = false
   ecr_repositories_force_destroy = true
 
   ################################################################################

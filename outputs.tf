@@ -64,7 +64,7 @@ output "acm_certificate_arn" {
 
 output "s3_bucket_id" {
   description = "Name of the S3 bucket"
-  value       = try(module.storage[0].s3_bucket_id, null)
+  value       = local.s3_bucket_id
 }
 
 
@@ -84,7 +84,7 @@ output "ecr_repository_urls" {
 
 output "kubernetes_cluster_name" {
   description = "Name of the EKS cluster"
-  value       = try(module.kubernetes[0].cluster_name, null)
+  value       = local.eks_cluster_name
 }
 
 output "kubernetes_cluster_endpoint" {
@@ -109,7 +109,7 @@ output "kubernetes_cluster_node_groups" {
 
 output "app_role_arn" {
   description = "ARN of the IAM role to be assumed by the DataRobot app service accounts"
-  value       = try(module.app_identity[0].iam_role_arn, null)
+  value       = local.app_role_arn
 }
 
 

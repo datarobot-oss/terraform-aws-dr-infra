@@ -3,6 +3,15 @@
 All notable changes are documented in this file.
 
 
+## v2.0.1
+
+### Added
+- `spark-batch-image` ECR repository
+
+### Updated
+- `app_identity` module switched to use `terraform-aws-modules/iam/aws//modules/iam-role` instead of `terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts` to allow emr-serverless AWS service to assume the app identity role.
+- ECR repositories created by this module now have policies attached which only allow read/write access to the IAM role associated with the DataRobot application.
+
 
 ## v2.0.0
 

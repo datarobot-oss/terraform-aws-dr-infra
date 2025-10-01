@@ -100,7 +100,7 @@ data "aws_route53_zone" "existing_private" {
 locals {
   # create a public zone if we're using external_dns with internet_facing LB
   # or creating a public ACM certificate
-  create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == null && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == null))
+  create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == null && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == ""))
   public_zone_id     = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.public_dns[0].id, null)
   public_zone_arn    = try(data.aws_route53_zone.existing_public[0].arn, module.public_dns[0].arn, null)
 
@@ -145,7 +145,7 @@ module "private_dns" {
 ################################################################################
 
 locals {
-  acm_certificate_arn = var.existing_acm_certificate_arn != null ? var.existing_acm_certificate_arn : try(module.acm[0].acm_certificate_arn, "")
+  acm_certificate_arn = var.existing_acm_certificate_arn != null ? var.existing_acm_certificate_arn : try(module.acm[0].acm_certificate_arn, null)
 }
 
 module "acm" {
@@ -194,15 +194,16 @@ module "storage" {
 ################################################################################
 
 module "container_registry" {
-  source   = "terraform-aws-modules/ecr/aws"
+  source = "terraform-aws-modules/ecr/aws"
+
   version  = "~> 3.0"
   for_each = var.create_container_registry ? var.ecr_repositories : []
 
-  repository_name               = "${var.name}/${each.key}"
-  repository_image_scan_on_push = false
-  repository_force_delete       = var.ecr_repositories_force_destroy
-  attach_repository_policy      = false
-  create_lifecycle_policy       = false
+  repository_name                   = "${var.name}/${each.key}"
+  repository_read_write_access_arns = [local.app_role_arn]
+  repository_image_scan_on_push     = var.ecr_repositories_scan_on_push
+  repository_force_delete           = var.ecr_repositories_force_destroy
+  create_lifecycle_policy           = false
 
   tags = var.tags
 }
@@ -218,9 +219,10 @@ data "aws_eks_cluster" "existing" {
 }
 
 locals {
-  eks_cluster_name        = try(data.aws_eks_cluster.existing[0].name, module.kubernetes[0].cluster_name, "")
+  eks_cluster_name        = try(data.aws_eks_cluster.existing[0].name, module.kubernetes[0].cluster_name, null)
   eks_cluster_ca_data     = try(data.aws_eks_cluster.existing[0].certificate_authority[0].data, module.kubernetes[0].cluster_certificate_authority_data, "")
   eks_cluster_endpoint    = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
+  eks_oidc_issuer_url     = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
   kubernetes_node_subnets = var.existing_kubernetes_node_subnets != null ? var.existing_kubernetes_node_subnets : try(module.network[0].private_subnets, null)
 }
 
@@ -313,34 +315,38 @@ resource "aws_autoscaling_group_tag" "this" {
 # App Identity
 ################################################################################
 
-data "aws_iam_openid_connect_provider" "existing" {
-  count = var.existing_eks_cluster_name != null ? 1 : 0
-  url   = data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer
-}
-
 locals {
-  oidc_provider_arn = var.existing_eks_cluster_name != null ? data.aws_iam_openid_connect_provider.existing[0].arn : try(module.kubernetes[0].oidc_provider_arn, "")
+  app_role_arn = var.existing_app_role_arn != null ? var.existing_app_role_arn : try(module.app_identity[0].arn, null)
 }
 
 module "app_identity" {
-  source  = "terraform-aws-modules/iam/aws//modules/iam-role-for-service-accounts"
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role"
   version = "~> 6.0"
   count   = var.create_app_identity ? 1 : 0
 
   name = "${var.name}-app-irsa"
 
-  oidc_providers = {
-    this = {
-      provider_arn               = local.oidc_provider_arn
-      namespace_service_accounts = ["${var.datarobot_namespace}:*"]
-      trust_condition_test       = "StringLike"
+  # trust
+  enable_oidc            = true
+  oidc_provider_urls     = [local.eks_oidc_issuer_url]
+  oidc_wildcard_subjects = ["system:serviceaccount:${var.datarobot_namespace}:*"]
+  oidc_audiences         = ["sts.amazonaws.com"]
+  trust_policy_permissions = {
+    emr = {
+      actions = ["sts:AssumeRole"]
+      principals = [{
+        type        = "Service"
+        identifiers = ["emr-serverless.amazonaws.com"]
+      }]
     }
   }
 
+  # managed policies
   policies = {
     ecr = "arn:${data.aws_partition.current.id}:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser"
   }
 
+  # inline policies
   create_inline_policy = true
   inline_policy_permissions = {
     s3bucket = {
@@ -475,7 +481,7 @@ data "aws_eks_cluster_auth" "this" {
 
 provider "helm" {
   kubernetes = {
-    host                   = try(local.eks_cluster_endpoint, "")
+    host                   = local.eks_cluster_endpoint
     cluster_ca_certificate = base64decode(try(local.eks_cluster_ca_data, ""))
     token                  = try(data.aws_eks_cluster_auth.this[0].token, "")
   }

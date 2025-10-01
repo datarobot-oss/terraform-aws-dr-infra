@@ -258,6 +258,8 @@ The DataRobot application will use this storage bucket for persistent file stora
 #### Description
 Uses the [terraform-aws-ecr](https://github.com/terraform-aws-modules/terraform-aws-ecr) module to create a new ECR repositories used by the DataRobot application to host custom images created by various services.
 
+By default, only the DataRobot application IAM role will be allowed read/write access to these repositories.
+
 #### IAM Policy
 ```
 {
@@ -375,6 +377,23 @@ Two node groups are created:
         }
     ]
 }
+```
+
+
+### App Identity
+#### Toggle
+- `create_app_identity` to create an IRSA role used by pods within the `datarobot_namespace`
+- `existing_app_role_arn` to use an existing IAM role
+
+An IAM role named `${var.name}-app-irsa` will be created with a trust policy allowing any service account within the `datarobot_namespace` in the Kubernetes cluster either created by this module or specified in `existing_eks_cluster_name` to assume it.
+
+To enable batch spark jobs using EMR serverless, the `emr-serverless.amazonaws.com` AWS Service is also allowed to assume the role.
+
+The role is given the `AmazonEC2ContainerRegistryPowerUser` managed policy in order to manage ECR repositories as well as S3 bucket access to either the bucket created in this module or specified by the `existing_s3_bucket_id` variable.
+
+#### IAM Policy
+```
+TBD
 ```
 
 

@@ -143,7 +143,7 @@ variable "create_container_registry" {
 }
 
 variable "ecr_repositories" {
-  description = "Repositories to create"
+  description = "Repositories to create. Names are prefixed with `name` variable as in `name`/`repository`."
   type        = set(string)
   default = [
     "base-image",
@@ -151,8 +151,15 @@ variable "ecr_repositories" {
     "custom-jobs/managed-image",
     "ephemeral-image",
     "managed-image",
-    "services/custom-model-conversion"
+    "services/custom-model-conversion",
+    "spark-batch-image"
   ]
+}
+
+variable "ecr_repositories_scan_on_push" {
+  description = "Indicates whether images are scanned after being pushed to the repository (`true`) or not scanned (`false`)"
+  type        = bool
+  default     = false
 }
 
 variable "ecr_repositories_force_destroy" {
@@ -369,6 +376,12 @@ variable "kubernetes_node_groups" {
 ################################################################################
 # App Identity
 ################################################################################
+
+variable "existing_app_role_arn" {
+  description = "ARN of existing IAM role which represents the DataRobot application"
+  type        = string
+  default     = null
+}
 
 variable "create_app_identity" {
   description = "Create an IAM role for the DataRobot application service accounts"
