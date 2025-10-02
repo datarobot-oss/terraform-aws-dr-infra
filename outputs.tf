@@ -112,6 +112,11 @@ output "app_role_arn" {
   value       = local.app_role_arn
 }
 
+output "genai_role_arn" {
+  description = "ARN of the IAM role assumed by the DataRobot app IRSA when accessing Amazon Bedrock AI Foundational Models"
+  value       = try(module.genai_identity[0].arn, null)
+}
+
 
 ################################################################################
 # PostgreSQL

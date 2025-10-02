@@ -382,6 +382,36 @@ module "app_identity" {
   tags = var.tags
 }
 
+module "genai_identity" {
+  source  = "terraform-aws-modules/iam/aws//modules/iam-role"
+  version = "~> 6.0"
+  count   = var.create_app_identity ? 1 : 0
+
+  name = "${var.name}-genai"
+
+  trust_policy_permissions = {
+    app = {
+      actions = ["sts:AssumeRole"]
+      principals = [{
+        type        = "AWS"
+        identifiers = [local.app_role_arn]
+      }]
+    }
+  }
+
+  create_inline_policy = true
+  inline_policy_permissions = {
+    bedrock = {
+      actions = [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
+        "bedrock:ListFoundationModels"
+      ]
+      resources = ["*"]
+    }
+  }
+}
+
 
 ################################################################################
 # PostgreSQL

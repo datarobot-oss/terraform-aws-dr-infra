@@ -3,6 +3,11 @@ output "app_role_arn" {
   value       = module.datarobot_infra.app_role_arn
 }
 
+output "genai_role_arn" {
+  description = "ARN of the IAM role assumed by the DataRobot app IRSA when accessing Amazon Bedrock AI Foundational Models"
+  value       = module.datarobot_infra.genai_role_arn
+}
+
 output "ecr_repository_urls" {
   description = "URLs of the image builder repositories"
   value       = module.datarobot_infra.ecr_repository_urls

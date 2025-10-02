@@ -391,6 +391,8 @@ To enable batch spark jobs using EMR serverless, the `emr-serverless.amazonaws.c
 
 The role is given the `AmazonEC2ContainerRegistryPowerUser` managed policy in order to manage ECR repositories as well as S3 bucket access to either the bucket created in this module or specified by the `existing_s3_bucket_id` variable.
 
+A second role will also be created which the DataRobot app role will assume in order to access Amazon Bedrock resources.
+
 #### IAM Policy
 ```
 TBD
