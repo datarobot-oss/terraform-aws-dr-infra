@@ -1,4 +1,5 @@
 data "aws_partition" "current" {}
+data "aws_caller_identity" "current" {}
 data "aws_availability_zones" "available" {
   state = "available"
   filter {
@@ -369,6 +370,12 @@ module "app_identity" {
         "s3:ListAllMyBuckets"
       ]
       resources = ["arn:${data.aws_partition.current.id}:s3:::*"]
+    }
+    sts = {
+      actions = [
+        "sts:AssumeRole"
+      ]
+      resources = ["arn:${data.aws_partition.current.id}:iam::${data.aws_caller_identity.current.account_id}:role/*"]
     }
   }
 
