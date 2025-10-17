@@ -101,6 +101,7 @@ module "flow_log" {
   name   = var.name
   vpc_id = local.vpc_id
 
+  cloudwatch_log_group_use_name_prefix   = false
   cloudwatch_log_group_retention_in_days = var.network_cloudwatch_log_group_retention_in_days
 
   tags = var.tags
@@ -519,6 +520,35 @@ module "mongodb" {
   enable_slack_alerts                = var.mongodb_enable_slack_alerts
   slack_api_token                    = var.mongodb_slack_api_token
   slack_notification_channel         = var.mongodb_slack_notification_channel
+
+  tags = var.tags
+}
+
+
+################################################################################
+# RabbitMQ
+################################################################################
+
+locals {
+  rabbitmq_subnets = var.existing_rabbitmq_subnets != null ? var.existing_rabbitmq_subnets : try(module.network[0].database_subnets, null)
+}
+
+module "rabbitmq" {
+  source = "./modules/rabbitmq"
+  count  = var.create_rabbitmq ? 1 : 0
+
+  name                       = var.name
+  vpc_id                     = local.vpc_id
+  vpc_cidr                   = local.vpc_cidr
+  subnets                    = local.rabbitmq_subnets
+  multi_az                   = local.multi_az
+  engine_version             = var.rabbitmq_engine_version
+  auto_minor_version_upgrade = var.rabbitmq_auto_minor_version_upgrade
+  host_instance_type         = var.rabbitmq_instance_type
+  authentication_strategy    = var.rabbitmq_authentication_strategy
+  username                   = var.rabbitmq_username
+  log                        = var.rabbitmq_enable_cloudwatch_logs
+  log_retention              = var.rabbitmq_cloudwatch_log_group_retention_in_days
 
   tags = var.tags
 }

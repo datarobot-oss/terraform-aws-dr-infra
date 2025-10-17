@@ -1,13 +1,16 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.3.0
+### Added
+- `rabbitmq` module
+
 ## v2.2.0
 ### Added
 - support setting `private_dns_enabled` to `false` for the `s3` VPC private interface endpoint.
 - support for enabling VPC flow logs and sending to a CloudWatch log group
 ### Updated
 - always create public and private zones if `create_dns_zones` is `true` and no existing zone IDs have been specified.
-
 
 ## v2.1.0
 ### Updated

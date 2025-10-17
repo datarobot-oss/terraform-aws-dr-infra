@@ -21,17 +21,6 @@ resource "mongodbatlas_database_user" "admin" {
   }
 }
 
-resource "aws_secretsmanager_secret" "admin_password" {
-  name                    = "${var.name}-mongodb-admin-password"
-  recovery_window_in_days = 0
-  tags                    = var.tags
-}
-
-resource "aws_secretsmanager_secret_version" "admin_password" {
-  secret_id     = aws_secretsmanager_secret.admin_password.id
-  secret_string = random_password.admin.result
-}
-
 resource "mongodbatlas_database_user" "aws_admins" {
   for_each = var.mongodb_admin_arns
 

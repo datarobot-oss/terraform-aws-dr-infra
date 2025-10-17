@@ -210,6 +210,18 @@ module "datarobot_infra" {
   mongodb_slack_notification_channel         = "#mongodb-atlas-notifications"
 
   ################################################################################
+  # RabbitMQ
+  ################################################################################
+  create_rabbitmq                                 = true
+  rabbitmq_engine_version                         = "3.13"
+  rabbitmq_auto_minor_version_upgrade             = true
+  rabbitmq_instance_type                          = "mq.m5.large"
+  rabbitmq_authentication_strategy                = "simple"
+  rabbitmq_username                               = "pcs-rabbitmq"
+  rabbitmq_enable_cloudwatch_logs                 = true
+  rabbitmq_cloudwatch_log_group_retention_in_days = 90
+
+  ################################################################################
   # Helm Charts
   ################################################################################
   install_helm_charts = true

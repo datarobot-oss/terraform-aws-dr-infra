@@ -603,6 +603,65 @@ variable "mongodb_slack_notification_channel" {
 
 
 ################################################################################
+# RabbitMQ
+################################################################################
+
+variable "create_rabbitmq" {
+  description = "Whether to create an AMQ RabbitMQ instance"
+  type        = bool
+  default     = false
+}
+
+variable "existing_rabbitmq_subnets" {
+  description = "List of existing subnet IDs to be used for the AMQ RabbitMQ instance. Required when an existing_network_id is specified."
+  type        = list(string)
+  default     = null
+}
+
+variable "rabbitmq_engine_version" {
+  description = "Version of the broker engine. See the [AmazonMQ Broker Engine docs](https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/broker-engine.html) for supported versions."
+  type        = string
+  default     = "3.13"
+}
+
+variable "rabbitmq_auto_minor_version_upgrade" {
+  type        = bool
+  description = "Whether to automatically upgrade to new minor versions of brokers as Amazon MQ makes releases available."
+  default     = true
+}
+
+variable "rabbitmq_instance_type" {
+  description = "Broker's instance type. For example, `mq.t3.micro`, `mq.m5.large`."
+  type        = string
+  default     = "mq.m5.large"
+}
+
+variable "rabbitmq_authentication_strategy" {
+  description = "Authentication strategy used to secure the broker"
+  type        = string
+  default     = "simple"
+}
+
+variable "rabbitmq_username" {
+  description = "RabbitMQ broker usernmae"
+  type        = string
+  default     = "pcs-rabbitmq"
+}
+
+variable "rabbitmq_enable_cloudwatch_logs" {
+  type        = bool
+  description = "Export RabbitMQ logs to CloudWatch"
+  default     = false
+}
+
+variable "rabbitmq_cloudwatch_log_group_retention_in_days" {
+  type        = string
+  description = "CloudWatch log retention for RabbitMQ"
+  default     = 90
+}
+
+
+################################################################################
 # Helm Charts
 ################################################################################
 

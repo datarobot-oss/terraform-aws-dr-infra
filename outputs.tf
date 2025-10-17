@@ -165,6 +165,21 @@ output "mongodb_password" {
   sensitive   = true
 }
 
+################################################################################
+# RabbitMQ
+################################################################################
+
+output "rabbitmq_endpoint" {
+  description = "RabbitMQ AMQP(S) endpoint"
+  value       = try(module.rabbitmq[0].endpoint, null)
+}
+
+output "rabbitmq_password" {
+  description = "RabbitMQ broker password"
+  value       = try(module.rabbitmq[0].password, null)
+  sensitive   = true
+}
+
 
 ################################################################################
 # ingress-nginx

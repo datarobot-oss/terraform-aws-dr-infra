@@ -6,7 +6,7 @@ resource "random_password" "postgres" {
   min_numeric = 1
 }
 
-module "postgres_sg" {
+module "security_group" {
   source  = "terraform-aws-modules/security-group/aws"
   version = "~> 5.0"
 
@@ -35,7 +35,7 @@ module "postgres" {
   multi_az               = var.multi_az
   subnet_ids             = var.subnets
   create_db_subnet_group = true
-  vpc_security_group_ids = [module.postgres_sg.security_group_id]
+  vpc_security_group_ids = [module.security_group.security_group_id]
 
   engine               = "postgres"
   engine_version       = var.postgres_engine_version
@@ -48,6 +48,7 @@ module "postgres" {
   max_allocated_storage = var.postgres_max_allocated_storage
   port                  = 5432
 
+  create_cloudwatch_log_group     = true
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
   backup_retention_period = var.postgres_backup_retention_period

@@ -22,6 +22,7 @@ module "datarobot_infra" {
   create_postgres                 = true
   create_redis                    = true
   create_mongodb                  = true
+  create_rabbitmq                 = true
 
   cluster_autoscaler           = true
   descheduler                  = true
@@ -475,6 +476,17 @@ Uses the [terraform-aws-elasticache](https://github.com/terraform-aws-modules/te
 
 #### Description
 Create a MongoDB Atlas project and cluster for use by the DataRobot application.
+
+#### IAM Policy
+Not required
+
+
+### RabbitMQ
+#### Toggle
+- `create_rabbitmq` to create a new AMQ RabbitMQ broker
+
+#### Description
+Create a AMQ RabbitMQ broker for use by the DataRobot application.
 
 #### IAM Policy
 Not required

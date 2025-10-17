@@ -50,3 +50,14 @@ output "mongo_password" {
   value       = module.datarobot_infra.mongodb_password
   sensitive   = true
 }
+
+output "rabbitmq_endpoint" {
+  description = "AMQP(S) endpoint"
+  value       = module.datarobot_infra.rabbitmq_endpoint
+}
+
+output "rabbitmq_password" {
+  description = "RabbitMQ broker password"
+  value       = module.datarobot_infra.rabbitmq_password
+  sensitive   = true
+}
