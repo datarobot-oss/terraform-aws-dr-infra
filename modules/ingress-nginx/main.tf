@@ -8,13 +8,23 @@ resource "helm_release" "ingress_nginx" {
   create_namespace = true
 
   values = [
-    templatefile("${path.module}/common.yaml", {}),
-    templatefile(var.internet_facing_ingress_lb ? "${path.module}/internet_facing.tftpl" : "${path.module}/internal.tftpl", {
-      acm_certificate_arn = var.acm_certificate_arn,
-      tags                = join(",", [for k, v in var.tags : "${k}=${v}"])
+    templatefile("${path.module}/values.tftpl", {
+      load_balancer_scheme = var.internet_facing_ingress_lb ? "internet-facing" : "internal"
+      tags                 = join(",", [for k, v in var.tags : "${k}=${v}"])
     }),
     var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
   ]
+
+  set = var.acm_certificate_arn != null ? [
+    {
+      name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-ssl-cert"
+      value = var.acm_certificate_arn
+    },
+    {
+      name  = "controller.service.targetPorts.https"
+      value = "http"
+    }
+  ] : []
 }
 
 data "aws_lb" "internal_ingress" {

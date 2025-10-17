@@ -1,6 +1,9 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.1.0
+### Updated
+- simplify `ingress-nginx` chart values to a single file
 
 ## v2.0.2
 ### Added

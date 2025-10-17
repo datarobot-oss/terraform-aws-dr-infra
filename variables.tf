@@ -358,7 +358,6 @@ variable "kubernetes_node_groups" {
       }
       labels = {
         "datarobot.com/node-capability" = "gpu"
-        "datarobot.com/node-type"       = "on-demand"
         "datarobot.com/gpu-type"        = "nvidia-t4-2x"
       }
       taints = {

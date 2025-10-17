@@ -6,6 +6,7 @@ variable "tags" {
 variable "acm_certificate_arn" {
   description = "ARN of the certificate to use with the ingress NLB"
   type        = string
+  default     = null
 }
 
 variable "internet_facing_ingress_lb" {

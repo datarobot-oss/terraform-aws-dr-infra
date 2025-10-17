@@ -1,0 +1,25 @@
+controller:
+  allowSnippetAnnotations: true
+  admissionWebhooks:
+    enabled: false
+  config:
+    use-forwarded-headers: "true"
+    use-proxy-protocol: "true"
+  replicaCount: 3
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: topology.kubernetes.io/zone
+      whenUnsatisfiable: DoNotSchedule
+      labelSelector:
+        matchLabels:
+          app.kubernetes.io/instance: ingress-nginx
+  service:
+    externalTrafficPolicy: Local
+    annotations:
+      service.beta.kubernetes.io/aws-load-balancer-type: external
+      service.beta.kubernetes.io/aws-load-balancer-scheme: ${load_balancer_scheme}
+      service.beta.kubernetes.io/aws-load-balancer-nlb-target-type: ip
+      service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "60" # seconds
+      service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+      service.beta.kubernetes.io/aws-load-balancer-proxy-protocol: "*"
+      service.beta.kubernetes.io/aws-load-balancer-additional-resource-tags: "${tags}"
