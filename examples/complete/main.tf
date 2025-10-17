@@ -15,8 +15,10 @@ module "datarobot_infra" {
   ################################################################################
   # General
   ################################################################################
-  name        = local.name
-  domain_name = "${local.name}.yourdomain.com"
+  name               = local.name
+  domain_name        = "${local.name}.yourdomain.com"
+  availability_zones = 2
+  fips_enabled       = false
   tags = {
     application = local.name
     environment = "dev"
@@ -26,9 +28,12 @@ module "datarobot_infra" {
   ################################################################################
   # Network
   ################################################################################
-  create_network            = true
-  network_address_space     = "10.7.0.0/16"
-  network_private_endpoints = ["s3"]
+  create_network                                 = true
+  network_address_space                          = "10.7.0.0/16"
+  network_private_endpoints                      = ["s3"]
+  network_s3_private_dns_enabled                 = true
+  network_enable_vpc_flow_logs                   = true
+  network_cloudwatch_log_group_retention_in_days = 30
 
   ################################################################################
   # DNS

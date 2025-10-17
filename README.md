@@ -143,7 +143,7 @@ Uses the [terraform-aws-route53](https://github.com/terraform-aws-modules/terraf
 
 A public Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources when `internet_facing_ingress_lb` is `true`. It is also used for DNS validation when creating a new ACM certificate.
 
-A private Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources when `internet_facing_ingress_lb` is `false`.
+A private Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources when `internet_facing_ingress_lb` is `false`. It is also used to create CNAME records for AWS service private endpoints that do not have `private_dns_enabled`.
 
 #### IAM Policy
 ```

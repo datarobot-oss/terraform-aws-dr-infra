@@ -1,5 +1,6 @@
 data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 data "aws_availability_zones" "available" {
   state = "available"
   filter {
@@ -73,12 +74,34 @@ module "endpoints" {
     endpoint_service => {
       service             = endpoint_service
       subnet_ids          = module.network[0].private_subnets
-      private_dns_enabled = true
+      private_dns_enabled = endpoint_service != "s3" || var.network_s3_private_dns_enabled
       dns_options = {
         private_dns_only_for_inbound_resolver_endpoint = false
       }
     }
   }
+
+  tags = var.tags
+}
+
+resource "aws_route53_record" "s3_endpoint_cname" {
+  count = var.create_network && var.existing_vpc_id == null && contains(var.network_private_endpoints, "s3") && !var.network_s3_private_dns_enabled ? 1 : 0
+
+  zone_id = local.private_zone_id
+  name    = var.fips_enabled ? "s3-fips.${data.aws_region.current.region}.amazonaws.com" : "s3.${data.aws_region.current.region}.amazonaws.com"
+  type    = "CNAME"
+  records = [module.endpoints[0].endpoints["s3"].dns_entry[0].dns_name]
+  ttl     = 300
+}
+
+module "flow_log" {
+  source = "terraform-aws-modules/vpc/aws//modules/flow-log"
+  count  = var.network_enable_vpc_flow_logs ? 1 : 0
+
+  name   = var.name
+  vpc_id = local.vpc_id
+
+  cloudwatch_log_group_retention_in_days = var.network_cloudwatch_log_group_retention_in_days
 
   tags = var.tags
 }
@@ -99,22 +122,17 @@ data "aws_route53_zone" "existing_private" {
 }
 
 locals {
-  # create a public zone if we're using external_dns with internet_facing LB
-  # or creating a public ACM certificate
-  create_public_zone = var.create_dns_zones && var.existing_public_route53_zone_id == null && ((var.external_dns && var.internet_facing_ingress_lb) || (var.create_acm_certificate && var.existing_acm_certificate_arn == ""))
-  public_zone_id     = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.public_dns[0].id, null)
-  public_zone_arn    = try(data.aws_route53_zone.existing_public[0].arn, module.public_dns[0].arn, null)
+  public_zone_id  = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.public_dns[0].id, null)
+  public_zone_arn = try(data.aws_route53_zone.existing_public[0].arn, module.public_dns[0].arn, null)
 
-  # create a private zone if we're using external_dns with an internal LB
-  create_private_zone = var.create_dns_zones && var.existing_private_route53_zone_id == null && (var.external_dns && !var.internet_facing_ingress_lb)
-  private_zone_id     = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.private_dns[0].id, null)
-  private_zone_arn    = try(data.aws_route53_zone.existing_private[0].arn, module.private_dns[0].arn, null)
+  private_zone_id  = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.private_dns[0].id, null)
+  private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.private_dns[0].arn, null)
 }
 
 module "public_dns" {
   source  = "terraform-aws-modules/route53/aws"
   version = "~> 6.0"
-  count   = local.create_public_zone ? 1 : 0
+  count   = var.existing_public_route53_zone_id == null && var.create_dns_zones ? 1 : 0
 
   name          = var.domain_name
   comment       = "${var.domain_name} public zone"
@@ -126,7 +144,7 @@ module "public_dns" {
 module "private_dns" {
   source  = "terraform-aws-modules/route53/aws"
   version = "~> 6.0"
-  count   = local.create_private_zone ? 1 : 0
+  count   = var.existing_private_route53_zone_id == null && var.create_dns_zones ? 1 : 0
 
   name          = var.domain_name
   comment       = "${var.domain_name} private zone"

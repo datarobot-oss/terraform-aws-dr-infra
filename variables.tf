@@ -15,6 +15,12 @@ variable "availability_zones" {
   default     = 2
 }
 
+variable "fips_enabled" {
+  description = "Enable FIPS endpoints for AWS services"
+  type        = bool
+  default     = false
+}
+
 variable "tags" {
   description = "A map of tags to add to all created resources"
   type        = map(string)
@@ -60,6 +66,24 @@ variable "network_private_endpoints" {
     "eks-auth",
     "eks"
   ]
+}
+
+variable "network_s3_private_dns_enabled" {
+  description = "Enable private DNS for the S3 VPC endpoint. Currently not supported in GovCloud regions https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-s3.html."
+  type        = bool
+  default     = true
+}
+
+variable "network_enable_vpc_flow_logs" {
+  description = "Enable VPC Flow Logs for the created VPC"
+  type        = bool
+  default     = false
+}
+
+variable "network_cloudwatch_log_group_retention_in_days" {
+  description = "Number of days to retain log events. Set to `0` to keep logs indefinitely"
+  type        = number
+  default     = 7
 }
 
 
