@@ -1,6 +1,10 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.4.0
+### Updated
+- prefix node group names with `var.name-`
+
 ## v2.3.0
 ### Added
 - `rabbitmq` module

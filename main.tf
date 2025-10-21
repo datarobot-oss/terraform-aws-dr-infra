@@ -289,7 +289,7 @@ module "kubernetes" {
   node_security_group_additional_rules         = var.kubernetes_node_security_group_additional_rules
   node_security_group_enable_recommended_rules = var.kubernetes_node_security_group_enable_recommended_rules
 
-  eks_managed_node_groups = var.kubernetes_node_groups
+  eks_managed_node_groups = { for k, v in var.kubernetes_node_groups : "${var.name}-${k}" => v }
 
   tags = var.tags
 }
