@@ -244,6 +244,7 @@ locals {
   eks_cluster_endpoint    = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
   eks_oidc_issuer_url     = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
   kubernetes_node_subnets = var.existing_kubernetes_node_subnets != null ? var.existing_kubernetes_node_subnets : try(module.network[0].private_subnets, null)
+  kubernetes_node_groups  = { for k, v in var.kubernetes_node_groups : "${var.name}-${k}" => v }
 }
 
 module "kubernetes" {
@@ -289,7 +290,7 @@ module "kubernetes" {
   node_security_group_additional_rules         = var.kubernetes_node_security_group_additional_rules
   node_security_group_enable_recommended_rules = var.kubernetes_node_security_group_enable_recommended_rules
 
-  eks_managed_node_groups = { for k, v in var.kubernetes_node_groups : "${var.name}-${k}" => v }
+  eks_managed_node_groups = local.kubernetes_node_groups
 
   tags = var.tags
 }
@@ -298,7 +299,7 @@ locals {
   # ASG tags for scaling to and from 0
   # represented as a tuple of objects in the form [{node_group, tag_key, tag_value}]
   node_group_asg_tags = flatten([
-    for node_group_name, node_group_values in var.kubernetes_node_groups : concat(
+    for node_group_name, node_group_values in local.kubernetes_node_groups : concat(
       [
         for k, v in node_group_values.labels : {
           node_group = node_group_name

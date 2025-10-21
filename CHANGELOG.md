@@ -1,6 +1,10 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.4.1
+### Fixed
+- issue with node group ASG tags introduced in `v2.4.0`
+
 ## v2.4.0
 ### Updated
 - prefix node group names with `var.name-`
