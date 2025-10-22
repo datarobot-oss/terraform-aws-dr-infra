@@ -123,8 +123,9 @@ data "aws_route53_zone" "existing_private" {
 }
 
 locals {
-  public_zone_id  = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.public_dns[0].id, null)
-  public_zone_arn = try(data.aws_route53_zone.existing_public[0].arn, module.public_dns[0].arn, null)
+  public_zone_id           = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.public_dns[0].id, null)
+  public_zone_arn          = try(data.aws_route53_zone.existing_public[0].arn, module.public_dns[0].arn, null)
+  public_zone_name_servers = try(data.aws_route53_zone.existing_public[0].name_servers, module.public_dns[0].name_servers, null)
 
   private_zone_id  = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.private_dns[0].id, null)
   private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.private_dns[0].arn, null)

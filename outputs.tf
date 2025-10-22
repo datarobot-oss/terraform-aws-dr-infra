@@ -37,6 +37,11 @@ output "public_route53_zone_arn" {
   value       = local.public_zone_arn
 }
 
+output "public_route53_zone_name_servers" {
+  description = "Name servers of Route53 zone"
+  value       = local.public_zone_name_servers
+}
+
 output "private_route53_zone_id" {
   description = "Zone ID of the private Route53 zone"
   value       = local.private_zone_id

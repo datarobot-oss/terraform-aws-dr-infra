@@ -1,6 +1,10 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.5.1
+## Added
+- `public_route53_zone_name_servers` to outputs
+
 ## v2.5.0
 ### Updated
 - disable ipv6 on default eks-pod-identity-agent addon
