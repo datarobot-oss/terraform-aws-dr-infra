@@ -311,8 +311,9 @@ variable "kubernetes_cluster_addons" {
       most_recent = true
     }
     eks-pod-identity-agent = {
-      most_recent    = true
-      before_compute = true
+      most_recent          = true
+      before_compute       = true
+      configuration_values = "{\"agent\": {\"additionalArgs\": {\"-b\": \"169.254.170.23\"}}}" # disable ipv6
     }
     kube-proxy = {
       most_recent = true

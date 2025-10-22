@@ -1,6 +1,10 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.5.0
+### Updated
+- disable ipv6 on default eks-pod-identity-agent addon
+
 ## v2.4.1
 ### Fixed
 - issue with node group ASG tags introduced in `v2.4.0`
