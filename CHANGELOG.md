@@ -1,6 +1,10 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.7.0
+## Added
+- `cilium` module
+
 ## v2.6.0
 ## Added
 - `external-secrets` module

@@ -691,3 +691,10 @@ module "metrics_server" {
 
   depends_on = [module.aws_load_balancer_controller]
 }
+
+module "cilium" {
+  source = "./modules/cilium"
+  count  = var.install_helm_charts && var.cilium ? 1 : 0
+
+  values_overrides = var.cilium_values_overrides
+}

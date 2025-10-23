@@ -295,4 +295,10 @@ module "datarobot_infra" {
   ################################################################################
   metrics_server                  = true
   metrics_server_values_overrides = file("${path.module}/templates/custom_metrics_server_values.yaml")
+
+  ################################################################################
+  # cilium
+  ################################################################################
+  cilium                  = true
+  cilium_values_overrides = file("${path.module}/templates/custom_cilium_values.yaml")
 }

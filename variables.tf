@@ -815,3 +815,15 @@ variable "metrics_server_values_overrides" {
   type        = string
   default     = null
 }
+
+variable "cilium" {
+  description = "Install the cilium helm chart to provide extended cluster networking and security features. All other cilium variables are ignored if this variable is false."
+  type        = bool
+  default     = false
+}
+
+variable "cilium_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
+  type        = string
+  default     = null
+}

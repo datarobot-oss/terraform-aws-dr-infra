@@ -1,0 +1,6 @@
+# https://docs.cilium.io/en/stable/installation/cni-chaining-aws-cni/#setting-up-a-cluster-on-aws
+cni:
+  chainingMode: aws-cni
+  exclusive: false
+enableIPv4Masquerade: false
+routingMode: native
