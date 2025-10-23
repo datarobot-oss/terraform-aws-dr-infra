@@ -678,16 +678,10 @@ variable "aws_ebs_csi_driver" {
   default     = true
 }
 
-variable "aws_ebs_csi_driver_values" {
-  description = "Path to templatefile containing custom values for the aws-ebs-csi-driver helm chart"
+variable "aws_ebs_csi_driver_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "aws_ebs_csi_driver_variables" {
-  description = "Variables passed to the ebs_csi_driver_values templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }
 
 variable "cluster_autoscaler" {
@@ -696,16 +690,10 @@ variable "cluster_autoscaler" {
   default     = true
 }
 
-variable "cluster_autoscaler_values" {
-  description = "Path to templatefile containing custom values for the cluster-autoscaler helm chart"
+variable "cluster_autoscaler_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "cluster_autoscaler_variables" {
-  description = "Variables passed to the cluster_autoscaler_values templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }
 
 variable "descheduler" {
@@ -714,16 +702,10 @@ variable "descheduler" {
   default     = true
 }
 
-variable "descheduler_values" {
-  description = "Path to templatefile containing custom values for the descheduler helm chart"
+variable "descheduler_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "descheduler_variables" {
-  description = "Variables passed to the descheduler templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }
 
 variable "aws_load_balancer_controller" {
@@ -732,16 +714,10 @@ variable "aws_load_balancer_controller" {
   default     = true
 }
 
-variable "aws_load_balancer_controller_values" {
-  description = "Path to templatefile containing custom values for the aws-load-balancer-controller helm chart"
+variable "aws_load_balancer_controller_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "aws_load_balancer_controller_variables" {
-  description = "Variables passed to the aws_load_balancer_controller_values templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }
 
 variable "ingress_nginx" {
@@ -768,16 +744,10 @@ variable "ingress_vpce_service_allowed_principals" {
   default     = null
 }
 
-variable "ingress_nginx_values" {
-  description = "Path to templatefile containing custom values for the ingress-nginx helm chart."
+variable "ingress_nginx_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "ingress_nginx_variables" {
-  description = "Variables passed to the ingress_nginx_values templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }
 
 variable "cert_manager" {
@@ -786,16 +756,10 @@ variable "cert_manager" {
   default     = true
 }
 
-variable "cert_manager_values" {
-  description = "Path to templatefile containing custom values for the cert-manager helm chart"
+variable "cert_manager_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "cert_manager_variables" {
-  description = "Variables passed to the cert_manager_values templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }
 
 variable "external_dns" {
@@ -804,16 +768,28 @@ variable "external_dns" {
   default     = true
 }
 
-variable "external_dns_values" {
-  description = "Path to templatefile containing custom values for the external-dns helm chart"
+variable "external_dns_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
+  default     = null
 }
 
-variable "external_dns_variables" {
-  description = "Variables passed to the external_dns_values templatefile"
-  type        = any
-  default     = {}
+variable "external_secrets" {
+  description = "Install the external_secrets helm chart to manage external secrets resources in the EKS cluster. All other external_secrets variables are ignored if this variable is false."
+  type        = bool
+  default     = false
+}
+
+variable "external_secrets_secrets_manager_arns" {
+  description = "List of Secrets Manager ARNs that contain secrets to mount using External Secrets"
+  type        = list(string)
+  default     = []
+}
+
+variable "external_secrets_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
+  type        = string
+  default     = null
 }
 
 variable "nvidia_gpu_operator" {
@@ -822,16 +798,10 @@ variable "nvidia_gpu_operator" {
   default     = false
 }
 
-variable "nvidia_gpu_operator_values" {
-  description = "Path to templatefile containing custom values for the nvidia-gpu-operator helm chart"
+variable "nvidia_gpu_operator_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "nvidia_gpu_operator_variables" {
-  description = "Variables passed to the nvidia_gpu_operator_values templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }
 
 variable "metrics_server" {
@@ -840,14 +810,8 @@ variable "metrics_server" {
   default     = true
 }
 
-variable "metrics_server_values" {
-  description = "Path to templatefile containing custom values for the metrics_server helm chart"
+variable "metrics_server_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
   type        = string
-  default     = ""
-}
-
-variable "metrics_server_variables" {
-  description = "Variables passed to the metrics_server_values templatefile"
-  type        = any
-  default     = {}
+  default     = null
 }

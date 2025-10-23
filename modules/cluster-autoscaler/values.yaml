@@ -1,3 +1,6 @@
+autoDiscovery:
+  clusterName: ${cluster_name}
+awsRegion: ${aws_region}
 extraArgs:
   expander: least-waste
   balance-similar-node-groups: true

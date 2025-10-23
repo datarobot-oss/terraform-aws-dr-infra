@@ -229,30 +229,26 @@ module "datarobot_infra" {
   ################################################################################
   # aws-ebs-csi-driver
   ################################################################################
-  aws_ebs_csi_driver           = true
-  aws_ebs_csi_driver_values    = "${path.module}/templates/custom_aws_ebs_csi_driver_values.yaml"
-  aws_ebs_csi_driver_variables = {}
+  aws_ebs_csi_driver                  = true
+  aws_ebs_csi_driver_values_overrides = file("${path.module}/templates/custom_aws_ebs_csi_driver_values.yaml")
 
   ################################################################################
   # cluster-autoscaler
   ################################################################################
-  cluster_autoscaler           = true
-  cluster_autoscaler_values    = "${path.module}/templates/custom_cluster_autoscaler_values.yaml"
-  cluster_autoscaler_variables = {}
+  cluster_autoscaler                  = true
+  cluster_autoscaler_values_overrides = file("${path.module}/templates/custom_cluster_autoscaler_values.yaml")
 
   ################################################################################
   # descheduler
   ################################################################################
-  descheduler           = true
-  descheduler_values    = "${path.module}/templates/custom_descheduler_values.yaml"
-  descheduler_variables = {}
+  descheduler                  = true
+  descheduler_values_overrides = file("${path.module}/templates/custom_descheduler_values.yaml")
 
   ################################################################################
   # aws-load-balancer-controller
   ################################################################################
-  aws_load_balancer_controller           = true
-  aws_load_balancer_controller_values    = "${path.module}/templates/custom_aws_lb_controller_values.yaml"
-  aws_load_balancer_controller_variables = {}
+  aws_load_balancer_controller                  = true
+  aws_load_balancer_controller_values_overrides = file("${path.module}/templates/custom_aws_lb_controller_values.yaml")
 
   ################################################################################
   # ingress-nginx
@@ -265,36 +261,38 @@ module "datarobot_infra" {
   # in this case our custom values file override is formatted as a templatefile
   # so we can pass variables like our provisioner_private_ip to it.
   # https://developer.hashicorp.com/terraform/language/functions/templatefile
-  ingress_nginx_values = "${path.module}/templates/custom_ingress_nginx_values.tftpl"
-  ingress_nginx_variables = {
+  ingress_nginx_values_overrides = templatefile("${path.module}/templates/custom_ingress_nginx_values.tftpl", {
     lb_source_ranges = [local.provisioner_private_ip]
-  }
+  })
 
   ################################################################################
   # cert-manager
   ################################################################################
-  cert_manager           = true
-  cert_manager_values    = "${path.module}/templates/custom_cert_manager_values.yaml"
-  cert_manager_variables = {}
+  cert_manager                  = true
+  cert_manager_values_overrides = file("${path.module}/templates/custom_cert_manager_values.yaml")
 
   ################################################################################
   # external-dns
   ################################################################################
-  external_dns           = true
-  external_dns_values    = "${path.module}/templates/custom_external_dns_values.yaml"
-  external_dns_variables = {}
+  external_dns                  = true
+  external_dns_values_overrides = file("${path.module}/templates/custom_external_dns_values.yaml")
+
+  ################################################################################
+  # external-secrets
+  ################################################################################
+  external_secrets                      = true
+  external_secrets_secrets_manager_arns = ["arn:aws:secretsmanager:*:*:secret:bar"]
+  external_secrets_values_overrides     = "${path.module}/templates/custom_external_secrets_values.yaml"
 
   ################################################################################
   # nvidia-gpu-operator
   ################################################################################
-  nvidia_gpu_operator           = false
-  nvidia_gpu_operator_values    = "${path.module}/templates/custom_nvidia_gpu_operator_plugin_values.yaml"
-  nvidia_gpu_operator_variables = {}
+  nvidia_gpu_operator                  = false
+  nvidia_gpu_operator_values_overrides = file("${path.module}/templates/custom_nvidia_gpu_operator_plugin_values.yaml")
 
   ################################################################################
   # metrics-server
   ################################################################################
-  metrics_server           = true
-  metrics_server_values    = "${path.module}/templates/custom_metrics_server_values.yaml"
-  metrics_server_variables = {}
+  metrics_server                  = true
+  metrics_server_values_overrides = file("${path.module}/templates/custom_metrics_server_values.yaml")
 }

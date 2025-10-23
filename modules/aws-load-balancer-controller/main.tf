@@ -1,25 +1,31 @@
-module "aws_load_balancer_controller_pod_identity" {
+locals {
+  name            = "aws-load-balancer-controller"
+  namespace       = "aws-load-balancer-controller"
+  service_account = "aws-load-balancer-controller"
+}
+
+module "pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "~> 2.0"
 
-  name = "aws-lbc"
+  name = local.name
 
   attach_aws_lb_controller_policy = true
 
   associations = {
     this = {
       cluster_name    = var.kubernetes_cluster_name
-      namespace       = "aws-load-balancer-controller"
-      service_account = "aws-load-balancer-controller"
+      namespace       = local.namespace
+      service_account = local.service_account
     }
   }
 
   tags = var.tags
 }
 
-resource "helm_release" "aws_load_balancer_controller" {
-  name       = "aws-load-balancer-controller"
-  namespace  = "aws-load-balancer-controller"
+resource "helm_release" "this" {
+  name       = local.name
+  namespace  = local.namespace
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   version    = "1.13.4"
@@ -27,19 +33,12 @@ resource "helm_release" "aws_load_balancer_controller" {
   create_namespace = true
 
   values = [
-    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+    templatefile("${path.module}/values.yaml", {
+      cluster_name = var.kubernetes_cluster_name
+      vpc_id       = var.vpc_id
+    }),
+    var.values_overrides
   ]
 
-  set = [
-    {
-      name  = "clusterName"
-      value = var.kubernetes_cluster_name
-    },
-    {
-      name  = "vpcId"
-      value = var.vpc_id
-    }
-  ]
-
-  depends_on = [module.aws_load_balancer_controller_pod_identity]
+  depends_on = [module.pod_identity]
 }

@@ -1,7 +1,7 @@
 locals {
-  name            = "cert-manager"
-  namespace       = "cert-manager"
-  service_account = "cert-manager"
+  name            = "external-secrets"
+  namespace       = "external-secrets"
+  service_account = "external-secrets"
 }
 
 module "pod_identity" {
@@ -10,8 +10,8 @@ module "pod_identity" {
 
   name = local.name
 
-  attach_cert_manager_policy    = true
-  cert_manager_hosted_zone_arns = [var.route53_zone_arn]
+  attach_external_secrets_policy        = true
+  external_secrets_secrets_manager_arns = var.secrets_manager_arns
 
   associations = {
     this = {
@@ -27,16 +27,13 @@ module "pod_identity" {
 resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
-  repository = "https://charts.jetstack.io"
-  chart      = "cert-manager"
-  version    = "1.18.2"
+  repository = "https://charts.external-secrets.io"
+  chart      = "external-secrets"
+  version    = "0.20.3"
 
   create_namespace = true
 
-  values = [
-    file("${path.module}/values.yaml"),
-    var.values_overrides
-  ]
+  values = [var.values_overrides]
 
   depends_on = [module.pod_identity]
 }

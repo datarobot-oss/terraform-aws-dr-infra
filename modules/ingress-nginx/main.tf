@@ -1,6 +1,11 @@
-resource "helm_release" "ingress_nginx" {
-  name       = "ingress-nginx"
-  namespace  = "ingress-nginx"
+locals {
+  name      = "ingress-nginx"
+  namespace = "ingress-nginx"
+}
+
+resource "helm_release" "this" {
+  name       = local.name
+  namespace  = local.namespace
   repository = "https://kubernetes.github.io/ingress-nginx"
   chart      = "ingress-nginx"
   version    = "4.13.2"
@@ -8,11 +13,11 @@ resource "helm_release" "ingress_nginx" {
   create_namespace = true
 
   values = [
-    templatefile("${path.module}/values.tftpl", {
+    templatefile("${path.module}/values.yaml", {
       load_balancer_scheme = var.internet_facing_ingress_lb ? "internet-facing" : "internal"
       tags                 = join(",", [for k, v in var.tags : "${k}=${v}"])
     }),
-    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+    var.values_overrides
   ]
 
   set = var.acm_certificate_arn != null ? [
@@ -27,22 +32,22 @@ resource "helm_release" "ingress_nginx" {
   ] : []
 }
 
-data "aws_lb" "internal_ingress" {
+data "aws_lb" "ingress" {
   count      = var.internet_facing_ingress_lb ? 0 : 1
-  depends_on = [helm_release.ingress_nginx]
+  depends_on = [helm_release.this]
 
   tags = {
     "elbv2.k8s.aws/cluster"    = var.eks_cluster_name
     "service.k8s.aws/resource" = "LoadBalancer"
-    "service.k8s.aws/stack"    = "ingress-nginx/ingress-nginx-controller-internal"
+    "service.k8s.aws/stack"    = "ingress-nginx/ingress-nginx-controller"
   }
 }
 
-resource "aws_vpc_endpoint_service" "internal_ingress" {
+resource "aws_vpc_endpoint_service" "ingress" {
   count = var.create_vpce_service && !var.internet_facing_ingress_lb ? 1 : 0
 
   acceptance_required        = false
-  network_load_balancer_arns = [data.aws_lb.internal_ingress[0].arn]
+  network_load_balancer_arns = [data.aws_lb.ingress[0].arn]
   allowed_principals         = var.vpce_service_allowed_principals
   private_dns_name           = var.vpce_service_private_dns_name
 

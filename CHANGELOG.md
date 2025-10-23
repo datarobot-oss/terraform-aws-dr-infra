@@ -1,6 +1,12 @@
 # Changelog
 All notable changes are documented in this file.
 
+## v2.6.0
+## Added
+- `external-secrets` module
+## Updated
+- more flexible amenity values overrides
+
 ## v2.5.1
 ## Added
 - `public_route53_zone_name_servers` to outputs

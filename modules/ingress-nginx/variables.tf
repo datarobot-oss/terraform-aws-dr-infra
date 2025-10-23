@@ -1,8 +1,3 @@
-variable "tags" {
-  description = "A map of tags to add to all resources"
-  type        = map(string)
-}
-
 variable "acm_certificate_arn" {
   description = "ARN of the certificate to use with the ingress NLB"
   type        = string
@@ -39,14 +34,13 @@ variable "eks_cluster_name" {
   default     = null
 }
 
-variable "custom_values_templatefile" {
-  description = "Custom values templatefile to pass to the helm chart"
-  type        = string
-  default     = ""
+variable "tags" {
+  description = "A map of tags to add to all resources"
+  type        = map(string)
 }
 
-variable "custom_values_variables" {
-  description = "Variables for the custom values templatefile"
-  type        = any
-  default     = {}
+variable "values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
+  type        = string
+  default     = null
 }

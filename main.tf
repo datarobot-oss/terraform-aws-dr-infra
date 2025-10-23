@@ -580,8 +580,7 @@ module "cluster_autoscaler" {
 
   kubernetes_cluster_name = local.eks_cluster_name
 
-  custom_values_templatefile = var.cluster_autoscaler_values
-  custom_values_variables    = var.cluster_autoscaler_variables
+  values_overrides = var.cluster_autoscaler_values_overrides
 
   tags = var.tags
 
@@ -592,8 +591,7 @@ module "descheduler" {
   source = "./modules/descheduler"
   count  = var.install_helm_charts && var.descheduler ? 1 : 0
 
-  custom_values_templatefile = var.descheduler_values
-  custom_values_variables    = var.descheduler_variables
+  values_overrides = var.descheduler_values_overrides
 }
 
 module "aws_ebs_csi_driver" {
@@ -602,8 +600,7 @@ module "aws_ebs_csi_driver" {
 
   kubernetes_cluster_name = local.eks_cluster_name
 
-  custom_values_templatefile = var.aws_ebs_csi_driver_values
-  custom_values_variables    = var.aws_ebs_csi_driver_variables
+  values_overrides = var.aws_ebs_csi_driver_values_overrides
 
   tags = var.tags
 }
@@ -615,8 +612,7 @@ module "aws_load_balancer_controller" {
   kubernetes_cluster_name = local.eks_cluster_name
   vpc_id                  = local.vpc_id
 
-  custom_values_templatefile = var.aws_load_balancer_controller_values
-  custom_values_variables    = var.aws_load_balancer_controller_variables
+  values_overrides = var.aws_load_balancer_controller_values_overrides
 
   tags = var.tags
 }
@@ -632,8 +628,7 @@ module "ingress_nginx" {
   vpce_service_allowed_principals = var.ingress_vpce_service_allowed_principals
   vpce_service_private_dns_name   = var.domain_name
 
-  custom_values_templatefile = var.ingress_nginx_values
-  custom_values_variables    = var.ingress_nginx_variables
+  values_overrides = var.ingress_nginx_values_overrides
 
   tags = var.tags
 
@@ -647,8 +642,7 @@ module "cert_manager" {
   kubernetes_cluster_name = local.eks_cluster_name
   route53_zone_arn        = local.public_zone_arn
 
-  custom_values_templatefile = var.cert_manager_values
-  custom_values_variables    = var.cert_manager_variables
+  values_overrides = var.cert_manager_values_overrides
 
   tags = var.tags
 
@@ -663,28 +657,37 @@ module "external_dns" {
   route53_zone_arn        = var.internet_facing_ingress_lb ? local.public_zone_arn : local.private_zone_arn
   route53_zone_name       = var.domain_name
 
-  custom_values_templatefile = var.external_dns_values
-  custom_values_variables    = var.external_dns_variables
+  values_overrides = var.external_dns_values_overrides
 
   tags = var.tags
 
   depends_on = [module.aws_load_balancer_controller]
 }
 
+module "external_secrets" {
+  source = "./modules/external-secrets"
+  count  = var.install_helm_charts && var.external_secrets ? 1 : 0
+
+  kubernetes_cluster_name = local.eks_cluster_name
+  secrets_manager_arns    = var.external_secrets_secrets_manager_arns
+
+  values_overrides = var.external_secrets_values_overrides
+
+  tags = var.tags
+}
+
 module "nvidia_gpu_operator" {
   source = "./modules/nvidia-gpu-operator"
   count  = var.install_helm_charts && var.nvidia_gpu_operator ? 1 : 0
 
-  custom_values_templatefile = var.nvidia_gpu_operator_values
-  custom_values_variables    = var.nvidia_gpu_operator_variables
+  values_overrides = var.nvidia_gpu_operator_values_overrides
 }
 
 module "metrics_server" {
   source = "./modules/metrics-server"
   count  = var.install_helm_charts && var.metrics_server ? 1 : 0
 
-  custom_values_templatefile = var.metrics_server_values
-  custom_values_variables    = var.metrics_server_variables
+  values_overrides = var.metrics_server_values_overrides
 
   depends_on = [module.aws_load_balancer_controller]
 }

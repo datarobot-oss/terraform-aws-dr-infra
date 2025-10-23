@@ -1,10 +1,16 @@
 data "aws_region" "current" {}
 
-module "cluster_autoscaler_pod_identity" {
+locals {
+  name            = "cluster-autoscaler"
+  namespace       = "cluster-autoscaler"
+  service_account = "cluster-autoscaler-aws-cluster-autoscaler"
+}
+
+module "pod_identity" {
   source  = "terraform-aws-modules/eks-pod-identity/aws"
   version = "~> 2.0"
 
-  name = "cluster-autoscaler"
+  name = local.name
 
   attach_cluster_autoscaler_policy = true
   cluster_autoscaler_cluster_names = [var.kubernetes_cluster_name]
@@ -12,17 +18,17 @@ module "cluster_autoscaler_pod_identity" {
   associations = {
     this = {
       cluster_name    = var.kubernetes_cluster_name
-      namespace       = "cluster-autoscaler"
-      service_account = "cluster-autoscaler-aws-cluster-autoscaler"
+      namespace       = local.namespace
+      service_account = local.service_account
     }
   }
 
   tags = var.tags
 }
 
-resource "helm_release" "cluster_autoscaler" {
-  name       = "cluster-autoscaler"
-  namespace  = "cluster-autoscaler"
+resource "helm_release" "this" {
+  name       = local.name
+  namespace  = local.namespace
   repository = "https://kubernetes.github.io/autoscaler"
   chart      = "cluster-autoscaler"
   version    = "9.50.1"
@@ -30,20 +36,12 @@ resource "helm_release" "cluster_autoscaler" {
   create_namespace = true
 
   values = [
-    templatefile("${path.module}/values.yaml", {}),
-    var.custom_values_templatefile != "" ? templatefile(var.custom_values_templatefile, var.custom_values_variables) : ""
+    templatefile("${path.module}/values.yaml", {
+      cluster_name = var.kubernetes_cluster_name,
+      aws_region   = data.aws_region.current.region
+    }),
+    var.values_overrides
   ]
 
-  set = [
-    {
-      name  = "autoDiscovery.clusterName"
-      value = var.kubernetes_cluster_name
-    },
-    {
-      name  = "awsRegion"
-      value = data.aws_region.current.region
-    }
-  ]
-
-  depends_on = [module.cluster_autoscaler_pod_identity]
+  depends_on = [module.pod_identity]
 }

@@ -8,6 +8,12 @@ variable "tags" {
   type        = map(string)
 }
 
+variable "secrets_manager_arns" {
+  description = "List of Secrets Manager ARNs that contain secrets to mount using External Secrets"
+  type        = list(string)
+  default     = []
+}
+
 variable "values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
