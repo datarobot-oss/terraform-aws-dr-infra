@@ -1,6 +1,11 @@
 # Changelog
 All notable changes are documented in this file.
 
+
+## v2.8.1
+## Added
+- `vpc_database_subnets` to outputs
+
 ## v2.8.0
 ## Updated
 - downgrade `external-dns` to `0.16.2` to support `v1beta` CRDs

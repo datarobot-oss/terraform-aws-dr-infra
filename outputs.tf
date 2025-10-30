@@ -22,6 +22,11 @@ output "vpc_private_subnets" {
   value       = try(module.network[0].private_subnets, null)
 }
 
+output "vpc_database_subnets" {
+  description = "List of IDs of database subnets"
+  value       = try(module.network[0].database_subnets, null)
+}
+
 
 ################################################################################
 # DNS
