@@ -17,14 +17,29 @@ output "vpc_public_subnets" {
   value       = try(module.network[0].public_subnets, null)
 }
 
+output "vpc_public_subnets_cidr_blocks" {
+  description = "List of CIDR blocks of public subnets"
+  value       = try(module.network[0].public_subnets_cidr_blocks, null)
+}
+
 output "vpc_private_subnets" {
   description = "List of IDs of private subnets"
   value       = try(module.network[0].private_subnets, null)
 }
 
+output "vpc_private_subnets_cidr_blocks" {
+  description = "List of CIDR blocks of private subnets"
+  value       = try(module.network[0].private_subnets_cidr_blocks, null)
+}
+
 output "vpc_database_subnets" {
   description = "List of IDs of database subnets"
   value       = try(module.network[0].database_subnets, null)
+}
+
+output "vpc_database_subnets_cidr_blocks" {
+  description = "List of CIDR blocks of the database subnets"
+  value       = try(module.acm[0].database_subnets_cidr_blocks, null)
 }
 
 
