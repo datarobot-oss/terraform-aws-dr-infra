@@ -2,6 +2,10 @@
 All notable changes are documented in this file.
 
 
+## v2.9.0
+## Updated
+- increase size of private subnets to `/20`
+
 ## v2.8.3
 ## Fixed
 - `vpc_database_subnets_cidr_blocks` output

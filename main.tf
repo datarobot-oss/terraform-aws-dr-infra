@@ -35,9 +35,9 @@ module "network" {
   cidr = var.network_address_space
 
   azs              = local.azs
-  public_subnets   = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k)]
-  private_subnets  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 3)]
-  database_subnets = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 6)]
+  private_subnets  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 4, k)]
+  public_subnets   = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 48)]
+  database_subnets = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 52)]
 
   create_database_subnet_group = false
 
