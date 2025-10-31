@@ -2,6 +2,10 @@
 All notable changes are documented in this file.
 
 
+## v2.8.3
+## Fixed
+- `vpc_database_subnets_cidr_blocks` output
+
 ## v2.8.2
 ## Added
 - VPC subnet CIDR blocks outputs

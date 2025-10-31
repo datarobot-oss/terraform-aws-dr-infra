@@ -39,7 +39,7 @@ output "vpc_database_subnets" {
 
 output "vpc_database_subnets_cidr_blocks" {
   description = "List of CIDR blocks of the database subnets"
-  value       = try(module.acm[0].database_subnets_cidr_blocks, null)
+  value       = try(module.network[0].database_subnets_cidr_blocks, null)
 }
 
 
