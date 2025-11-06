@@ -2,6 +2,10 @@
 All notable changes are documented in this file.
 
 
+## v2.9.1
+## Updated
+- cilium `policyEnforcementMode` set to `always`
+
 ## v2.9.0
 ## Updated
 - increase size of private subnets to `/20`

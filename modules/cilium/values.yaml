@@ -4,3 +4,4 @@ cni:
   exclusive: false
 enableIPv4Masquerade: false
 routingMode: native
+policyEnforcementMode: always
