@@ -212,5 +212,5 @@ output "rabbitmq_password" {
 
 output "ingress_vpce_service_id" {
   description = "Ingress VPCE service ID"
-  value       = try(module.ingress_nginx[0].vpce_service_id, null)
+  value       = try(module.private_link_service[0].vpce_service_id, null)
 }
