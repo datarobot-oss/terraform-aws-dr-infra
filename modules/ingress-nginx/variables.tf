@@ -10,24 +10,6 @@ variable "internet_facing_ingress_lb" {
   default     = true
 }
 
-variable "create_vpce_service" {
-  description = "Create a VPC endpoint service for the NLB"
-  type        = bool
-  default     = false
-}
-
-variable "vpce_service_allowed_principals" {
-  description = "The ARNs of one or more principals allowed to discover the endpoint service."
-  type        = list(string)
-  default     = null
-}
-
-variable "vpce_service_private_dns_name" {
-  description = "Private DNS name to use for the VPCE service"
-  type        = string
-  default     = null
-}
-
 variable "eks_cluster_name" {
   description = "Name of the EKS cluster"
   type        = string

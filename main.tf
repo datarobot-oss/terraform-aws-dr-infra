@@ -555,6 +555,32 @@ module "rabbitmq" {
   tags = var.tags
 }
 
+################################################################################
+# Private Link Service
+################################################################################
+
+locals {
+  load_balancer_arns = [try(data.aws_lb.existing[0].arn, module.ingress_nginx[0].load_balancer_arn, null)]
+}
+
+data "aws_lb" "existing" {
+  count = var.create_ingress_vpce_service && var.existing_ingress_lb_arn != null ? 1 : 0
+  arn   = var.existing_ingress_lb_arn
+}
+
+module "private_link_service" {
+  source = "./modules/private-link-service"
+  count  = var.create_ingress_vpce_service ? 1 : 0
+
+  eks_cluster_name                = local.eks_cluster_name
+  vpce_service_allowed_principals = var.ingress_vpce_service_allowed_principals
+  vpce_service_private_dns_name   = var.domain_name
+  ingress_lb_arns                 = local.load_balancer_arns
+
+  tags = var.tags
+
+  depends_on = [module.ingress_nginx.helm_release]
+}
 
 ################################################################################
 # Helm Charts
@@ -621,12 +647,9 @@ module "ingress_nginx" {
   source = "./modules/ingress-nginx"
   count  = var.install_helm_charts && var.ingress_nginx ? 1 : 0
 
-  internet_facing_ingress_lb      = var.internet_facing_ingress_lb
-  eks_cluster_name                = local.eks_cluster_name
-  acm_certificate_arn             = local.acm_certificate_arn
-  create_vpce_service             = var.create_ingress_vpce_service
-  vpce_service_allowed_principals = var.ingress_vpce_service_allowed_principals
-  vpce_service_private_dns_name   = var.domain_name
+  internet_facing_ingress_lb = var.internet_facing_ingress_lb
+  eks_cluster_name           = local.eks_cluster_name
+  acm_certificate_arn        = local.acm_certificate_arn
 
   values_overrides = var.ingress_nginx_values_overrides
 
