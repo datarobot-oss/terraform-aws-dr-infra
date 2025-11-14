@@ -29,6 +29,9 @@ module "redis" {
       cidr_ipv4   = var.vpc_cidr
     }
   }
+  security_group_tags = {
+    Name = "${var.name}-redis"
+  }
 
   create_parameter_group = true
   parameter_group_family = "redis7"
