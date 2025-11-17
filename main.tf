@@ -579,7 +579,6 @@ module "private_link_service" {
 
   tags = var.tags
 
-  depends_on = [module.ingress_nginx.helm_release]
 }
 
 ################################################################################
