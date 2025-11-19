@@ -599,6 +599,21 @@ provider "helm" {
   }
 }
 
+module "aws_load_balancer_controller" {
+  source = "./modules/aws-load-balancer-controller"
+  count  = var.install_helm_charts && var.aws_load_balancer_controller ? 1 : 0
+
+  kubernetes_cluster_name = local.eks_cluster_name
+  vpc_id                  = local.vpc_id
+
+  values_overrides = var.aws_load_balancer_controller_values_overrides
+
+  tags = var.tags
+
+  # race condition with coredns
+  depends_on = [module.kubernetes]
+}
+
 module "cluster_autoscaler" {
   source = "./modules/cluster-autoscaler"
   count  = var.install_helm_charts && var.cluster_autoscaler ? 1 : 0
@@ -626,18 +641,6 @@ module "aws_ebs_csi_driver" {
   kubernetes_cluster_name = local.eks_cluster_name
 
   values_overrides = var.aws_ebs_csi_driver_values_overrides
-
-  tags = var.tags
-}
-
-module "aws_load_balancer_controller" {
-  source = "./modules/aws-load-balancer-controller"
-  count  = var.install_helm_charts && var.aws_load_balancer_controller ? 1 : 0
-
-  kubernetes_cluster_name = local.eks_cluster_name
-  vpc_id                  = local.vpc_id
-
-  values_overrides = var.aws_load_balancer_controller_values_overrides
 
   tags = var.tags
 }
@@ -696,6 +699,8 @@ module "external_secrets" {
   values_overrides = var.external_secrets_values_overrides
 
   tags = var.tags
+
+  depends_on = [module.aws_load_balancer_controller]
 }
 
 module "nvidia_gpu_operator" {
@@ -719,4 +724,6 @@ module "cilium" {
   count  = var.install_helm_charts && var.cilium ? 1 : 0
 
   values_overrides = var.cilium_values_overrides
+
+  depends_on = [module.aws_load_balancer_controller]
 }

@@ -672,6 +672,18 @@ variable "install_helm_charts" {
   default     = true
 }
 
+variable "aws_load_balancer_controller" {
+  description = "Install the aws-load-balancer-controller helm chart to use AWS Network Load Balancers as ingress to the EKS cluster. All other aws_load_balancer_controller variables are ignored if this variable is false."
+  type        = bool
+  default     = true
+}
+
+variable "aws_load_balancer_controller_values_overrides" {
+  description = "Values in raw yaml format to pass to helm."
+  type        = string
+  default     = null
+}
+
 variable "aws_ebs_csi_driver" {
   description = "Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs_csi_driver variables are ignored if this variable is false"
   type        = bool
@@ -703,18 +715,6 @@ variable "descheduler" {
 }
 
 variable "descheduler_values_overrides" {
-  description = "Values in raw yaml format to pass to helm."
-  type        = string
-  default     = null
-}
-
-variable "aws_load_balancer_controller" {
-  description = "Install the aws-load-balancer-controller helm chart to use AWS Network Load Balancers as ingress to the EKS cluster. All other aws_load_balancer_controller variables are ignored if this variable is false."
-  type        = bool
-  default     = true
-}
-
-variable "aws_load_balancer_controller_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
   default     = null
