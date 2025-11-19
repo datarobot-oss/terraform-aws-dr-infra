@@ -732,18 +732,6 @@ variable "internet_facing_ingress_lb" {
   default     = true
 }
 
-variable "create_ingress_vpce_service" {
-  description = "Expose the internal NLB created by the ingress-nginx controller as a VPC Endpoint Service. Only applies if internet_facing_ingress_lb is false."
-  type        = bool
-  default     = false
-}
-
-variable "ingress_vpce_service_allowed_principals" {
-  description = "The ARNs of one or more principals allowed to discover the endpoint service. Only applies if internet_facing_ingress_lb is false."
-  type        = list(string)
-  default     = null
-}
-
 variable "ingress_nginx_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -825,5 +813,26 @@ variable "cilium" {
 variable "cilium_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
+  default     = null
+}
+
+################################################################################
+# Privaete Link Service
+################################################################################
+variable "existing_ingress_lb_arn" {
+  description = "ARN of an existing ingress load balancer to expose as a VPC Endpoint Service. When specified, the load balancer created by the ingress_nginx module will not be used."
+  type        = string
+  default     = null
+}
+
+variable "create_ingress_vpce_service" {
+  description = "Expose the internal NLB created by the ingress-nginx controller as a VPC Endpoint Service. Only applies if internet_facing_ingress_lb is false."
+  type        = bool
+  default     = false
+}
+
+variable "ingress_vpce_service_allowed_principals" {
+  description = "The ARNs of one or more principals allowed to discover the endpoint service. Only applies if internet_facing_ingress_lb is false."
+  type        = list(string)
   default     = null
 }
