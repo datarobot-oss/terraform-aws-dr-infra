@@ -1,5 +1,5 @@
 locals {
-  name            = "aws-ebs-csi"
+  name            = "aws-ebs-csi-driver"
   namespace       = "aws-ebs-csi-driver"
   service_account = "ebs-csi-controller-sa"
 }
@@ -27,7 +27,7 @@ resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
   repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
-  chart      = "aws-ebs-csi-driver"
+  chart      = local.name
   version    = "2.49.0"
 
   create_namespace = true
