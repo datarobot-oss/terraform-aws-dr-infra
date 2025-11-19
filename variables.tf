@@ -307,21 +307,16 @@ variable "kubernetes_cluster_addons" {
   description = "Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name`"
   type        = any
   default = {
-    coredns = {
-      most_recent = true
-    }
+    coredns = {}
     eks-pod-identity-agent = {
-      most_recent          = true
       before_compute       = true
       configuration_values = "{\"agent\": {\"additionalArgs\": {\"-b\": \"169.254.170.23\"}}}" # disable ipv6
     }
-    kube-proxy = {
-      most_recent = true
-    }
+    kube-proxy = {}
     vpc-cni = {
-      most_recent          = true
-      before_compute       = true
-      configuration_values = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+      before_compute              = true
+      resolve_conflicts_on_create = "OVERWRITE"
+      configuration_values        = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
     }
   }
 }
