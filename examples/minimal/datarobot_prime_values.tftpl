@@ -1,0 +1,38 @@
+global:
+  serviceAccount:
+    name: datarobot-storage-sa
+    annotations:
+      eks.amazonaws.com/role-arn: ${app_role_arn}
+
+  domain: ${domain_name}
+
+  imageCredentials:
+    createSecret: "true"
+    username: ${pull_registry_username}
+    password: ${pull_registry_password}
+    externalSecret: false
+
+  filestore:
+    type: s3
+    environment:
+      S3_BUCKET: ${s3_bucket}
+      S3_REGION: ${region}
+
+core:
+  config_env_vars:
+    IMAGE_BUILDER_CUSTOM_MODELS_REGISTRY_HOST: ${ibs_registry}
+    IMAGE_BUILDER_CUSTOM_MODELS_ENVIRONMENT_REGISTRY_REPO: ${ibs_repository}/base-image
+    IMAGE_BUILDER_CUSTOM_MODELS_REGISTRY_REPO: ${ibs_repository}/managed-image
+    IMAGE_BUILDER_EPHEMERAL_CUSTOM_MODELS_REGISTRY_REPO: ${ibs_repository}/ephemeral-image
+    IMAGE_BUILDER_CUSTOM_APPLICATION_REGISTRY_REPO: ${ibs_repository}/custom-apps-managed-image
+    CSP_SPARK_SAFER_CUSTOM_IMAGE_HOST: ${ibs_registry}
+    CSP_SPARK_SAFER_CUSTOM_IMAGE_REPO: ${ibs_repository}/spark-batch-image
+
+buzok-onprem:
+  enabled: false
+
+compute-spark:
+  enabled: false
+
+core-integration-tasks:
+  datarobot_license: ${datarobot_license}
