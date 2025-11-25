@@ -73,7 +73,7 @@ resource "mongodbatlas_advanced_cluster" "this" {
   }
 
   lifecycle {
-    ignore_changes = [replication_specs[0].region_configs[0].electable_specs[0].disk_size_gb]
+    ignore_changes = [replication_specs[0].region_configs[0].electable_specs.disk_size_gb]
   }
 
   depends_on = [mongodbatlas_privatelink_endpoint_service.this]
