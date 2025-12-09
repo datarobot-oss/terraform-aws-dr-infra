@@ -831,3 +831,9 @@ variable "ingress_vpce_service_allowed_principals" {
   type        = list(string)
   default     = null
 }
+
+variable "application_dns_name" {
+  description = "Application dns name"
+  type        = string
+  default     = null
+}
