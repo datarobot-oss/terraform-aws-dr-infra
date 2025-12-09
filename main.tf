@@ -574,7 +574,7 @@ module "private_link_service" {
 
   eks_cluster_name                = local.eks_cluster_name
   vpce_service_allowed_principals = var.ingress_vpce_service_allowed_principals
-  vpce_service_private_dns_name   = var.domain_name
+  vpce_service_private_dns_name   = "app.${var.domain_name}"
   ingress_lb_arns                 = local.load_balancer_arns
   route53_zone_id                 = local.public_zone_id
 
