@@ -576,6 +576,7 @@ module "private_link_service" {
   vpce_service_allowed_principals = var.ingress_vpce_service_allowed_principals
   vpce_service_private_dns_name   = var.domain_name
   ingress_lb_arns                 = local.load_balancer_arns
+  route53_zone_id                 = local.public_zone_id
 
   tags = var.tags
 
