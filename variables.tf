@@ -337,7 +337,7 @@ variable "kubernetes_node_groups" {
   description = "Map of EKS managed node groups. See https://github.com/terraform-aws-modules/terraform-aws-eks/tree/master/modules/eks-managed-node-group for further configuration options."
   type        = any
   default = {
-    drcpu = {
+    r-4x = {
       create         = true
       ami_type       = "AL2023_x86_64_STANDARD"
       instance_types = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
@@ -359,7 +359,7 @@ variable "kubernetes_node_groups" {
       }
       taints = {}
     }
-    drgpu = {
+    g4dn-2x = {
       create         = true
       ami_type       = "AL2023_x86_64_NVIDIA"
       instance_types = ["g4dn.2xlarge"]
