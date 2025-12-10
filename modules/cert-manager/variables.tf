@@ -1,6 +1,7 @@
 variable "chart_version" {
   description = "Version of the helm chart to install"
   type        = string
+  default     = null
 }
 
 variable "kubernetes_cluster_name" {

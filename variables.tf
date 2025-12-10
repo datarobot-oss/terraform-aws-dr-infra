@@ -676,7 +676,7 @@ variable "aws_load_balancer_controller" {
 variable "aws_load_balancer_controller_version" {
   description = "Version of the aws-load-balancer-controller helm chart to install"
   type        = string
-  default     = "1.13.4"
+  default     = null
 }
 
 variable "aws_load_balancer_controller_values_overrides" {
@@ -694,7 +694,7 @@ variable "aws_ebs_csi_driver" {
 variable "aws_ebs_csi_driver_version" {
   description = "Version of the aws-ebs-csi-driver helm chart to install"
   type        = string
-  default     = "2.49.0"
+  default     = null
 }
 
 variable "aws_ebs_csi_driver_values_overrides" {
@@ -712,7 +712,7 @@ variable "cluster_autoscaler" {
 variable "cluster_autoscaler_version" {
   description = "Version of the cluster-autoscaler helm chart to install"
   type        = string
-  default     = "9.50.1"
+  default     = null
 }
 
 variable "cluster_autoscaler_values_overrides" {
@@ -730,7 +730,7 @@ variable "descheduler" {
 variable "descheduler_version" {
   description = "Version of the descheduler helm chart to install"
   type        = string
-  default     = "0.33.0"
+  default     = null
 }
 
 variable "descheduler_values_overrides" {
@@ -748,7 +748,7 @@ variable "ingress_nginx" {
 variable "ingress_nginx_version" {
   description = "Version of the ingress-nginx helm chart to install"
   type        = string
-  default     = "4.13.2"
+  default     = null
 }
 
 variable "internet_facing_ingress_lb" {
@@ -772,7 +772,7 @@ variable "cert_manager" {
 variable "cert_manager_version" {
   description = "Version of the cert-manager helm chart to install"
   type        = string
-  default     = "1.18.2"
+  default     = null
 }
 
 variable "cert_manager_values_overrides" {
@@ -790,7 +790,7 @@ variable "external_dns" {
 variable "external_dns_version" {
   description = "Version of the external-dns helm chart to install"
   type        = string
-  default     = "1.19.0"
+  default     = null
 }
 
 variable "external_dns_values_overrides" {
@@ -808,7 +808,7 @@ variable "external_secrets" {
 variable "external_secrets_version" {
   description = "Version of the external-secrets helm chart to install"
   type        = string
-  default     = "0.16.2"
+  default     = null
 }
 
 variable "external_secrets_secrets_manager_arns" {
@@ -832,7 +832,7 @@ variable "nvidia_gpu_operator" {
 variable "nvidia_gpu_operator_version" {
   description = "Version of the nvidia-gpu-operator helm chart to install"
   type        = string
-  default     = "v25.3.0"
+  default     = null
 }
 
 variable "nvidia_gpu_operator_values_overrides" {
@@ -850,7 +850,7 @@ variable "metrics_server" {
 variable "metrics_server_version" {
   description = "Version of the metrics-server helm chart to install"
   type        = string
-  default     = "3.13.0"
+  default     = null
 }
 
 variable "metrics_server_values_overrides" {
