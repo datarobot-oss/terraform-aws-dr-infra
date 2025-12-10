@@ -28,8 +28,8 @@ resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
   repository = "https://charts.external-secrets.io"
-  chart      = "external-secrets"
-  version    = "0.16.2"
+  chart      = local.name
+  version    = var.chart_version
 
   create_namespace = true
 

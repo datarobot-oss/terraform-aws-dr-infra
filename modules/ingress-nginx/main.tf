@@ -7,8 +7,8 @@ resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
   repository = "https://kubernetes.github.io/ingress-nginx"
-  chart      = "ingress-nginx"
-  version    = "4.13.2"
+  chart      = local.name
+  version    = var.chart_version
 
   create_namespace = true
 

@@ -28,8 +28,8 @@ resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
   repository = "https://charts.jetstack.io"
-  chart      = "cert-manager"
-  version    = "1.18.2"
+  chart      = local.name
+  version    = var.chart_version
 
   create_namespace = true
 

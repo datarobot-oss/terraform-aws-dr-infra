@@ -673,6 +673,12 @@ variable "aws_load_balancer_controller" {
   default     = true
 }
 
+variable "aws_load_balancer_controller_version" {
+  description = "Version of the aws-load-balancer-controller helm chart to install"
+  type        = string
+  default     = "1.13.4"
+}
+
 variable "aws_load_balancer_controller_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -683,6 +689,12 @@ variable "aws_ebs_csi_driver" {
   description = "Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs_csi_driver variables are ignored if this variable is false"
   type        = bool
   default     = true
+}
+
+variable "aws_ebs_csi_driver_version" {
+  description = "Version of the aws-ebs-csi-driver helm chart to install"
+  type        = string
+  default     = "2.49.0"
 }
 
 variable "aws_ebs_csi_driver_values_overrides" {
@@ -697,6 +709,12 @@ variable "cluster_autoscaler" {
   default     = true
 }
 
+variable "cluster_autoscaler_version" {
+  description = "Version of the cluster-autoscaler helm chart to install"
+  type        = string
+  default     = "9.50.1"
+}
+
 variable "cluster_autoscaler_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -709,6 +727,12 @@ variable "descheduler" {
   default     = true
 }
 
+variable "descheduler_version" {
+  description = "Version of the descheduler helm chart to install"
+  type        = string
+  default     = "0.33.0"
+}
+
 variable "descheduler_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -719,6 +743,12 @@ variable "ingress_nginx" {
   description = "Install the ingress-nginx helm chart to use as the ingress controller for the EKS cluster. All other ingress_nginx variables are ignored if this variable is false."
   type        = bool
   default     = true
+}
+
+variable "ingress_nginx_version" {
+  description = "Version of the ingress-nginx helm chart to install"
+  type        = string
+  default     = "4.13.2"
 }
 
 variable "internet_facing_ingress_lb" {
@@ -739,6 +769,12 @@ variable "cert_manager" {
   default     = true
 }
 
+variable "cert_manager_version" {
+  description = "Version of the cert-manager helm chart to install"
+  type        = string
+  default     = "1.18.2"
+}
+
 variable "cert_manager_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -751,6 +787,12 @@ variable "external_dns" {
   default     = true
 }
 
+variable "external_dns_version" {
+  description = "Version of the external-dns helm chart to install"
+  type        = string
+  default     = "1.19.0"
+}
+
 variable "external_dns_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -761,6 +803,12 @@ variable "external_secrets" {
   description = "Install the external_secrets helm chart to manage external secrets resources in the EKS cluster. All other external_secrets variables are ignored if this variable is false."
   type        = bool
   default     = false
+}
+
+variable "external_secrets_version" {
+  description = "Version of the external-secrets helm chart to install"
+  type        = string
+  default     = "0.16.2"
 }
 
 variable "external_secrets_secrets_manager_arns" {
@@ -781,6 +829,12 @@ variable "nvidia_gpu_operator" {
   default     = false
 }
 
+variable "nvidia_gpu_operator_version" {
+  description = "Version of the nvidia-gpu-operator helm chart to install"
+  type        = string
+  default     = "v25.3.0"
+}
+
 variable "nvidia_gpu_operator_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -793,6 +847,12 @@ variable "metrics_server" {
   default     = true
 }
 
+variable "metrics_server_version" {
+  description = "Version of the metrics-server helm chart to install"
+  type        = string
+  default     = "3.13.0"
+}
+
 variable "metrics_server_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
@@ -803,6 +863,12 @@ variable "cilium" {
   description = "Install the cilium helm chart to provide extended cluster networking and security features. All other cilium variables are ignored if this variable is false."
   type        = bool
   default     = false
+}
+
+variable "cilium_version" {
+  description = "Version of the cilium helm chart to install"
+  type        = string
+  default     = "1.18.3"
 }
 
 variable "cilium_values_overrides" {

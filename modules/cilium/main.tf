@@ -7,8 +7,8 @@ resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
   repository = "https://helm.cilium.io"
-  chart      = "cilium"
-  version    = "1.18.3"
+  chart      = local.name
+  version    = var.chart_version
 
   create_namespace = true
 

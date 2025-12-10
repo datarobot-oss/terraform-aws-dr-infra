@@ -606,6 +606,7 @@ module "aws_load_balancer_controller" {
   kubernetes_cluster_name = local.eks_cluster_name
   vpc_id                  = local.vpc_id
 
+  chart_version    = var.aws_load_balancer_controller_version
   values_overrides = var.aws_load_balancer_controller_values_overrides
 
   tags = var.tags
@@ -620,6 +621,7 @@ module "cluster_autoscaler" {
 
   kubernetes_cluster_name = local.eks_cluster_name
 
+  chart_version    = var.cluster_autoscaler_version
   values_overrides = var.cluster_autoscaler_values_overrides
 
   tags = var.tags
@@ -631,6 +633,7 @@ module "descheduler" {
   source = "./modules/descheduler"
   count  = var.install_helm_charts && var.descheduler ? 1 : 0
 
+  chart_version    = var.descheduler_version
   values_overrides = var.descheduler_values_overrides
 }
 
@@ -640,6 +643,7 @@ module "aws_ebs_csi_driver" {
 
   kubernetes_cluster_name = local.eks_cluster_name
 
+  chart_version    = var.aws_ebs_csi_driver_version
   values_overrides = var.aws_ebs_csi_driver_values_overrides
 
   tags = var.tags
@@ -653,6 +657,7 @@ module "ingress_nginx" {
   eks_cluster_name           = local.eks_cluster_name
   acm_certificate_arn        = local.acm_certificate_arn
 
+  chart_version    = var.ingress_nginx_version
   values_overrides = var.ingress_nginx_values_overrides
 
   tags = var.tags
@@ -667,6 +672,7 @@ module "cert_manager" {
   kubernetes_cluster_name = local.eks_cluster_name
   route53_zone_arn        = local.public_zone_arn
 
+  chart_version    = var.cert_manager_version
   values_overrides = var.cert_manager_values_overrides
 
   tags = var.tags
@@ -682,6 +688,7 @@ module "external_dns" {
   route53_zone_arn        = var.internet_facing_ingress_lb ? local.public_zone_arn : local.private_zone_arn
   route53_zone_name       = var.domain_name
 
+  chart_version    = var.external_dns_version
   values_overrides = var.external_dns_values_overrides
 
   tags = var.tags
@@ -696,6 +703,7 @@ module "external_secrets" {
   kubernetes_cluster_name = local.eks_cluster_name
   secrets_manager_arns    = var.external_secrets_secrets_manager_arns
 
+  chart_version    = var.external_secrets_version
   values_overrides = var.external_secrets_values_overrides
 
   tags = var.tags
@@ -707,6 +715,7 @@ module "nvidia_gpu_operator" {
   source = "./modules/nvidia-gpu-operator"
   count  = var.install_helm_charts && var.nvidia_gpu_operator ? 1 : 0
 
+  chart_version    = var.nvidia_gpu_operator_version
   values_overrides = var.nvidia_gpu_operator_values_overrides
 }
 
@@ -714,6 +723,7 @@ module "metrics_server" {
   source = "./modules/metrics-server"
   count  = var.install_helm_charts && var.metrics_server ? 1 : 0
 
+  chart_version    = var.metrics_server_version
   values_overrides = var.metrics_server_values_overrides
 
   depends_on = [module.aws_load_balancer_controller]
@@ -723,6 +733,7 @@ module "cilium" {
   source = "./modules/cilium"
   count  = var.install_helm_charts && var.cilium ? 1 : 0
 
+  chart_version    = var.cilium_version
   values_overrides = var.cilium_values_overrides
 
   depends_on = [module.aws_load_balancer_controller]

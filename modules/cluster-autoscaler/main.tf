@@ -30,8 +30,8 @@ resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
   repository = "https://kubernetes.github.io/autoscaler"
-  chart      = "cluster-autoscaler"
-  version    = "9.50.1"
+  chart      = local.name
+  version    = var.chart_version
 
   create_namespace = true
 

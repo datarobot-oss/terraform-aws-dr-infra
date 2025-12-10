@@ -1,3 +1,8 @@
+variable "chart_version" {
+  description = "Version of the helm chart to install"
+  type        = string
+}
+
 variable "acm_certificate_arn" {
   description = "ARN of the certificate to use with the ingress NLB"
   type        = string

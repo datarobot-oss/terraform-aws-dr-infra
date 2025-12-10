@@ -27,8 +27,8 @@ resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
   repository = "https://aws.github.io/eks-charts"
-  chart      = "aws-load-balancer-controller"
-  version    = "1.13.4"
+  chart      = local.name
+  version    = var.chart_version
 
   create_namespace = true
 

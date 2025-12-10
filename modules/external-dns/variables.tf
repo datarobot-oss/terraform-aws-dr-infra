@@ -1,3 +1,8 @@
+variable "chart_version" {
+  description = "Version of the helm chart to install"
+  type        = string
+}
+
 variable "kubernetes_cluster_name" {
   description = "Name of the EKS cluster"
   type        = string

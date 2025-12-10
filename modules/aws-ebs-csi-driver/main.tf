@@ -28,7 +28,7 @@ resource "helm_release" "this" {
   namespace  = local.namespace
   repository = "https://kubernetes-sigs.github.io/aws-ebs-csi-driver"
   chart      = local.name
-  version    = "2.49.0"
+  version    = var.chart_version
 
   create_namespace = true
 
