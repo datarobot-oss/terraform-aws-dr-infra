@@ -42,6 +42,11 @@ output "vpc_database_subnets_cidr_blocks" {
   value       = try(module.network[0].database_subnets_cidr_blocks, null)
 }
 
+output "vpc_private_route_table_ids" {
+  description = "List of IDs of private route tables"
+  value       = try(module.network[0].private_route_table_ids, null)
+}
+
 
 ################################################################################
 # DNS
