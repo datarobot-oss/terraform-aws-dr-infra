@@ -26,3 +26,9 @@ variable "ingress_lb_arns" {
   type        = list(string)
   default     = null
 }
+
+variable "route53_zone_id" {
+  description = "Route 53 zone ID for the private DNS confirmation record"
+  type        = string
+  default     = null
+}
