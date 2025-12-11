@@ -33,7 +33,6 @@ resource "helm_release" "this" {
 }
 
 data "aws_lb" "ingress" {
-  count      = var.internet_facing_ingress_lb ? 0 : 1
   depends_on = [helm_release.this]
 
   tags = {
