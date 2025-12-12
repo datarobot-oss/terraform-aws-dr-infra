@@ -13,15 +13,8 @@ module "security_group" {
   name   = "${var.name}-postgres"
   vpc_id = var.vpc_id
 
-  ingress_with_cidr_blocks = [
-    {
-      from_port   = 5432
-      to_port     = 5432
-      protocol    = "tcp"
-      description = "VPC postgres access"
-      cidr_blocks = var.vpc_cidr
-    }
-  ]
+  ingress_rules       = ["postgresql-tcp"]
+  ingress_cidr_blocks = var.ingress_cidr_blocks
 
   tags = var.tags
 }

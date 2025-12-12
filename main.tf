@@ -446,11 +446,11 @@ module "postgres" {
   source = "./modules/postgres"
   count  = var.create_postgres ? 1 : 0
 
-  name     = var.name
-  vpc_id   = local.vpc_id
-  vpc_cidr = local.vpc_cidr
-  subnets  = local.postgres_subnets
-  multi_az = local.multi_az
+  name                = var.name
+  vpc_id              = local.vpc_id
+  subnets             = local.postgres_subnets
+  multi_az            = local.multi_az
+  ingress_cidr_blocks = concat([local.vpc_cidr], var.postgres_additional_ingress_cidr_blocks)
 
   postgres_engine_version          = var.postgres_engine_version
   postgres_instance_class          = var.postgres_instance_class

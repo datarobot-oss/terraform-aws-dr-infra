@@ -431,6 +431,12 @@ variable "existing_postgres_subnets" {
   default     = null
 }
 
+variable "postgres_additional_ingress_cidr_blocks" {
+  description = "Additional CIDR blocks allowed to reach the PostgreSQL port"
+  type        = list(string)
+  default     = []
+}
+
 variable "postgres_engine_version" {
   description = "The engine version to use"
   type        = string

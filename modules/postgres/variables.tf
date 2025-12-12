@@ -8,9 +8,9 @@ variable "vpc_id" {
   type        = string
 }
 
-variable "vpc_cidr" {
-  description = "CIDR of the VPC"
-  type        = string
+variable "ingress_cidr_blocks" {
+  description = "CIDR blocks allowed for ingress on the PostgreSQL port"
+  type        = list(string)
 }
 
 variable "subnets" {
