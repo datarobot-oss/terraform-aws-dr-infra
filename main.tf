@@ -737,6 +737,4 @@ module "cilium" {
 
   chart_version    = var.cilium_version
   values_overrides = var.cilium_values_overrides
-
-  depends_on = [module.aws_load_balancer_controller]
 }
