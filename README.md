@@ -1154,6 +1154,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_rabbitmq_username"></a> [rabbitmq\_username](#input\_rabbitmq\_username) | RabbitMQ broker usernmae | `string` | `"pcs-rabbitmq"` | no |
 | <a name="input_redis_engine_version"></a> [redis\_engine\_version](#input\_redis\_engine\_version) | The Elasticache engine version to use | `string` | `"7.1"` | no |
 | <a name="input_redis_node_type"></a> [redis\_node\_type](#input\_redis\_node\_type) | The instance type of the RDS instance | `string` | `"cache.t4g.medium"` | no |
+| <a name="input_redis_snapshot_retention"></a> [redis\_snapshot\_retention](#input\_redis\_snapshot\_retention) | Number of days for which ElastiCache will retain automatic cache cluster snapshots before deleting them | `number` | `7` | no |
 | <a name="input_s3_bucket_force_destroy"></a> [s3\_bucket\_force\_destroy](#input\_s3\_bucket\_force\_destroy) | Force destroy the public and private Route53 zones | `bool` | `false` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all created resources | `map(string)` | <pre>{<br/>  "managed-by": "terraform"<br/>}</pre> | no |
 

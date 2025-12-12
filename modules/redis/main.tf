@@ -15,10 +15,11 @@ module "redis" {
   num_node_groups         = 1
   replicas_per_node_group = 2
 
-  auth_token        = random_password.redis.result
-  engine_version    = var.redis_engine_version
-  node_type         = var.redis_node_type
-  apply_immediately = true
+  auth_token               = random_password.redis.result
+  engine_version           = var.redis_engine_version
+  node_type                = var.redis_node_type
+  snapshot_retention_limit = var.redis_snapshot_retention
+  apply_immediately        = true
 
   vpc_id     = var.vpc_id
   subnet_ids = var.subnets

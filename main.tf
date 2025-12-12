@@ -481,8 +481,9 @@ module "redis" {
   subnets  = local.redis_subnets
   multi_az = local.multi_az
 
-  redis_engine_version = var.redis_engine_version
-  redis_node_type      = var.redis_node_type
+  redis_engine_version     = var.redis_engine_version
+  redis_node_type          = var.redis_node_type
+  redis_snapshot_retention = var.redis_snapshot_retention
 
   tags = var.tags
 }

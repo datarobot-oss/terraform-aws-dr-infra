@@ -502,6 +502,12 @@ variable "redis_node_type" {
   default     = "cache.t4g.medium"
 }
 
+variable "redis_snapshot_retention" {
+  description = "Number of days for which ElastiCache will retain automatic cache cluster snapshots before deleting them"
+  type        = number
+  default     = 7
+}
+
 
 ################################################################################
 # MongoDB
