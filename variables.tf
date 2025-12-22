@@ -915,3 +915,16 @@ variable "application_dns_name" {
   type        = string
   default     = null
 }
+
+#################################################################################
+# Custom Private Endpoints
+#################################################################################
+
+variable "custom_vpc_endpoints" {
+  description = "Configuration for the specific endpoint"
+  type = object({
+    service_name     = string
+    private_dns_zone = optional(string, "")
+    private_dns_name = optional(string, "")
+  })
+}

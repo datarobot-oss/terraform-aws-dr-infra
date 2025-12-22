@@ -738,3 +738,34 @@ module "cilium" {
   chart_version    = var.cilium_version
   values_overrides = var.cilium_values_overrides
 }
+
+
+################################################################################
+# Custom Private Endpoints
+################################################################################
+
+provider "kubectl" {
+  host                   = local.eks_cluster_endpoint
+  cluster_ca_certificate = base64decode(try(local.eks_cluster_ca_data, ""))
+  token                  = try(data.aws_eks_cluster_auth.this[0].token, "")
+  load_config_file       = false
+}
+
+module "custom_endpoints" {
+  source = "./modules/custom-private-endpoints"
+
+  for_each = {
+    for ep in var.custom_vpc_endpoints : ep.service_name => ep
+  }
+
+  name   = var.name
+  cilium = var.cilium
+
+  vpc_id   = local.vpc_id
+  vpc_cidr = local.vpc_cidr
+  subnets  = local.kubernetes_node_subnets
+
+  endpoint_config = each.value
+
+  tags = var.tags
+}
