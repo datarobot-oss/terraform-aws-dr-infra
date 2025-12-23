@@ -1,13 +1,5 @@
 data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
-data "aws_region" "current" {}
-data "aws_availability_zones" "available" {
-  state = "available"
-  filter {
-    name   = "opt-in-status"
-    values = ["opt-in-not-required"]
-  }
-}
 
 
 ################################################################################
@@ -20,89 +12,40 @@ data "aws_vpc" "existing" {
 }
 
 locals {
-  azs      = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
   multi_az = var.availability_zones > 1
   vpc_id   = var.existing_vpc_id != null ? var.existing_vpc_id : try(module.network[0].vpc_id, null)
   vpc_cidr = try(data.aws_vpc.existing[0].cidr_block, var.network_address_space)
 }
 
 module "network" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "~> 6.0"
-  count   = var.create_network && var.existing_vpc_id == null ? 1 : 0
+  source = "./modules/network"
+  count  = var.create_network && var.existing_vpc_id == null ? 1 : 0
 
-  name = var.name
-  cidr = var.network_address_space
+  name                  = var.name
+  network_address_space = var.network_address_space
+  availability_zones    = var.availability_zones
 
-  azs              = local.azs
-  private_subnets  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 4, k)]
-  public_subnets   = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 48)]
-  database_subnets = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 52)]
+  # endpoints
+  interface_endpoints    = var.network_interface_endpoints
+  s3_private_dns_enabled = var.network_s3_private_dns_enabled
+  zone_id                = local.private_zone_id
+  fips_enabled           = var.fips_enabled
 
-  create_database_subnet_group = false
+  # flow logs
+  enable_vpc_flow_logs   = var.network_enable_vpc_flow_logs
+  vpc_flow_log_retention = var.network_vpc_flow_log_retention
 
-  enable_nat_gateway = true
-  single_nat_gateway = true
-
-  public_subnet_tags = {
-    "kubernetes.io/role/elb" = 1
-  }
-  private_subnet_tags = {
-    "kubernetes.io/role/internal-elb" = 1
-  }
-
-  tags = var.tags
-}
-
-module "endpoints" {
-  source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
-  version = "~> 6.0"
-  count   = var.create_network && var.existing_vpc_id == null && length(var.network_private_endpoints) > 0 ? 1 : 0
-
-  vpc_id                     = local.vpc_id
-  create_security_group      = true
-  security_group_name        = "${var.name}-endpoints"
-  security_group_description = "VPC endpoint default security group"
-  security_group_rules = {
-    ingress_https = {
-      description = "HTTPS from VPC"
-      cidr_blocks = [local.vpc_cidr]
-    }
-  }
-
-  endpoints = { for endpoint_service in var.network_private_endpoints :
-    endpoint_service => {
-      service             = endpoint_service
-      subnet_ids          = module.network[0].private_subnets
-      private_dns_enabled = endpoint_service != "s3" || var.network_s3_private_dns_enabled
-      dns_options = {
-        private_dns_only_for_inbound_resolver_endpoint = false
-      }
-    }
-  }
-
-  tags = var.tags
-}
-
-resource "aws_route53_record" "s3_endpoint_cname" {
-  count = var.create_network && var.existing_vpc_id == null && contains(var.network_private_endpoints, "s3") && !var.network_s3_private_dns_enabled ? 1 : 0
-
-  zone_id = local.private_zone_id
-  name    = var.fips_enabled ? "s3-fips.${data.aws_region.current.region}.amazonaws.com" : "s3.${data.aws_region.current.region}.amazonaws.com"
-  type    = "CNAME"
-  records = [module.endpoints[0].endpoints["s3"].dns_entry[0].dns_name]
-  ttl     = 300
-}
-
-module "flow_log" {
-  source = "terraform-aws-modules/vpc/aws//modules/flow-log"
-  count  = var.network_enable_vpc_flow_logs ? 1 : 0
-
-  name   = var.name
-  vpc_id = local.vpc_id
-
-  cloudwatch_log_group_use_name_prefix   = false
-  cloudwatch_log_group_retention_in_days = var.network_cloudwatch_log_group_retention_in_days
+  # network firewall
+  network_firewall                                           = var.network_firewall
+  network_firewall_delete_protection                         = var.network_firewall_delete_protection
+  network_firewall_subnet_change_protection                  = var.network_firewall_subnet_change_protection
+  network_firewall_create_logging_configuration              = var.network_firewall_create_logging_configuration
+  network_firewall_alert_log_retention                       = var.network_firewall_alert_log_retention
+  network_firewall_flow_log_retention                        = var.network_firewall_flow_log_retention
+  network_firewall_policy_stateless_default_actions          = var.network_firewall_policy_stateless_default_actions
+  network_firewall_policy_stateless_fragment_default_actions = var.network_firewall_policy_stateless_fragment_default_actions
+  network_firewall_policy_stateless_rule_group_reference     = var.network_firewall_policy_stateless_rule_group_reference
+  network_firewall_policy_stateful_rule_group_reference      = var.network_firewall_policy_stateful_rule_group_reference
 
   tags = var.tags
 }
@@ -754,4 +697,6 @@ module "kyverno" {
   notation_aws_chart_version    = var.kyverno_notation_aws_chart_version
   notation_aws_values_overrides = var.kyverno_notation_aws_values_overrides
   signer_profile_arn            = var.kyverno_signer_profile_arn
+
+  depends_on = [module.aws_load_balancer_controller]
 }
