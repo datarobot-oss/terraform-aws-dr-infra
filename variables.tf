@@ -983,9 +983,10 @@ variable "application_dns_name" {
 
 variable "custom_vpc_endpoints" {
   description = "Configuration for the specific endpoint"
-  type = object({
+  type = list(object({
     service_name     = string
     private_dns_zone = optional(string, "")
     private_dns_name = optional(string, "")
-  })
+  }))
+  default = []
 }
