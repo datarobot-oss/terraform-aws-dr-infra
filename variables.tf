@@ -981,7 +981,7 @@ variable "application_dns_name" {
 # Custom Private Endpoints
 #################################################################################
 
-variable "custom_vpc_endpoints" {
+variable "custom_private_endpoints" {
   description = "Configuration for the specific endpoint"
   type = list(object({
     service_name     = string

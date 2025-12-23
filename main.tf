@@ -768,11 +768,11 @@ provider "kubectl" {
   load_config_file       = false
 }
 
-module "custom_endpoints" {
+module "custom_private_endpoints" {
   source = "./modules/custom-private-endpoints"
 
   for_each = {
-    for ep in var.custom_vpc_endpoints : ep.service_name => ep
+    for ep in var.custom_private_endpoints : ep.service_name => ep
   }
 
   name   = var.name
