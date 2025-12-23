@@ -889,6 +889,67 @@ variable "cilium_values_overrides" {
   default     = null
 }
 
+variable "kyverno" {
+  description = "Install the kyverno helm chart to manage policies within the Kubernetes cluster"
+  type        = bool
+  default     = false
+}
+
+variable "kyverno_version" {
+  description = "Version of the kyverno helm chart to install"
+  type        = string
+  default     = null
+}
+
+variable "kyverno_values_overrides" {
+  description = "Values in raw yaml format to pass to the kyverno helm chart."
+  type        = string
+  default     = null
+}
+
+variable "kyverno_policies" {
+  description = "Install the Pod Security Standard policies"
+  type        = bool
+  default     = true
+}
+
+variable "kyverno_policies_chart_version" {
+  description = "Version of the kyverno-policies helm chart to install"
+  type        = string
+  default     = null
+}
+
+variable "kyverno_policies_values_overrides" {
+  description = "Values in raw yaml format to pass to the kyverno-policies helm chart."
+  type        = string
+  default     = null
+}
+
+variable "kyverno_notation_aws" {
+  description = "Install kyverno-notation-aws helm chart which executes the AWS Signer plugin for Notation to verify image signatures and attestations."
+  type        = bool
+  default     = false
+}
+
+variable "kyverno_notation_aws_chart_version" {
+  description = "Version of the kyverno-notation-aws helm chart to install"
+  type        = string
+  default     = null
+}
+
+variable "kyverno_notation_aws_values_overrides" {
+  description = "Values in raw yaml format to pass to the kyverno-notation-aws helm chart."
+  type        = string
+  default     = null
+}
+
+variable "kyverno_signer_profile_arn" {
+  description = "ARN of the signer profile to use for image signature verification with kyverno-notation-aws. Required if kyverno_notation_aws is true."
+  type        = string
+  default     = null
+}
+
+
 ################################################################################
 # Privaete Link Service
 ################################################################################
