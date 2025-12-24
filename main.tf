@@ -748,10 +748,10 @@ module "kyverno" {
   chart_version                 = var.kyverno_version
   values_overrides              = var.kyverno_values_overrides
   install_policies              = var.kyverno_policies
-  policies_chart_version        = var.kyverno_policies_chart_version
+  policies_chart_version        = var.kyverno_policies_version
   policies_values_overrides     = var.kyverno_policies_values_overrides
   notation_aws                  = var.kyverno_notation_aws
-  notation_aws_chart_version    = var.kyverno_notation_aws_chart_version
+  notation_aws_chart_version    = var.kyverno_notation_aws_version
   notation_aws_values_overrides = var.kyverno_notation_aws_values_overrides
   signer_profile_arn            = var.kyverno_signer_profile_arn
 }
