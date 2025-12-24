@@ -544,6 +544,13 @@ provider "helm" {
   }
 }
 
+provider "kubectl" {
+  host                   = local.eks_cluster_endpoint
+  cluster_ca_certificate = base64decode(try(local.eks_cluster_ca_data, ""))
+  token                  = try(data.aws_eks_cluster_auth.this[0].token, "")
+  load_config_file       = false
+}
+
 module "aws_load_balancer_controller" {
   source = "./modules/aws-load-balancer-controller"
   count  = var.install_helm_charts && var.aws_load_balancer_controller ? 1 : 0
@@ -691,12 +698,35 @@ module "kyverno" {
   chart_version                 = var.kyverno_version
   values_overrides              = var.kyverno_values_overrides
   install_policies              = var.kyverno_policies
-  policies_chart_version        = var.kyverno_policies_chart_version
+  policies_chart_version        = var.kyverno_policies_version
   policies_values_overrides     = var.kyverno_policies_values_overrides
   notation_aws                  = var.kyverno_notation_aws
-  notation_aws_chart_version    = var.kyverno_notation_aws_chart_version
+  notation_aws_chart_version    = var.kyverno_notation_aws_version
   notation_aws_values_overrides = var.kyverno_notation_aws_values_overrides
   signer_profile_arn            = var.kyverno_signer_profile_arn
 
   depends_on = [module.aws_load_balancer_controller]
+}
+
+
+################################################################################
+# Custom Private Endpoints
+################################################################################
+
+module "custom_private_endpoints" {
+  source = "./modules/custom-private-endpoints"
+
+  for_each = {
+    for ep in var.custom_private_endpoints : ep.service_name => ep
+  }
+
+  name = var.name
+
+  vpc_id   = local.vpc_id
+  vpc_cidr = local.vpc_cidr
+  subnets  = local.kubernetes_node_subnets
+
+  endpoint_config = each.value
+
+  tags = var.tags
 }

@@ -983,7 +983,7 @@ variable "kyverno_policies" {
   default     = true
 }
 
-variable "kyverno_policies_chart_version" {
+variable "kyverno_policies_version" {
   description = "Version of the kyverno-policies helm chart to install"
   type        = string
   default     = null
@@ -1001,7 +1001,7 @@ variable "kyverno_notation_aws" {
   default     = false
 }
 
-variable "kyverno_notation_aws_chart_version" {
+variable "kyverno_notation_aws_version" {
   description = "Version of the kyverno-notation-aws helm chart to install"
   type        = string
   default     = null
@@ -1045,4 +1045,18 @@ variable "application_dns_name" {
   description = "Application dns name"
   type        = string
   default     = null
+}
+
+#################################################################################
+# Custom Private Endpoints
+#################################################################################
+
+variable "custom_private_endpoints" {
+  description = "Configuration for the specific endpoint"
+  type = list(object({
+    service_name     = string
+    private_dns_zone = optional(string, "")
+    private_dns_name = optional(string, "")
+  }))
+  default = []
 }

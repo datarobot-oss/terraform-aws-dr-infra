@@ -968,6 +968,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 3.0 |
+| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >= 1.19.0 |
 | <a name="requirement_mongodbatlas"></a> [mongodbatlas](#requirement\_mongodbatlas) | ~> 2.0 |
 
 ## Providers
@@ -988,6 +989,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="module_cilium"></a> [cilium](#module\_cilium) | ./modules/cilium | n/a |
 | <a name="module_cluster_autoscaler"></a> [cluster\_autoscaler](#module\_cluster\_autoscaler) | ./modules/cluster-autoscaler | n/a |
 | <a name="module_container_registry"></a> [container\_registry](#module\_container\_registry) | terraform-aws-modules/ecr/aws | ~> 3.0 |
+| <a name="module_custom_private_endpoints"></a> [custom\_private\_endpoints](#module\_custom\_private\_endpoints) | ./modules/custom-private-endpoints | n/a |
 | <a name="module_descheduler"></a> [descheduler](#module\_descheduler) | ./modules/descheduler | n/a |
 | <a name="module_external_dns"></a> [external\_dns](#module\_external\_dns) | ./modules/external-dns | n/a |
 | <a name="module_external_secrets"></a> [external\_secrets](#module\_external\_secrets) | ./modules/external-secrets | n/a |
@@ -1054,6 +1056,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_create_rabbitmq"></a> [create\_rabbitmq](#input\_create\_rabbitmq) | Whether to create an AMQ RabbitMQ instance | `bool` | `false` | no |
 | <a name="input_create_redis"></a> [create\_redis](#input\_create\_redis) | Whether to create a Elasticache Redis instance | `bool` | `false` | no |
 | <a name="input_create_storage"></a> [create\_storage](#input\_create\_storage) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing\_s3\_bucket\_id is specified. | `bool` | `true` | no |
+| <a name="input_custom_private_endpoints"></a> [custom\_private\_endpoints](#input\_custom\_private\_endpoints) | Configuration for the specific endpoint | <pre>list(object({<br/>    service_name     = string<br/>    private_dns_zone = optional(string, "")<br/>    private_dns_name = optional(string, "")<br/>  }))</pre> | `[]` | no |
 | <a name="input_datarobot_namespace"></a> [datarobot\_namespace](#input\_datarobot\_namespace) | Kubernetes namespace in which the DataRobot application will be installed | `string` | `"dr-app"` | no |
 | <a name="input_descheduler"></a> [descheduler](#input\_descheduler) | Install the descheduler helm chart to enable rescheduling of pods. All other descheduler variables are ignored if this variable is false | `bool` | `true` | no |
 | <a name="input_descheduler_values_overrides"></a> [descheduler\_values\_overrides](#input\_descheduler\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
@@ -1110,11 +1113,11 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_kubernetes_node_security_group_enable_recommended_rules"></a> [kubernetes\_node\_security\_group\_enable\_recommended\_rules](#input\_kubernetes\_node\_security\_group\_enable\_recommended\_rules) | Determines whether to enable recommended security group rules for the node security group created. This includes node-to-node TCP ingress on ephemeral ports and allows all egress traffic | `bool` | `true` | no |
 | <a name="input_kyverno"></a> [kyverno](#input\_kyverno) | Install the kyverno helm chart to manage policies within the Kubernetes cluster | `bool` | `false` | no |
 | <a name="input_kyverno_notation_aws"></a> [kyverno\_notation\_aws](#input\_kyverno\_notation\_aws) | Install kyverno-notation-aws helm chart which executes the AWS Signer plugin for Notation to verify image signatures and attestations. | `bool` | `false` | no |
-| <a name="input_kyverno_notation_aws_chart_version"></a> [kyverno\_notation\_aws\_chart\_version](#input\_kyverno\_notation\_aws\_chart\_version) | Version of the kyverno-notation-aws helm chart to install | `string` | `null` | no |
 | <a name="input_kyverno_notation_aws_values_overrides"></a> [kyverno\_notation\_aws\_values\_overrides](#input\_kyverno\_notation\_aws\_values\_overrides) | Values in raw yaml format to pass to the kyverno-notation-aws helm chart. | `string` | `null` | no |
+| <a name="input_kyverno_notation_aws_version"></a> [kyverno\_notation\_aws\_version](#input\_kyverno\_notation\_aws\_version) | Version of the kyverno-notation-aws helm chart to install | `string` | `null` | no |
 | <a name="input_kyverno_policies"></a> [kyverno\_policies](#input\_kyverno\_policies) | Install the Pod Security Standard policies | `bool` | `true` | no |
-| <a name="input_kyverno_policies_chart_version"></a> [kyverno\_policies\_chart\_version](#input\_kyverno\_policies\_chart\_version) | Version of the kyverno-policies helm chart to install | `string` | `null` | no |
 | <a name="input_kyverno_policies_values_overrides"></a> [kyverno\_policies\_values\_overrides](#input\_kyverno\_policies\_values\_overrides) | Values in raw yaml format to pass to the kyverno-policies helm chart. | `string` | `null` | no |
+| <a name="input_kyverno_policies_version"></a> [kyverno\_policies\_version](#input\_kyverno\_policies\_version) | Version of the kyverno-policies helm chart to install | `string` | `null` | no |
 | <a name="input_kyverno_signer_profile_arn"></a> [kyverno\_signer\_profile\_arn](#input\_kyverno\_signer\_profile\_arn) | ARN of the signer profile to use for image signature verification with kyverno-notation-aws. Required if kyverno\_notation\_aws is true. | `string` | `null` | no |
 | <a name="input_kyverno_values_overrides"></a> [kyverno\_values\_overrides](#input\_kyverno\_values\_overrides) | Values in raw yaml format to pass to the kyverno helm chart. | `string` | `null` | no |
 | <a name="input_kyverno_version"></a> [kyverno\_version](#input\_kyverno\_version) | Version of the kyverno helm chart to install | `string` | `null` | no |
