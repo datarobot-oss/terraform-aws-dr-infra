@@ -31,9 +31,3 @@ variable "endpoint_config" {
     private_dns_name = optional(string, "")
   })
 }
-
-variable "cilium" {
-  description = "If cilium is deployed in the cluster"
-  type        = bool
-  default     = false
-}
