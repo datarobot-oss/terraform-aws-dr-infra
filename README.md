@@ -968,6 +968,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 3.0 |
+| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >= 1.19.0 |
 | <a name="requirement_mongodbatlas"></a> [mongodbatlas](#requirement\_mongodbatlas) | ~> 2.0 |
 
 ## Providers
@@ -988,6 +989,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="module_cilium"></a> [cilium](#module\_cilium) | ./modules/cilium | n/a |
 | <a name="module_cluster_autoscaler"></a> [cluster\_autoscaler](#module\_cluster\_autoscaler) | ./modules/cluster-autoscaler | n/a |
 | <a name="module_container_registry"></a> [container\_registry](#module\_container\_registry) | terraform-aws-modules/ecr/aws | ~> 3.0 |
+| <a name="module_custom_private_endpoints"></a> [custom\_private\_endpoints](#module\_custom\_private\_endpoints) | ./modules/custom-private-endpoints | n/a |
 | <a name="module_descheduler"></a> [descheduler](#module\_descheduler) | ./modules/descheduler | n/a |
 | <a name="module_endpoints"></a> [endpoints](#module\_endpoints) | terraform-aws-modules/vpc/aws//modules/vpc-endpoints | ~> 6.0 |
 | <a name="module_external_dns"></a> [external\_dns](#module\_external\_dns) | ./modules/external-dns | n/a |
@@ -1059,6 +1061,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_create_rabbitmq"></a> [create\_rabbitmq](#input\_create\_rabbitmq) | Whether to create an AMQ RabbitMQ instance | `bool` | `false` | no |
 | <a name="input_create_redis"></a> [create\_redis](#input\_create\_redis) | Whether to create a Elasticache Redis instance | `bool` | `false` | no |
 | <a name="input_create_storage"></a> [create\_storage](#input\_create\_storage) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing\_s3\_bucket\_id is specified. | `bool` | `true` | no |
+| <a name="input_custom_private_endpoints"></a> [custom\_private\_endpoints](#input\_custom\_private\_endpoints) | Configuration for the specific endpoint | <pre>list(object({<br/>    service_name     = string<br/>    private_dns_zone = optional(string, "")<br/>    private_dns_name = optional(string, "")<br/>  }))</pre> | `[]` | no |
 | <a name="input_datarobot_namespace"></a> [datarobot\_namespace](#input\_datarobot\_namespace) | Kubernetes namespace in which the DataRobot application will be installed | `string` | `"dr-app"` | no |
 | <a name="input_descheduler"></a> [descheduler](#input\_descheduler) | Install the descheduler helm chart to enable rescheduling of pods. All other descheduler variables are ignored if this variable is false | `bool` | `true` | no |
 | <a name="input_descheduler_values_overrides"></a> [descheduler\_values\_overrides](#input\_descheduler\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |

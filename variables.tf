@@ -976,3 +976,17 @@ variable "application_dns_name" {
   type        = string
   default     = null
 }
+
+#################################################################################
+# Custom Private Endpoints
+#################################################################################
+
+variable "custom_private_endpoints" {
+  description = "Configuration for the specific endpoint"
+  type = list(object({
+    service_name     = string
+    private_dns_zone = optional(string, "")
+    private_dns_name = optional(string, "")
+  }))
+  default = []
+}
