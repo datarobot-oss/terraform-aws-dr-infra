@@ -14,12 +14,17 @@ output "vpc_cidr_block" {
 
 output "vpc_public_subnets" {
   description = "List of IDs of public subnets"
-  value       = try(module.network[0].public_subnets, null)
+  value       = try(module.network_firewall[0].public_subnets, module.network[0].public_subnets, null)
 }
 
 output "vpc_public_subnets_cidr_blocks" {
   description = "List of CIDR blocks of public subnets"
-  value       = try(module.network[0].public_subnets_cidr_blocks, null)
+  value       = try(module.network_firewall[0].public_subnets_cidr_blocks, module.network[0].public_subnets_cidr_blocks, null)
+}
+
+output "vpc_public_route_table_ids" {
+  description = "List of IDs of public route tables"
+  value       = try(module.network_firewall[0].public_route_table_ids, module.network[0].public_route_table_ids, null)
 }
 
 output "vpc_private_subnets" {
@@ -32,19 +37,24 @@ output "vpc_private_subnets_cidr_blocks" {
   value       = try(module.network[0].private_subnets_cidr_blocks, null)
 }
 
-output "vpc_database_subnets" {
-  description = "List of IDs of database subnets"
-  value       = try(module.network[0].database_subnets, null)
-}
-
-output "vpc_database_subnets_cidr_blocks" {
-  description = "List of CIDR blocks of the database subnets"
-  value       = try(module.network[0].database_subnets_cidr_blocks, null)
-}
-
 output "vpc_private_route_table_ids" {
   description = "List of IDs of private route tables"
   value       = try(module.network[0].private_route_table_ids, null)
+}
+
+output "vpc_intra_subnets" {
+  description = "List of IDs of database subnets"
+  value       = try(module.network[0].intra_subnets, null)
+}
+
+output "vpc_intra_subnets_cidr_blocks" {
+  description = "List of CIDR blocks of the intra subnets"
+  value       = try(module.network[0].intra_subnets_cidr_blocks, null)
+}
+
+output "vpc_intra_route_table_ids" {
+  description = "List of IDs of intra route tables"
+  value       = try(module.network[0].intra_route_table_ids, null)
 }
 
 

@@ -18,7 +18,6 @@ module "datarobot_infra" {
   name               = local.name
   domain_name        = "${local.name}.yourdomain.com"
   availability_zones = 2
-  fips_enabled       = false
   tags = {
     application = local.name
     environment = "dev"
@@ -28,12 +27,55 @@ module "datarobot_infra" {
   ################################################################################
   # Network
   ################################################################################
-  create_network                                 = true
-  network_address_space                          = "10.7.0.0/16"
-  network_private_endpoints                      = ["s3"]
-  network_s3_private_dns_enabled                 = true
-  network_enable_vpc_flow_logs                   = true
-  network_cloudwatch_log_group_retention_in_days = 30
+  create_network        = true
+  network_address_space = "10.7.0.0/16"
+  network_endpoints = [
+    # {
+    #   service_name            = "com.vpce.us-west-2.vpce-svc-0a5fa55fb030ce1ac"
+    #   private_dns_enabled     = false
+    #   custom_private_dns_name = "example-vpce-service"
+    #   custom_private_dns_zone = "internal.datarobot.com"
+    # },
+    {
+      service = "s3"
+    },
+    {
+      service = "ec2"
+    },
+    {
+      service = "ecr.api"
+    },
+    {
+      service = "ecr.dkr"
+    },
+    {
+      service = "elasticloadbalancing"
+    },
+    {
+      service = "logs"
+    },
+    {
+      service = "sts"
+    },
+    {
+      service = "eks-auth"
+    },
+    {
+      service = "eks"
+    }
+  ]
+  network_enable_vpc_flow_logs                               = true
+  network_vpc_flow_log_retention                             = 30
+  network_firewall                                           = true
+  network_firewall_delete_protection                         = false
+  network_firewall_subnet_change_protection                  = false
+  network_firewall_create_logging_configuration              = false
+  network_firewall_alert_log_retention                       = 7
+  network_firewall_flow_log_retention                        = 7
+  network_firewall_policy_stateless_default_actions          = ["aws:pass"]
+  network_firewall_policy_stateless_fragment_default_actions = ["aws:drop"]
+  network_firewall_policy_stateless_rule_group_reference     = null
+  network_firewall_policy_stateful_rule_group_reference      = null
 
   ################################################################################
   # DNS
@@ -227,36 +269,40 @@ module "datarobot_infra" {
   install_helm_charts = true
 
   ################################################################################
+  # aws-load-balancer-controller
+  ################################################################################
+  aws_load_balancer_controller                  = true
+  aws_load_balancer_controller_version          = null
+  aws_load_balancer_controller_values_overrides = file("${path.module}/templates/custom_aws_lb_controller_values.yaml")
+
+  ################################################################################
   # aws-ebs-csi-driver
   ################################################################################
   aws_ebs_csi_driver                  = true
+  aws_ebs_csi_driver_version          = null
   aws_ebs_csi_driver_values_overrides = file("${path.module}/templates/custom_aws_ebs_csi_driver_values.yaml")
 
   ################################################################################
   # cluster-autoscaler
   ################################################################################
   cluster_autoscaler                  = true
+  cluster_autoscaler_version          = null
   cluster_autoscaler_values_overrides = file("${path.module}/templates/custom_cluster_autoscaler_values.yaml")
 
   ################################################################################
   # descheduler
   ################################################################################
   descheduler                  = true
+  descheduler_version          = null
   descheduler_values_overrides = file("${path.module}/templates/custom_descheduler_values.yaml")
-
-  ################################################################################
-  # aws-load-balancer-controller
-  ################################################################################
-  aws_load_balancer_controller                  = true
-  aws_load_balancer_controller_values_overrides = file("${path.module}/templates/custom_aws_lb_controller_values.yaml")
 
   ################################################################################
   # ingress-nginx
   ################################################################################
-  ingress_nginx                           = true
-  internet_facing_ingress_lb              = false
-  create_ingress_vpce_service             = true
-  ingress_vpce_service_allowed_principals = ["arn:aws:iam::12345678910:root"]
+  ingress_nginx               = true
+  ingress_nginx_version       = null
+  internet_facing_ingress_lb  = false
+  create_ingress_vpce_service = true
 
   # in this case our custom values file override is formatted as a templatefile
   # so we can pass variables like our provisioner_private_ip to it.
@@ -269,18 +315,21 @@ module "datarobot_infra" {
   # cert-manager
   ################################################################################
   cert_manager                  = true
+  cert_manager_version          = null
   cert_manager_values_overrides = file("${path.module}/templates/custom_cert_manager_values.yaml")
 
   ################################################################################
   # external-dns
   ################################################################################
   external_dns                  = true
+  external_dns_version          = null
   external_dns_values_overrides = file("${path.module}/templates/custom_external_dns_values.yaml")
 
   ################################################################################
   # external-secrets
   ################################################################################
   external_secrets                      = true
+  external_secrets_version              = null
   external_secrets_secrets_manager_arns = ["arn:aws:secretsmanager:*:*:secret:bar"]
   external_secrets_values_overrides     = "${path.module}/templates/custom_external_secrets_values.yaml"
 
@@ -288,17 +337,34 @@ module "datarobot_infra" {
   # nvidia-gpu-operator
   ################################################################################
   nvidia_gpu_operator                  = false
+  nvidia_gpu_operator_version          = null
   nvidia_gpu_operator_values_overrides = file("${path.module}/templates/custom_nvidia_gpu_operator_plugin_values.yaml")
 
   ################################################################################
   # metrics-server
   ################################################################################
   metrics_server                  = true
+  metrics_server_version          = null
   metrics_server_values_overrides = file("${path.module}/templates/custom_metrics_server_values.yaml")
 
   ################################################################################
   # cilium
   ################################################################################
   cilium                  = true
+  cilium_version          = null
   cilium_values_overrides = file("${path.module}/templates/custom_cilium_values.yaml")
+
+  ################################################################################
+  # kyverno
+  ################################################################################
+  kyverno                               = true
+  kyverno_version                       = null
+  kyverno_values_overrides              = file("${path.module}/templates/custom_kyverno_values.yaml")
+  kyverno_policies                      = true
+  kyverno_policies_version              = null
+  kyverno_policies_values_overrides     = file("${path.module}/templates/custom_kyverno_policies_values.yaml")
+  kyverno_notation_aws                  = true
+  kyverno_notation_aws_version          = null
+  kyverno_notation_aws_values_overrides = file("${path.module}/templates/custom_kyverno_notation_aws_values.yaml")
+  kyverno_signer_profile_arn            = "arn:aws:signer:us-west-2:01234567890:/signing-profiles/example_20241231162516984400000001"
 }
