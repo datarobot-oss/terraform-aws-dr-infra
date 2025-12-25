@@ -989,17 +989,20 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="module_cilium"></a> [cilium](#module\_cilium) | ./modules/cilium | n/a |
 | <a name="module_cluster_autoscaler"></a> [cluster\_autoscaler](#module\_cluster\_autoscaler) | ./modules/cluster-autoscaler | n/a |
 | <a name="module_container_registry"></a> [container\_registry](#module\_container\_registry) | terraform-aws-modules/ecr/aws | ~> 3.0 |
-| <a name="module_custom_private_endpoints"></a> [custom\_private\_endpoints](#module\_custom\_private\_endpoints) | ./modules/custom-private-endpoints | n/a |
 | <a name="module_descheduler"></a> [descheduler](#module\_descheduler) | ./modules/descheduler | n/a |
+| <a name="module_endpoint_security_group"></a> [endpoint\_security\_group](#module\_endpoint\_security\_group) | terraform-aws-modules/security-group/aws//modules/https-443 | ~> 5.0 |
+| <a name="module_endpoints"></a> [endpoints](#module\_endpoints) | terraform-aws-modules/vpc/aws//modules/vpc-endpoints | ~> 6.0 |
 | <a name="module_external_dns"></a> [external\_dns](#module\_external\_dns) | ./modules/external-dns | n/a |
 | <a name="module_external_secrets"></a> [external\_secrets](#module\_external\_secrets) | ./modules/external-secrets | n/a |
+| <a name="module_flow_log"></a> [flow\_log](#module\_flow\_log) | terraform-aws-modules/vpc/aws//modules/flow-log | n/a |
 | <a name="module_genai_identity"></a> [genai\_identity](#module\_genai\_identity) | terraform-aws-modules/iam/aws//modules/iam-role | ~> 6.0 |
 | <a name="module_ingress_nginx"></a> [ingress\_nginx](#module\_ingress\_nginx) | ./modules/ingress-nginx | n/a |
 | <a name="module_kubernetes"></a> [kubernetes](#module\_kubernetes) | terraform-aws-modules/eks/aws | ~> 21.0 |
 | <a name="module_kyverno"></a> [kyverno](#module\_kyverno) | ./modules/kyverno | n/a |
 | <a name="module_metrics_server"></a> [metrics\_server](#module\_metrics\_server) | ./modules/metrics-server | n/a |
 | <a name="module_mongodb"></a> [mongodb](#module\_mongodb) | ./modules/mongodb | n/a |
-| <a name="module_network"></a> [network](#module\_network) | ./modules/network | n/a |
+| <a name="module_network"></a> [network](#module\_network) | terraform-aws-modules/vpc/aws | ~> 6.0 |
+| <a name="module_network_firewall"></a> [network\_firewall](#module\_network\_firewall) | ./modules/network-firewall | n/a |
 | <a name="module_nvidia_gpu_operator"></a> [nvidia\_gpu\_operator](#module\_nvidia\_gpu\_operator) | ./modules/nvidia-gpu-operator | n/a |
 | <a name="module_postgres"></a> [postgres](#module\_postgres) | ./modules/postgres | n/a |
 | <a name="module_private_dns"></a> [private\_dns](#module\_private\_dns) | terraform-aws-modules/route53/aws | ~> 6.0 |
@@ -1014,6 +1017,9 @@ The default installation supports DataRobot versions >= 10.1.
 | Name | Type |
 |------|------|
 | [aws_autoscaling_group_tag.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group_tag) | resource |
+| [aws_route53_record.endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
+| [aws_route53_zone.endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone) | resource |
+| [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_eks_cluster.existing](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
 | [aws_eks_cluster_auth.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
@@ -1056,7 +1062,6 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_create_rabbitmq"></a> [create\_rabbitmq](#input\_create\_rabbitmq) | Whether to create an AMQ RabbitMQ instance | `bool` | `false` | no |
 | <a name="input_create_redis"></a> [create\_redis](#input\_create\_redis) | Whether to create a Elasticache Redis instance | `bool` | `false` | no |
 | <a name="input_create_storage"></a> [create\_storage](#input\_create\_storage) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing\_s3\_bucket\_id is specified. | `bool` | `true` | no |
-| <a name="input_custom_private_endpoints"></a> [custom\_private\_endpoints](#input\_custom\_private\_endpoints) | Configuration for the specific endpoint | <pre>list(object({<br/>    service_name     = string<br/>    private_dns_zone = optional(string, "")<br/>    private_dns_name = optional(string, "")<br/>  }))</pre> | `[]` | no |
 | <a name="input_datarobot_namespace"></a> [datarobot\_namespace](#input\_datarobot\_namespace) | Kubernetes namespace in which the DataRobot application will be installed | `string` | `"dr-app"` | no |
 | <a name="input_descheduler"></a> [descheduler](#input\_descheduler) | Install the descheduler helm chart to enable rescheduling of pods. All other descheduler variables are ignored if this variable is false | `bool` | `true` | no |
 | <a name="input_descheduler_values_overrides"></a> [descheduler\_values\_overrides](#input\_descheduler\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
@@ -1086,7 +1091,6 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_external_secrets_secrets_manager_arns"></a> [external\_secrets\_secrets\_manager\_arns](#input\_external\_secrets\_secrets\_manager\_arns) | List of Secrets Manager ARNs that contain secrets to mount using External Secrets | `list(string)` | `[]` | no |
 | <a name="input_external_secrets_values_overrides"></a> [external\_secrets\_values\_overrides](#input\_external\_secrets\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_external_secrets_version"></a> [external\_secrets\_version](#input\_external\_secrets\_version) | Version of the external-secrets helm chart to install | `string` | `null` | no |
-| <a name="input_fips_enabled"></a> [fips\_enabled](#input\_fips\_enabled) | Enable FIPS endpoints for AWS services | `bool` | `false` | no |
 | <a name="input_ingress_nginx"></a> [ingress\_nginx](#input\_ingress\_nginx) | Install the ingress-nginx helm chart to use as the ingress controller for the EKS cluster. All other ingress\_nginx variables are ignored if this variable is false. | `bool` | `true` | no |
 | <a name="input_ingress_nginx_values_overrides"></a> [ingress\_nginx\_values\_overrides](#input\_ingress\_nginx\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_ingress_nginx_version"></a> [ingress\_nginx\_version](#input\_ingress\_nginx\_version) | Version of the ingress-nginx helm chart to install | `string` | `null` | no |
@@ -1141,6 +1145,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_name"></a> [name](#input\_name) | Name to use as a prefix for created resources | `string` | n/a | yes |
 | <a name="input_network_address_space"></a> [network\_address\_space](#input\_network\_address\_space) | CIDR block to be used for the new VPC | `string` | `"10.0.0.0/16"` | no |
 | <a name="input_network_enable_vpc_flow_logs"></a> [network\_enable\_vpc\_flow\_logs](#input\_network\_enable\_vpc\_flow\_logs) | Enable VPC Flow Logs for the created VPC | `bool` | `false` | no |
+| <a name="input_network_endpoints"></a> [network\_endpoints](#input\_network\_endpoints) | A map of interface and/or gateway endpoints containing their properties and configurations. See https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/modules/vpc-endpoints/variables.tf#L19 for available options. If `private_dns_enabled` is `false`, `custom_private_dns_name` and `custom_private_dns_zone` can be used to create a private DNS record for the endpoint. | <pre>list(object({<br/>    service                 = optional(string)<br/>    service_name            = optional(string)<br/>    service_type            = optional(string, "Interface")<br/>    private_dns_enabled     = optional(bool, true)<br/>    custom_private_dns_name = optional(string)<br/>    custom_private_dns_zone = optional(string)<br/>  }))</pre> | <pre>[<br/>  {<br/>    "service": "s3"<br/>  },<br/>  {<br/>    "service": "ec2"<br/>  },<br/>  {<br/>    "service": "ecr.api"<br/>  },<br/>  {<br/>    "service": "ecr.dkr"<br/>  },<br/>  {<br/>    "service": "elasticloadbalancing"<br/>  },<br/>  {<br/>    "service": "logs"<br/>  },<br/>  {<br/>    "service": "sts"<br/>  },<br/>  {<br/>    "service": "eks-auth"<br/>  },<br/>  {<br/>    "service": "eks"<br/>  }<br/>]</pre> | no |
 | <a name="input_network_firewall"></a> [network\_firewall](#input\_network\_firewall) | Create an AWS Network Firewall | `bool` | `false` | no |
 | <a name="input_network_firewall_alert_log_retention"></a> [network\_firewall\_alert\_log\_retention](#input\_network\_firewall\_alert\_log\_retention) | Number of days to retain NFW alert logs. Set to `0` to keep logs indefinitely | `number` | `7` | no |
 | <a name="input_network_firewall_create_logging_configuration"></a> [network\_firewall\_create\_logging\_configuration](#input\_network\_firewall\_create\_logging\_configuration) | Create logging configuration for the AWS Network Firewall | `bool` | `false` | no |
@@ -1151,8 +1156,6 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_network_firewall_policy_stateless_fragment_default_actions"></a> [network\_firewall\_policy\_stateless\_fragment\_default\_actions](#input\_network\_firewall\_policy\_stateless\_fragment\_default\_actions) | Set of actions to take on a fragmented packet if it does not match any of the stateless rules in the policy. You must specify one of the standard actions including: `aws:drop`, `aws:pass`, or `aws:forward_to_sfe` | `list(string)` | <pre>[<br/>  "aws:drop"<br/>]</pre> | no |
 | <a name="input_network_firewall_policy_stateless_rule_group_reference"></a> [network\_firewall\_policy\_stateless\_rule\_group\_reference](#input\_network\_firewall\_policy\_stateless\_rule\_group\_reference) | Set of configuration blocks containing references to the stateless rule groups that are used in the policy. See [Stateless Rule Group Reference](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/networkfirewall_firewall_policy#stateless-rule-group-reference) for details | <pre>map(object({<br/>    priority     = number<br/>    resource_arn = string<br/>  }))</pre> | `null` | no |
 | <a name="input_network_firewall_subnet_change_protection"></a> [network\_firewall\_subnet\_change\_protection](#input\_network\_firewall\_subnet\_change\_protection) | Enable subnet change protection for the AWS Network Firewall | `bool` | `false` | no |
-| <a name="input_network_interface_endpoints"></a> [network\_interface\_endpoints](#input\_network\_interface\_endpoints) | List of AWS services to create interface VPC endpoints for | `list(string)` | <pre>[<br/>  "s3",<br/>  "ec2",<br/>  "ecr.api",<br/>  "ecr.dkr",<br/>  "elasticloadbalancing",<br/>  "logs",<br/>  "sts",<br/>  "eks-auth",<br/>  "eks"<br/>]</pre> | no |
-| <a name="input_network_s3_private_dns_enabled"></a> [network\_s3\_private\_dns\_enabled](#input\_network\_s3\_private\_dns\_enabled) | Enable private DNS for the S3 VPC endpoint. Currently not supported in GovCloud regions https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-s3.html. | `bool` | `true` | no |
 | <a name="input_network_vpc_flow_log_retention"></a> [network\_vpc\_flow\_log\_retention](#input\_network\_vpc\_flow\_log\_retention) | Number of days to retain log events. Set to `0` to keep logs indefinitely | `number` | `7` | no |
 | <a name="input_nvidia_gpu_operator"></a> [nvidia\_gpu\_operator](#input\_nvidia\_gpu\_operator) | Install the nvidia-gpu-operator helm chart to manage NVIDIA GPU resources in the EKS cluster. All other nvidia\_gpu\_operator variables are ignored if this variable is false. | `bool` | `false` | no |
 | <a name="input_nvidia_gpu_operator_values_overrides"></a> [nvidia\_gpu\_operator\_values\_overrides](#input\_nvidia\_gpu\_operator\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
@@ -1205,12 +1208,14 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="output_redis_password"></a> [redis\_password](#output\_redis\_password) | Elasticache redis auth token |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Name of the S3 bucket |
 | <a name="output_vpc_cidr_block"></a> [vpc\_cidr\_block](#output\_vpc\_cidr\_block) | The CIDR block of the VPC |
-| <a name="output_vpc_database_subnets"></a> [vpc\_database\_subnets](#output\_vpc\_database\_subnets) | List of IDs of database subnets |
-| <a name="output_vpc_database_subnets_cidr_blocks"></a> [vpc\_database\_subnets\_cidr\_blocks](#output\_vpc\_database\_subnets\_cidr\_blocks) | List of CIDR blocks of the database subnets |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC |
+| <a name="output_vpc_intra_route_table_ids"></a> [vpc\_intra\_route\_table\_ids](#output\_vpc\_intra\_route\_table\_ids) | List of IDs of intra route tables |
+| <a name="output_vpc_intra_subnets"></a> [vpc\_intra\_subnets](#output\_vpc\_intra\_subnets) | List of IDs of database subnets |
+| <a name="output_vpc_intra_subnets_cidr_blocks"></a> [vpc\_intra\_subnets\_cidr\_blocks](#output\_vpc\_intra\_subnets\_cidr\_blocks) | List of CIDR blocks of the intra subnets |
 | <a name="output_vpc_private_route_table_ids"></a> [vpc\_private\_route\_table\_ids](#output\_vpc\_private\_route\_table\_ids) | List of IDs of private route tables |
 | <a name="output_vpc_private_subnets"></a> [vpc\_private\_subnets](#output\_vpc\_private\_subnets) | List of IDs of private subnets |
 | <a name="output_vpc_private_subnets_cidr_blocks"></a> [vpc\_private\_subnets\_cidr\_blocks](#output\_vpc\_private\_subnets\_cidr\_blocks) | List of CIDR blocks of private subnets |
+| <a name="output_vpc_public_route_table_ids"></a> [vpc\_public\_route\_table\_ids](#output\_vpc\_public\_route\_table\_ids) | List of IDs of public route tables |
 | <a name="output_vpc_public_subnets"></a> [vpc\_public\_subnets](#output\_vpc\_public\_subnets) | List of IDs of public subnets |
 | <a name="output_vpc_public_subnets_cidr_blocks"></a> [vpc\_public\_subnets\_cidr\_blocks](#output\_vpc\_public\_subnets\_cidr\_blocks) | List of CIDR blocks of public subnets |
 <!-- END_TF_DOCS -->

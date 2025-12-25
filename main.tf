@@ -1,6 +1,13 @@
 data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
 
+data "aws_availability_zones" "available" {
+  state = "available"
+  filter {
+    name   = "opt-in-status"
+    values = ["opt-in-not-required"]
+  }
+}
 
 ################################################################################
 # Network
@@ -13,41 +20,148 @@ data "aws_vpc" "existing" {
 
 locals {
   multi_az = var.availability_zones > 1
+  azs      = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
+
+  private_subnet_cidrs  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 4, k)]      # /20 EKS nodes
+  intra_subnet_cidrs    = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 48)] # /24 PCS
+  public_subnet_cidrs   = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 52)] # /24 ALB + NAT
+  firewall_subnet_cidrs = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 56)] # /24 Firewall
+
   vpc_id   = var.existing_vpc_id != null ? var.existing_vpc_id : try(module.network[0].vpc_id, null)
   vpc_cidr = try(data.aws_vpc.existing[0].cidr_block, var.network_address_space)
 }
 
 module "network" {
-  source = "./modules/network"
-  count  = var.create_network && var.existing_vpc_id == null ? 1 : 0
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 6.0"
+  count   = var.existing_vpc_id == null && var.create_network ? 1 : 0
 
-  name                  = var.name
-  network_address_space = var.network_address_space
-  availability_zones    = var.availability_zones
+  name = var.name
+  cidr = var.network_address_space
 
-  # endpoints
-  interface_endpoints    = var.network_interface_endpoints
-  s3_private_dns_enabled = var.network_s3_private_dns_enabled
-  zone_id                = local.private_zone_id
-  fips_enabled           = var.fips_enabled
+  azs             = local.azs
+  private_subnets = local.private_subnet_cidrs
+  # When using network firewall, manage public subnets manually to control routing
+  public_subnets = var.network_firewall ? [] : local.public_subnet_cidrs
+  intra_subnets  = local.intra_subnet_cidrs
 
-  # flow logs
-  enable_vpc_flow_logs   = var.network_enable_vpc_flow_logs
-  vpc_flow_log_retention = var.network_vpc_flow_log_retention
+  enable_nat_gateway     = !var.network_firewall
+  one_nat_gateway_per_az = true
 
-  # network firewall
-  network_firewall                                           = var.network_firewall
-  network_firewall_delete_protection                         = var.network_firewall_delete_protection
-  network_firewall_subnet_change_protection                  = var.network_firewall_subnet_change_protection
-  network_firewall_create_logging_configuration              = var.network_firewall_create_logging_configuration
-  network_firewall_alert_log_retention                       = var.network_firewall_alert_log_retention
-  network_firewall_flow_log_retention                        = var.network_firewall_flow_log_retention
-  network_firewall_policy_stateless_default_actions          = var.network_firewall_policy_stateless_default_actions
-  network_firewall_policy_stateless_fragment_default_actions = var.network_firewall_policy_stateless_fragment_default_actions
-  network_firewall_policy_stateless_rule_group_reference     = var.network_firewall_policy_stateless_rule_group_reference
-  network_firewall_policy_stateful_rule_group_reference      = var.network_firewall_policy_stateful_rule_group_reference
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+  }
 
   tags = var.tags
+}
+
+module "flow_log" {
+  source = "terraform-aws-modules/vpc/aws//modules/flow-log"
+  count  = var.network_enable_vpc_flow_logs ? 1 : 0
+
+  name   = var.name
+  vpc_id = local.vpc_id
+
+  cloudwatch_log_group_use_name_prefix   = false
+  cloudwatch_log_group_retention_in_days = var.network_vpc_flow_log_retention
+
+  tags = var.tags
+}
+
+module "network_firewall" {
+  source = "./modules/network-firewall"
+  count  = var.network_firewall ? 1 : 0
+
+  name                    = var.name
+  azs                     = local.azs
+  vpc_id                  = local.vpc_id
+  firewall_subnet_cidrs   = local.firewall_subnet_cidrs
+  public_subnet_cidrs     = local.public_subnet_cidrs
+  private_route_table_ids = module.network[0].private_route_table_ids
+
+  delete_protection                         = var.network_firewall_delete_protection
+  subnet_change_protection                  = var.network_firewall_subnet_change_protection
+  create_logging_configuration              = var.network_firewall_create_logging_configuration
+  alert_log_retention                       = var.network_firewall_alert_log_retention
+  flow_log_retention                        = var.network_firewall_flow_log_retention
+  policy_stateless_default_actions          = var.network_firewall_policy_stateless_default_actions
+  policy_stateless_fragment_default_actions = var.network_firewall_policy_stateless_fragment_default_actions
+  policy_stateless_rule_group_reference     = var.network_firewall_policy_stateless_rule_group_reference
+  policy_stateful_rule_group_reference      = var.network_firewall_policy_stateful_rule_group_reference
+
+  tags = var.tags
+}
+
+module "endpoint_security_group" {
+  source  = "terraform-aws-modules/security-group/aws//modules/https-443"
+  version = "~> 5.0"
+  count   = length(var.network_endpoints) > 0 ? 1 : 0
+
+  name        = "${var.name}-endpoint"
+  description = "Security group for VPC interface endpoints"
+  vpc_id      = local.vpc_id
+
+  ingress_cidr_blocks = [local.vpc_cidr]
+}
+
+module "endpoints" {
+  source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
+  version = "~> 6.0"
+  count   = length(var.network_endpoints) > 0 ? 1 : 0
+
+  vpc_id                     = local.vpc_id
+  create_security_group      = true
+  security_group_name        = "${var.name}-endpoints"
+  security_group_description = "VPC endpoint default security group"
+  security_group_rules = {
+    ingress_https = {
+      description = "HTTPS from VPC"
+      cidr_blocks = [local.vpc_cidr]
+    }
+  }
+
+  endpoints = { for endpoint in var.network_endpoints :
+    coalesce(endpoint.service, endpoint.service_name) => merge(
+      {
+        service             = endpoint.service
+        service_name        = endpoint.service_name
+        service_type        = endpoint.service_type
+        subnet_ids          = local.kubernetes_node_subnets
+        route_table_ids     = try(module.network[0].private_route_table_ids, null)
+        private_dns_enabled = endpoint.private_dns_enabled
+      },
+      endpoint.service_type == "Interface" ? {
+        dns_options = {
+          private_dns_only_for_inbound_resolver_endpoint = false
+        }
+      } : {}
+    )
+  }
+
+  tags = var.tags
+}
+
+resource "aws_route53_zone" "endpoint" {
+  for_each = { for endpoint in var.network_endpoints : coalesce(endpoint.service, endpoint.service_name) => endpoint if endpoint.custom_private_dns_zone != null }
+
+  name = each.value.custom_private_dns_zone
+  vpc {
+    vpc_id = local.vpc_id
+  }
+  tags = var.tags
+}
+
+resource "aws_route53_record" "endpoint" {
+  for_each = { for endpoint in var.network_endpoints : coalesce(endpoint.service, endpoint.service_name) => endpoint if endpoint.custom_private_dns_name != null }
+
+  name    = each.value.custom_private_dns_name
+  zone_id = aws_route53_zone.endpoint[each.key].id
+  type    = "CNAME"
+  ttl     = 60
+  records = [module.endpoints[0].endpoints[each.key].dns_entry[0].dns_name]
 }
 
 
@@ -382,7 +496,7 @@ module "genai_identity" {
 ################################################################################
 
 locals {
-  postgres_subnets = var.existing_postgres_subnets != null ? var.existing_postgres_subnets : try(module.network[0].database_subnets, null)
+  postgres_subnets = var.existing_postgres_subnets != null ? var.existing_postgres_subnets : try(module.network[0].intra_subnets, null)
 }
 
 module "postgres" {
@@ -411,7 +525,7 @@ module "postgres" {
 ################################################################################
 
 locals {
-  redis_subnets = var.existing_redis_subnets != null ? var.existing_redis_subnets : try(module.network[0].database_subnets, null)
+  redis_subnets = var.existing_redis_subnets != null ? var.existing_redis_subnets : try(module.network[0].intra_subnets, null)
 }
 
 module "redis" {
@@ -442,7 +556,7 @@ provider "mongodbatlas" {
 }
 
 locals {
-  mongodb_subnets = var.existing_mongodb_subnets != null ? var.existing_mongodb_subnets : try(module.network[0].database_subnets, null)
+  mongodb_subnets = var.existing_mongodb_subnets != null ? var.existing_mongodb_subnets : try(module.network[0].private_subnets, null)
 }
 
 module "mongodb" {
@@ -476,7 +590,7 @@ module "mongodb" {
 ################################################################################
 
 locals {
-  rabbitmq_subnets = var.existing_rabbitmq_subnets != null ? var.existing_rabbitmq_subnets : try(module.network[0].database_subnets, null)
+  rabbitmq_subnets = var.existing_rabbitmq_subnets != null ? var.existing_rabbitmq_subnets : try(module.network[0].intra_subnets, null)
 }
 
 module "rabbitmq" {
@@ -706,27 +820,4 @@ module "kyverno" {
   signer_profile_arn            = var.kyverno_signer_profile_arn
 
   depends_on = [module.aws_load_balancer_controller]
-}
-
-
-################################################################################
-# Custom Private Endpoints
-################################################################################
-
-module "custom_private_endpoints" {
-  source = "./modules/custom-private-endpoints"
-
-  for_each = {
-    for ep in var.custom_private_endpoints : ep.service_name => ep
-  }
-
-  name = var.name
-
-  vpc_id   = local.vpc_id
-  vpc_cidr = local.vpc_cidr
-  subnets  = local.kubernetes_node_subnets
-
-  endpoint_config = each.value
-
-  tags = var.tags
 }
