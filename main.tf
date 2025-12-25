@@ -1,6 +1,5 @@
 data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
-
 data "aws_availability_zones" "available" {
   state = "available"
   filter {
@@ -8,6 +7,7 @@ data "aws_availability_zones" "available" {
     values = ["opt-in-not-required"]
   }
 }
+
 
 ################################################################################
 # Network
@@ -19,8 +19,8 @@ data "aws_vpc" "existing" {
 }
 
 locals {
-  multi_az = var.availability_zones > 1
   azs      = slice(data.aws_availability_zones.available.names, 0, var.availability_zones)
+  multi_az = var.availability_zones > 1
 
   private_subnet_cidrs  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 4, k)]      # /20 EKS nodes
   intra_subnet_cidrs    = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 48)] # /24 PCS
@@ -34,7 +34,7 @@ locals {
 module "network" {
   source  = "terraform-aws-modules/vpc/aws"
   version = "~> 6.0"
-  count   = var.existing_vpc_id == null && var.create_network ? 1 : 0
+  count   = var.create_network && var.existing_vpc_id == null ? 1 : 0
 
   name = var.name
   cidr = var.network_address_space
