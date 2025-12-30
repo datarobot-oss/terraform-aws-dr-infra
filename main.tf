@@ -23,8 +23,8 @@ locals {
   multi_az = var.availability_zones > 1
 
   private_subnet_cidrs  = [for k, v in local.azs : cidrsubnet(var.network_address_space, 4, k)]      # /20 EKS nodes
-  intra_subnet_cidrs    = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 48)] # /24 PCS
-  public_subnet_cidrs   = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 52)] # /24 ALB + NAT
+  public_subnet_cidrs   = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 48)] # /24 ALB + NAT
+  intra_subnet_cidrs    = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 52)] # /24 PCS
   firewall_subnet_cidrs = [for k, v in local.azs : cidrsubnet(var.network_address_space, 8, k + 56)] # /24 Firewall
 
   vpc_id   = var.existing_vpc_id != null ? var.existing_vpc_id : try(module.network[0].vpc_id, null)
