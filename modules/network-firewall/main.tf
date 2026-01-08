@@ -129,14 +129,14 @@ module "network_firewall" {
       log_type             = "ALERT"
       log_destination_type = "CloudWatchLogs"
       log_destination = {
-        logGroup = aws_cloudwatch_log_group.network_firewall_alert[0].name
+        logGroup = try(aws_cloudwatch_log_group.network_firewall_alert[0].name, null)
       }
     },
     {
       log_type             = "FLOW"
       log_destination_type = "CloudWatchLogs"
       log_destination = {
-        logGroup = aws_cloudwatch_log_group.network_firewall_flow[0].name
+        logGroup = try(aws_cloudwatch_log_group.network_firewall_flow[0].name, null)
       }
     }
   ]

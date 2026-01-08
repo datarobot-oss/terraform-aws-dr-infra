@@ -95,18 +95,6 @@ module "network_firewall" {
   tags = var.tags
 }
 
-module "endpoint_security_group" {
-  source  = "terraform-aws-modules/security-group/aws//modules/https-443"
-  version = "~> 5.0"
-  count   = length(var.network_endpoints) > 0 ? 1 : 0
-
-  name        = "${var.name}-endpoint"
-  description = "Security group for VPC interface endpoints"
-  vpc_id      = local.vpc_id
-
-  ingress_cidr_blocks = [local.vpc_cidr]
-}
-
 module "endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
   version = "~> 6.0"
@@ -133,7 +121,7 @@ module "endpoints" {
         route_table_ids     = try(module.network[0].private_route_table_ids, null)
         private_dns_enabled = endpoint.private_dns_enabled
       },
-      endpoint.service_type == "Interface" ? {
+      endpoint.service_type == "Interface" && endpoint.private_dns_enabled ? {
         dns_options = {
           private_dns_only_for_inbound_resolver_endpoint = false
         }
@@ -144,6 +132,7 @@ module "endpoints" {
   tags = var.tags
 }
 
+# custom_private_dns_zone for VPC endpoints
 resource "aws_route53_zone" "endpoint" {
   for_each = { for endpoint in var.network_endpoints : coalesce(endpoint.service, endpoint.service_name) => endpoint if endpoint.custom_private_dns_zone != null }
 
@@ -154,14 +143,25 @@ resource "aws_route53_zone" "endpoint" {
   tags = var.tags
 }
 
+# custom_private_dns_name for VPC endpoints
 resource "aws_route53_record" "endpoint" {
-  for_each = { for endpoint in var.network_endpoints : coalesce(endpoint.service, endpoint.service_name) => endpoint if endpoint.custom_private_dns_name != null }
+  for_each = { for endpoint in var.network_endpoints : coalesce(endpoint.service, endpoint.service_name) => endpoint if endpoint.custom_private_dns_zone != null }
 
   name    = each.value.custom_private_dns_name
   zone_id = aws_route53_zone.endpoint[each.key].id
-  type    = "CNAME"
-  ttl     = 60
-  records = [module.endpoints[0].endpoints[each.key].dns_entry[0].dns_name]
+  type    = each.value.custom_private_dns_type
+
+  ttl     = each.value.custom_private_dns_alias ? null : each.value.custom_private_dns_ttl
+  records = each.value.custom_private_dns_alias ? null : [module.endpoints[0].endpoints[each.key].dns_entry[0].dns_name]
+
+  dynamic "alias" {
+    for_each = each.value.custom_private_dns_alias ? [1] : []
+    content {
+      name                   = module.endpoints[0].endpoints[each.key].dns_entry[0].dns_name
+      zone_id                = module.endpoints[0].endpoints[each.key].dns_entry[0].hosted_zone_id
+      evaluate_target_health = false
+    }
+  }
 }
 
 

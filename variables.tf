@@ -49,40 +49,50 @@ variable "network_address_space" {
 variable "network_endpoints" {
   description = "A map of interface and/or gateway endpoints containing their properties and configurations. See https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/modules/vpc-endpoints/variables.tf#L19 for available options. If `private_dns_enabled` is `false`, `custom_private_dns_name` and `custom_private_dns_zone` can be used to create a private DNS record for the endpoint."
   type = list(object({
-    service                 = optional(string)
-    service_name            = optional(string)
-    service_type            = optional(string, "Interface")
-    private_dns_enabled     = optional(bool, true)
-    custom_private_dns_name = optional(string)
-    custom_private_dns_zone = optional(string)
+    service                  = optional(string)
+    service_name             = optional(string)
+    service_type             = optional(string, "Interface")
+    private_dns_enabled      = optional(bool, true)
+    custom_private_dns_zone  = optional(string)
+    custom_private_dns_name  = optional(string)
+    custom_private_dns_type  = optional(string, "CNAME")
+    custom_private_dns_ttl   = optional(number, 60)
+    custom_private_dns_alias = optional(bool, false)
   }))
   default = [
     {
-      service = "s3"
+      service      = "s3" # S3 / ECR container layers
+      service_type = "Gateway"
     },
     {
-      service = "ec2"
+      service = "ec2" # Managed node groups
     },
     {
-      service = "ecr.api"
+      service = "ecr.api" # ECR
     },
     {
-      service = "ecr.dkr"
+      service = "ecr.dkr" # ECR
     },
     {
-      service = "elasticloadbalancing"
+      service = "logs" # CloudWatch
     },
     {
-      service = "logs"
+      service = "sts" # IRSA
     },
     {
-      service = "sts"
+      service = "elasticloadbalancing" # AWS Load Balancer Controller
     },
     {
-      service = "eks-auth"
+      service = "autoscaling" # Cluster Autoscaler
     },
     {
-      service = "eks"
+      service = "secretsmanager" # External Secrets Operator
+    },
+    {
+      service = "route53resolver" # External DNS
+    },
+    {
+      service = "bedrock-runtime" # Bedrock LLMs
     }
   ]
 }
