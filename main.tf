@@ -821,3 +821,20 @@ module "kyverno" {
 
   depends_on = [module.aws_load_balancer_controller]
 }
+
+################################################################################
+# Observability
+################################################################################
+
+module "observability" {
+  source = "./modules/observability"
+  count  = var.create_observability ? 1 : 0
+
+  name = var.name
+
+  kubernetes_iam_role_name = module.kubernetes[0].cluster_iam_role_name
+
+  tags = var.tags
+
+  depends_on = [module.kubernetes]
+}
