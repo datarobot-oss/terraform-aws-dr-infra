@@ -1069,3 +1069,13 @@ variable "application_dns_name" {
   type        = string
   default     = null
 }
+
+################################################################################
+# Observability
+################################################################################
+
+variable "create_observability" {
+  description = "Whether to provision observability resources with Cloudwatch, Prometheus and Grafana"
+  type        = bool
+  default     = false
+}
