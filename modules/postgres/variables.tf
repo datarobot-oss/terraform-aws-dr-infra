@@ -18,9 +18,40 @@ variable "subnets" {
   type        = list(string)
 }
 
+variable "subnet_group_name" {
+  description = "Name of DB subnet group"
+  type        = string
+  default     = null
+}
+
+variable "subnet_group_use_name_prefix" {
+  description = "Determines whether to use subnet_group_name as is or create a unique name beginning with the subnet_group_name as the prefix"
+  type        = bool
+  default     = true
+}
+
 variable "multi_az" {
   description = "Create Postgres cluster in multi AZ mode"
   type        = bool
+}
+
+variable "password_constraints" {
+  description = "Constraints to put on any generated passwords"
+  type = object({
+    length           = number
+    min_lower        = optional(number)
+    min_numeric      = optional(number)
+    min_upper        = optional(number)
+    special          = optional(bool)
+    override_special = optional(string)
+  })
+  default = {
+    length           = 32
+    min_lower        = 1
+    min_numeric      = 1
+    min_upper        = 1
+    override_special = "!#$%&*()-_=+[]{}<>" # Excludes URI-breaking characters like @, :, /, ?, and #
+  }
 }
 
 variable "postgres_engine_version" {

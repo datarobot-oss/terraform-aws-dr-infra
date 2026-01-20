@@ -1,9 +1,9 @@
 resource "random_password" "postgres" {
-  length      = 32
-  special     = false
-  min_lower   = 1
-  min_upper   = 1
-  min_numeric = 1
+  length      = var.password_constraints.length
+  special     = var.password_constraints.special
+  min_lower   = var.password_constraints.min_lower
+  min_upper   = var.password_constraints.min_upper
+  min_numeric = var.password_constraints.min_numeric
 }
 
 module "security_group" {
@@ -25,10 +25,12 @@ module "postgres" {
 
   identifier = var.name
 
-  multi_az               = var.multi_az
-  subnet_ids             = var.subnets
-  create_db_subnet_group = true
-  vpc_security_group_ids = [module.security_group.security_group_id]
+  multi_az                        = var.multi_az
+  subnet_ids                      = var.subnets
+  create_db_subnet_group          = true
+  db_subnet_group_name            = var.subnet_group_name
+  db_subnet_group_use_name_prefix = var.subnet_group_use_name_prefix
+  vpc_security_group_ids          = [module.security_group.security_group_id]
 
   engine               = "postgres"
   engine_version       = var.postgres_engine_version

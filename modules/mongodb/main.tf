@@ -20,7 +20,7 @@ resource "mongodbatlas_project_ip_access_list" "this" {
 resource "mongodbatlas_privatelink_endpoint" "this" {
   project_id    = mongodbatlas_project.this.id
   provider_name = "AWS"
-  region        = local.region
+  region        = data.aws_region.this.region
 }
 
 resource "mongodbatlas_privatelink_endpoint_service" "this" {

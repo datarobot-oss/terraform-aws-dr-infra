@@ -1,9 +1,9 @@
 resource "random_password" "redis" {
-  length      = 32
-  special     = false
-  min_lower   = 1
-  min_upper   = 1
-  min_numeric = 1
+  length      = var.password_constraints.length
+  special     = var.password_constraints.special
+  min_lower   = var.password_constraints.min_lower
+  min_upper   = var.password_constraints.min_upper
+  min_numeric = var.password_constraints.min_numeric
 }
 
 module "redis" {
@@ -21,8 +21,9 @@ module "redis" {
   snapshot_retention_limit = var.redis_snapshot_retention
   apply_immediately        = true
 
-  vpc_id     = var.vpc_id
-  subnet_ids = var.subnets
+  vpc_id            = var.vpc_id
+  subnet_ids        = var.subnets
+  subnet_group_name = var.subnet_group_name
 
   security_group_rules = {
     ingress_vpc = {

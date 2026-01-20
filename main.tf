@@ -496,6 +496,7 @@ module "genai_identity" {
 ################################################################################
 
 locals {
+  postgres_name    = coalesce(var.postgres_name, "${var.name}-postgres")
   postgres_subnets = var.existing_postgres_subnets != null ? var.existing_postgres_subnets : try(module.network[0].intra_subnets, null)
 }
 
@@ -503,11 +504,14 @@ module "postgres" {
   source = "./modules/postgres"
   count  = var.create_postgres ? 1 : 0
 
-  name                = var.name
-  vpc_id              = local.vpc_id
-  subnets             = local.postgres_subnets
-  multi_az            = local.multi_az
-  ingress_cidr_blocks = concat([local.vpc_cidr], var.postgres_additional_ingress_cidr_blocks)
+  name                         = local.postgres_name
+  vpc_id                       = local.vpc_id
+  subnets                      = local.postgres_subnets
+  subnet_group_name            = var.postgres_subnet_group_name
+  subnet_group_use_name_prefix = var.postgres_subnet_group_use_name_prefix
+  multi_az                     = local.multi_az
+  ingress_cidr_blocks          = concat([local.vpc_cidr], var.postgres_additional_ingress_cidr_blocks)
+  password_constraints         = var.password_constraints
 
   postgres_engine_version          = var.postgres_engine_version
   postgres_instance_class          = var.postgres_instance_class
@@ -525,6 +529,7 @@ module "postgres" {
 ################################################################################
 
 locals {
+  redis_name    = coalesce(var.redis_name, "${var.name}-redis")
   redis_subnets = var.existing_redis_subnets != null ? var.existing_redis_subnets : try(module.network[0].intra_subnets, null)
 }
 
@@ -532,11 +537,13 @@ module "redis" {
   source = "./modules/redis"
   count  = var.create_redis ? 1 : 0
 
-  name     = var.name
-  vpc_id   = local.vpc_id
-  vpc_cidr = local.vpc_cidr
-  subnets  = local.redis_subnets
-  multi_az = local.multi_az
+  name                 = local.redis_name
+  vpc_id               = local.vpc_id
+  vpc_cidr             = local.vpc_cidr
+  subnets              = local.redis_subnets
+  subnet_group_name    = var.redis_subnet_group_name
+  multi_az             = local.multi_az
+  password_constraints = var.password_constraints
 
   redis_engine_version     = var.redis_engine_version
   redis_node_type          = var.redis_node_type
@@ -556,6 +563,7 @@ provider "mongodbatlas" {
 }
 
 locals {
+  mongodb_name    = coalesce(var.mongodb_name, "${var.name}-sts")
   mongodb_subnets = var.existing_mongodb_subnets != null ? var.existing_mongodb_subnets : try(module.network[0].private_subnets, null)
 }
 
@@ -563,10 +571,11 @@ module "mongodb" {
   source = "./modules/mongodb"
   count  = var.create_mongodb ? 1 : 0
 
-  name     = var.name
-  vpc_id   = local.vpc_id
-  vpc_cidr = local.vpc_cidr
-  subnets  = local.mongodb_subnets
+  name                 = local.mongodb_name
+  vpc_id               = local.vpc_id
+  vpc_cidr             = local.vpc_cidr
+  subnets              = local.mongodb_subnets
+  password_constraints = var.password_constraints
 
   mongodb_version                    = var.mongodb_version
   atlas_org_id                       = var.mongodb_atlas_org_id

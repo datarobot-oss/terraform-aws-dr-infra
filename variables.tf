@@ -15,6 +15,25 @@ variable "availability_zones" {
   default     = 2
 }
 
+variable "password_constraints" {
+  description = "Constraints to put on any generated passwords"
+  type = object({
+    length           = number
+    min_lower        = optional(number)
+    min_numeric      = optional(number)
+    min_upper        = optional(number)
+    special          = optional(bool)
+    override_special = optional(string)
+  })
+  default = {
+    length           = 32
+    min_lower        = 1
+    min_numeric      = 1
+    min_upper        = 1
+    override_special = "!#$%&*()-_=+[]{}<>" # Excludes URI-breaking characters like @, :, /, ?, and #
+  }
+}
+
 variable "tags" {
   description = "A map of tags to add to all created resources"
   type        = map(string)
@@ -524,6 +543,24 @@ variable "existing_postgres_subnets" {
   default     = null
 }
 
+variable "postgres_name" {
+  description = "Name of the RDS postgres instance. If not specified, the `name` variable will be used."
+  type        = string
+  default     = null
+}
+
+variable "postgres_subnet_group_name" {
+  description = "Name of RDS postgres instance DB subnet group."
+  type        = string
+  default     = null
+}
+
+variable "postgres_subnet_group_use_name_prefix" {
+  description = "Determines whether to use subnet_group_name as is or create a unique name beginning with the subnet_group_name as the prefix"
+  type        = bool
+  default     = true
+}
+
 variable "postgres_additional_ingress_cidr_blocks" {
   description = "Additional CIDR blocks allowed to reach the PostgreSQL port"
   type        = list(string)
@@ -533,7 +570,7 @@ variable "postgres_additional_ingress_cidr_blocks" {
 variable "postgres_engine_version" {
   description = "The engine version to use"
   type        = string
-  default     = "13"
+  default     = "14.20"
 }
 
 variable "postgres_instance_class" {
@@ -583,10 +620,22 @@ variable "existing_redis_subnets" {
   default     = null
 }
 
+variable "redis_name" {
+  description = "Name of the Elasticache Redis instance. If not specified, the `name` variable will be used."
+  type        = string
+  default     = null
+}
+
+variable "redis_subnet_group_name" {
+  description = "The name of the Elasticache Redis subnet group."
+  type        = string
+  default     = null
+}
+
 variable "redis_engine_version" {
   description = "The Elasticache engine version to use"
   type        = string
-  default     = "7.1"
+  default     = "7.0"
 }
 
 variable "redis_node_type" {
@@ -615,6 +664,12 @@ variable "create_mongodb" {
 variable "existing_mongodb_subnets" {
   description = "List of existing subnet IDs to be used for the MongoDB Atlas instance. Required when an existing_network_id is specified."
   type        = list(string)
+  default     = null
+}
+
+variable "mongodb_name" {
+  description = "Name of the MongoDB Atlas instance. If not specified, the `name` variable will be used."
+  type        = string
   default     = null
 }
 

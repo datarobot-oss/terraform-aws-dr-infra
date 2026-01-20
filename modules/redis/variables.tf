@@ -18,9 +18,34 @@ variable "subnets" {
   type        = list(string)
 }
 
+variable "subnet_group_name" {
+  description = "The name of the Elasticache Redis subnet group"
+  type        = string
+  default     = null
+}
+
 variable "multi_az" {
   description = "Create redis cluster in multi AZ mode"
   type        = bool
+}
+
+variable "password_constraints" {
+  description = "Constraints to put on any generated passwords"
+  type = object({
+    length           = number
+    min_lower        = optional(number)
+    min_numeric      = optional(number)
+    min_upper        = optional(number)
+    special          = optional(bool)
+    override_special = optional(string)
+  })
+  default = {
+    length           = 32
+    min_lower        = 1
+    min_numeric      = 1
+    min_upper        = 1
+    override_special = "!#$%&*()-_=+[]{}<>" # Excludes URI-breaking characters like @, :, /, ?, and #
+  }
 }
 
 variable "redis_engine_version" {
