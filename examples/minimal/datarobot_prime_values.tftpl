@@ -15,6 +15,7 @@ global:
   filestore:
     type: s3
     environment:
+      S3_HOST: s3.${region}.amazonaws.com
       S3_BUCKET: ${s3_bucket}
       S3_REGION: ${region}
 
