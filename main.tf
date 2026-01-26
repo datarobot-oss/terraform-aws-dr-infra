@@ -730,7 +730,7 @@ module "ingress_nginx" {
 
   internet_facing_ingress_lb = var.internet_facing_ingress_lb
   eks_cluster_name           = local.eks_cluster_name
-  acm_certificate_arn        = local.acm_certificate_arn
+  acm_certificate_arn        = var.ingress_nginx_use_acm_cert ? local.acm_certificate_arn : null
 
   chart_version    = var.ingress_nginx_version
   values_overrides = var.ingress_nginx_values_overrides

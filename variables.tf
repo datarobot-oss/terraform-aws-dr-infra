@@ -911,6 +911,12 @@ variable "ingress_nginx_version" {
   default     = null
 }
 
+variable "ingress_nginx_use_acm_cert" {
+  description = "Use ACM certificate on the ingress NLB to terminate TLS. Only applicable when `create_acm_certificate` or `existing_acm_certificate_arn` is set."
+  type        = bool
+  default     = true
+}
+
 variable "internet_facing_ingress_lb" {
   description = "Determines the type of NLB created for EKS ingress. If true, an internet-facing NLB will be created. If false, an internal NLB will be created. Ignored when ingress_nginx is false."
   type        = bool

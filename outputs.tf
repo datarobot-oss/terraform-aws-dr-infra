@@ -222,10 +222,20 @@ output "rabbitmq_password" {
 
 
 ################################################################################
-# ingress-nginx
+# Private Link Service
 ################################################################################
 
 output "ingress_vpce_service_id" {
   description = "Ingress VPCE service ID"
   value       = try(module.private_link_service[0].vpce_service_id, null)
+}
+
+
+################################################################################
+# ingress-nginx
+################################################################################
+
+output "ingress_lb_dns_name" {
+  description = "The DNS name of the ingress load balancer created by ingress-nginx"
+  value       = try(module.ingress_nginx[0].load_balancer_dns_name, null)
 }
