@@ -71,5 +71,5 @@ resource "aws_route53_record" "this" {
   name    = var.name
   type    = "CNAME"
   ttl     = "300"
-  records = [module.postgres.db_instance_domain_fqdn]
+  records = [module.postgres.db_instance_address]
 }
