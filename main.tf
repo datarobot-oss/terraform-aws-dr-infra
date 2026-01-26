@@ -520,6 +520,8 @@ module "postgres" {
   postgres_backup_retention_period = var.postgres_backup_retention_period
   postgres_deletion_protection     = var.postgres_deletion_protection
 
+  route_53_zone_id = local.private_zone_id
+
   tags = var.tags
 }
 
