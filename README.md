@@ -1205,6 +1205,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="output_mongodb_password"></a> [mongodb\_password](#output\_mongodb\_password) | MongoDB admin password |
 | <a name="output_postgres_endpoint"></a> [postgres\_endpoint](#output\_postgres\_endpoint) | RDS postgres endpoint |
 | <a name="output_postgres_password"></a> [postgres\_password](#output\_postgres\_password) | RDS postgres master password |
+| <a name="output_postgres_route53_endpoint"></a> [postgres\_route53\_endpoint](#output\_postgres\_route53\_endpoint) | Route53 endpoint for the RDS instance |
 | <a name="output_private_route53_zone_arn"></a> [private\_route53\_zone\_arn](#output\_private\_route53\_zone\_arn) | Zone ARN of the private Route53 zone |
 | <a name="output_private_route53_zone_id"></a> [private\_route53\_zone\_id](#output\_private\_route53\_zone\_id) | Zone ID of the private Route53 zone |
 | <a name="output_public_route53_zone_arn"></a> [public\_route53\_zone\_arn](#output\_public\_route53\_zone\_arn) | Zone ARN of the public Route53 zone |

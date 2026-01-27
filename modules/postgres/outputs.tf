@@ -8,3 +8,8 @@ output "password" {
   value       = random_password.postgres.result
   sensitive   = true
 }
+
+output "route53_endpoint" {
+  description = "Route53 endpoint for the RDS instance"
+  value       = aws_route53_record.this.fqdn
+}

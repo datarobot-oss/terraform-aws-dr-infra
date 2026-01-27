@@ -167,6 +167,11 @@ output "postgres_endpoint" {
   value       = try(module.postgres[0].endpoint, null)
 }
 
+output "postgres_route53_endpoint" {
+  description = "Route53 endpoint for the RDS instance"
+  value       = try(module.postgres[0].route53_endpoint, null)
+}
+
 output "postgres_password" {
   description = "RDS postgres master password"
   value       = try(module.postgres[0].password, null)

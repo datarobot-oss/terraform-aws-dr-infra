@@ -94,3 +94,8 @@ variable "tags" {
   description = "A map of tags to add to all created resources"
   type        = map(string)
 }
+
+variable "route_53_zone_id" {
+  description = "Route 53 hosted zone ID for RDS DNS records"
+  type        = string
+}

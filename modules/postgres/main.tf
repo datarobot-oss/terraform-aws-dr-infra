@@ -65,3 +65,11 @@ module "postgres" {
 
   tags = var.tags
 }
+
+resource "aws_route53_record" "this" {
+  zone_id = var.route_53_zone_id
+  name    = var.name
+  type    = "CNAME"
+  ttl     = "300"
+  records = [module.postgres.db_instance_address]
+}
