@@ -164,12 +164,7 @@ output "genai_role_arn" {
 
 output "postgres_endpoint" {
   description = "RDS postgres endpoint"
-  value       = try(module.postgres[0].endpoint, null)
-}
-
-output "postgres_route53_endpoint" {
-  description = "Route53 endpoint for the RDS instance"
-  value       = try(module.postgres[0].route53_endpoint, null)
+  value       = try(module.postgres[0].route53_endpoint, module.postgres[0].endpoint, null)
 }
 
 output "postgres_password" {
@@ -184,12 +179,12 @@ output "postgres_password" {
 ################################################################################
 
 output "redis_endpoint" {
-  description = "Elasticache redis endpoint"
-  value       = try(module.redis[0].endpoint, null)
+  description = "ElastiCache redis endpoint"
+  value       = try(module.redis[0].route53_endpoint, module.redis[0].endpoint, null)
 }
 
 output "redis_password" {
-  description = "Elasticache redis auth token"
+  description = "ElastiCache redis auth token"
   value       = try(module.redis[0].password, null)
   sensitive   = true
 }
@@ -201,7 +196,7 @@ output "redis_password" {
 
 output "mongodb_endpoint" {
   description = "MongoDB endpoint"
-  value       = try(module.mongodb[0].endpoint, null)
+  value       = try(module.mongodb[0].route53_endpoint, module.mongodb[0].endpoint, null)
 }
 
 output "mongodb_password" {

@@ -514,13 +514,15 @@ module "postgres" {
   password_constraints         = var.password_constraints
 
   postgres_engine_version          = var.postgres_engine_version
+  postgres_family                  = var.postgres_family
   postgres_instance_class          = var.postgres_instance_class
   postgres_allocated_storage       = var.postgres_allocated_storage
   postgres_max_allocated_storage   = var.postgres_max_allocated_storage
   postgres_backup_retention_period = var.postgres_backup_retention_period
   postgres_deletion_protection     = var.postgres_deletion_protection
 
-  route_53_zone_id = local.private_zone_id
+  create_route53_cname_record = var.create_dns_zones
+  route_53_zone_id            = local.private_zone_id
 
   tags = var.tags
 }
@@ -550,6 +552,9 @@ module "redis" {
   redis_engine_version     = var.redis_engine_version
   redis_node_type          = var.redis_node_type
   redis_snapshot_retention = var.redis_snapshot_retention
+
+  create_route53_cname_record = var.create_dns_zones
+  route_53_zone_id            = local.private_zone_id
 
   tags = var.tags
 }
@@ -591,6 +596,9 @@ module "mongodb" {
   enable_slack_alerts                = var.mongodb_enable_slack_alerts
   slack_api_token                    = var.mongodb_slack_api_token
   slack_notification_channel         = var.mongodb_slack_notification_channel
+
+  create_route53_cname_record = var.create_dns_zones
+  route_53_zone_id            = local.private_zone_id
 
   tags = var.tags
 }

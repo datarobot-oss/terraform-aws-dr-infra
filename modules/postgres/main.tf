@@ -34,7 +34,7 @@ module "postgres" {
 
   engine               = "postgres"
   engine_version       = var.postgres_engine_version
-  family               = "postgres13"
+  family               = var.postgres_family
   major_engine_version = var.postgres_engine_version
   apply_immediately    = true
 
@@ -67,8 +67,10 @@ module "postgres" {
 }
 
 resource "aws_route53_record" "this" {
+  count = var.create_route53_cname_record ? 1 : 0
+
   zone_id = var.route_53_zone_id
-  name    = var.name
+  name    = "postgres"
   type    = "CNAME"
   ttl     = "300"
   records = [module.postgres.db_instance_address]

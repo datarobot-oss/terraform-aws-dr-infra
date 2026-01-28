@@ -85,7 +85,7 @@ variable "mongodb_admin_arns" {
 
 variable "enable_slack_alerts" {
   description = "Enable alert notifications to a Slack channel. When `true`, `slack_api_token` and `slack_notification_channel` must be set."
-  type        = string
+  type        = bool
   default     = false
 }
 
@@ -97,6 +97,18 @@ variable "slack_api_token" {
 
 variable "slack_notification_channel" {
   description = "Slack channel to send alert notifications to. Required when `enable_slack_alerts` is `true`."
+  type        = string
+  default     = null
+}
+
+variable "create_route53_cname_record" {
+  description = "Whether to create a Route 53 CNAME record for the MongoDB instance"
+  type        = bool
+  default     = true
+}
+
+variable "route_53_zone_id" {
+  description = "Route 53 hosted zone ID for MongoDB DNS records"
   type        = string
   default     = null
 }

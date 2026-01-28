@@ -573,6 +573,12 @@ variable "postgres_engine_version" {
   default     = "14.20"
 }
 
+variable "postgres_family" {
+  description = "Postgres family variable to support major version upgrades"
+  type        = string
+  default     = "postgres14"
+}
+
 variable "postgres_instance_class" {
   description = "The instance type of the RDS instance"
   type        = string

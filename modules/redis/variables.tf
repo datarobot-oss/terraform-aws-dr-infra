@@ -55,7 +55,7 @@ variable "redis_engine_version" {
 }
 
 variable "redis_node_type" {
-  description = "The instance type of the RDS instance"
+  description = "The instance type of the Redis instance"
   type        = string
   default     = "cache.t4g.medium"
 }
@@ -64,6 +64,18 @@ variable "redis_snapshot_retention" {
   description = "Number of days for which ElastiCache will retain automatic cache cluster snapshots before deleting them"
   type        = number
   default     = 7
+}
+
+variable "create_route53_cname_record" {
+  description = "Whether to create a Route 53 CNAME record for the RDS instance"
+  type        = bool
+  default     = true
+}
+
+variable "route_53_zone_id" {
+  description = "Route 53 hosted zone ID for Redis DNS records"
+  type        = string
+  default     = null
 }
 
 variable "tags" {
