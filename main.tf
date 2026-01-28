@@ -689,7 +689,7 @@ module "aws_load_balancer_controller" {
   tags = var.tags
 
   # race condition with coredns
-  depends_on = [module.kubernetes]
+  depends_on = [module.kubernetes[0].cluster_addons]
 }
 
 module "cluster_autoscaler" {
