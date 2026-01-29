@@ -23,6 +23,25 @@ variable "multi_az" {
   type        = bool
 }
 
+variable "password_constraints" {
+  description = "Constraints to put on any generated passwords"
+  type = object({
+    length           = number
+    min_lower        = optional(number)
+    min_numeric      = optional(number)
+    min_upper        = optional(number)
+    special          = optional(bool)
+    override_special = optional(string)
+  })
+  default = {
+    length           = 32
+    min_lower        = 1
+    min_numeric      = 1
+    min_upper        = 1
+    override_special = "!%&*()_+-=~"
+  }
+}
+
 variable "engine_version" {
   type        = string
   description = "Version of the broker engine. See the [AmazonMQ Broker Engine docs](https://docs.aws.amazon.com/amazon-mq/latest/developer-guide/broker-engine.html) for supported versions."

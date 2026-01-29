@@ -33,7 +33,7 @@ variable "password_constraints" {
     min_lower        = 1
     min_numeric      = 1
     min_upper        = 1
-    override_special = "!#$%&*()-_=+[]{}<>" # Excludes URI-breaking characters like @, :, /, ?, and #
+    override_special = "!%&*()_+-=~"
   }
 }
 

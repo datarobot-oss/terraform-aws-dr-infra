@@ -1,9 +1,10 @@
 resource "random_password" "admin" {
-  length      = var.password_constraints.length
-  special     = var.password_constraints.special
-  min_lower   = var.password_constraints.min_lower
-  min_upper   = var.password_constraints.min_upper
-  min_numeric = var.password_constraints.min_numeric
+  length           = var.password_constraints.length
+  min_lower        = var.password_constraints.min_lower
+  min_upper        = var.password_constraints.min_upper
+  min_numeric      = var.password_constraints.min_numeric
+  special          = var.password_constraints.special
+  override_special = var.password_constraints.override_special
 }
 
 resource "mongodbatlas_database_user" "admin" {
