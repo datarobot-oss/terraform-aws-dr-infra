@@ -135,20 +135,3 @@ resource "aws_security_group" "this" {
 
   tags = var.tags
 }
-
-locals {
-  connection_strings = [
-    for pe in mongodbatlas_advanced_cluster.this.connection_strings.private_endpoint : pe.srv_connection_string
-    if contains([for e in pe.endpoints : e.endpoint_id], aws_vpc_endpoint.this.id)
-  ]
-}
-
-resource "aws_route53_record" "this" {
-  count = var.create_route53_cname_record ? 1 : 0
-
-  zone_id = var.route_53_zone_id
-  name    = "mongodb"
-  type    = "CNAME"
-  ttl     = "300"
-  records = [split("://", local.connection_strings[0])[1]]
-}

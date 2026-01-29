@@ -196,7 +196,7 @@ output "redis_password" {
 
 output "mongodb_endpoint" {
   description = "MongoDB endpoint"
-  value       = try(module.mongodb[0].route53_endpoint, module.mongodb[0].endpoint, null)
+  value       = try(module.mongodb[0].endpoint, null)
 }
 
 output "mongodb_password" {

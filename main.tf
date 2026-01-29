@@ -597,9 +597,6 @@ module "mongodb" {
   slack_api_token                    = var.mongodb_slack_api_token
   slack_notification_channel         = var.mongodb_slack_notification_channel
 
-  create_route53_cname_record = var.create_dns_zones
-  route_53_zone_id            = local.private_zone_id
-
   tags = var.tags
 }
 
