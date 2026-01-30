@@ -553,9 +553,6 @@ module "redis" {
   redis_node_type          = var.redis_node_type
   redis_snapshot_retention = var.redis_snapshot_retention
 
-  create_route53_cname_record = var.create_dns_zones
-  route_53_zone_id            = local.private_zone_id
-
   tags = var.tags
 }
 

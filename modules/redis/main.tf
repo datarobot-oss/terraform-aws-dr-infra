@@ -47,13 +47,3 @@ module "redis" {
 
   tags = var.tags
 }
-
-resource "aws_route53_record" "this" {
-  count = var.create_route53_cname_record ? 1 : 0
-
-  zone_id = var.route_53_zone_id
-  name    = "redis"
-  type    = "CNAME"
-  ttl     = "300"
-  records = [module.redis.replication_group_primary_endpoint_address]
-}

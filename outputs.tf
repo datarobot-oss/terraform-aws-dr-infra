@@ -180,7 +180,7 @@ output "postgres_password" {
 
 output "redis_endpoint" {
   description = "ElastiCache redis endpoint"
-  value       = try(module.redis[0].route53_endpoint, module.redis[0].endpoint, null)
+  value       = try(module.redis[0].endpoint, null)
 }
 
 output "redis_password" {

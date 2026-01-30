@@ -66,18 +66,6 @@ variable "redis_snapshot_retention" {
   default     = 7
 }
 
-variable "create_route53_cname_record" {
-  description = "Whether to create a Route 53 CNAME record for the RDS instance"
-  type        = bool
-  default     = true
-}
-
-variable "route_53_zone_id" {
-  description = "Route 53 hosted zone ID for Redis DNS records"
-  type        = string
-  default     = null
-}
-
 variable "tags" {
   description = "A map of tags to add to all created resources"
   type        = map(string)
