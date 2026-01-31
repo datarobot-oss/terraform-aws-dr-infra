@@ -428,7 +428,7 @@ variable "kubernetes_cluster_addons" {
     vpc-cni = {
       before_compute              = true
       resolve_conflicts_on_create = "OVERWRITE"
-      configuration_values        = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+      configuration_values        = "{\"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
     }
   }
 }
@@ -469,7 +469,13 @@ variable "kubernetes_node_groups" {
       labels = {
         "datarobot.com/node-capability" = "cpu"
       }
-      taints = {}
+      taints = {
+        cilium_agent = {
+          key    = "node.cilium.io/agent-not-ready"
+          value  = true
+          effect = "NO_SCHEDULE"
+        }
+      }
     }
     g4dn-2x = {
       create         = true
@@ -493,6 +499,11 @@ variable "kubernetes_node_groups" {
         "datarobot.com/gpu-type"        = "nvidia-t4-2x"
       }
       taints = {
+        cilium_agent = {
+          key    = "node.cilium.io/agent-not-ready"
+          value  = true
+          effect = "NO_SCHEDULE"
+        }
         nvidia_gpu = {
           key    = "nvidia.com/gpu"
           value  = "true"
