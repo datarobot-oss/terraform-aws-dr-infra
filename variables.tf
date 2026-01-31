@@ -1051,7 +1051,7 @@ variable "cilium" {
 variable "cilium_version" {
   description = "Version of the cilium helm chart to install"
   type        = string
-  default     = "1.18.3"
+  default     = null
 }
 
 variable "cilium_values_overrides" {
