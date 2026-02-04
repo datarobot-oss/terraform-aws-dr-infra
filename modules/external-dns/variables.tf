@@ -9,13 +9,8 @@ variable "kubernetes_cluster_name" {
   type        = string
 }
 
-variable "route53_zone_arn" {
-  description = "ARN of the Route53 zone"
-  type        = string
-}
-
-variable "route53_zone_name" {
-  description = "Name of the Route53 zone"
+variable "route53_zone_id" {
+  description = "ID of the Route53 zone"
   type        = string
 }
 

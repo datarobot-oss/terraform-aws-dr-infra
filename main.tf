@@ -764,8 +764,7 @@ module "external_dns" {
   count  = var.install_helm_charts && var.external_dns ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
-  route53_zone_arn        = var.internet_facing_ingress_lb ? local.public_zone_arn : local.private_zone_arn
-  route53_zone_name       = var.domain_name
+  route53_zone_id         = var.internet_facing_ingress_lb ? local.public_zone_id : local.private_zone_id
 
   chart_version    = var.external_dns_version
   values_overrides = var.external_dns_values_overrides

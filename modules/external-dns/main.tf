@@ -1,3 +1,7 @@
+data "aws_route53_zone" "this" {
+  zone_id = var.route53_zone_id
+}
+
 locals {
   name            = "external-dns"
   namespace       = "external-dns"
@@ -11,7 +15,7 @@ module "pod_identity" {
   name = local.name
 
   attach_external_dns_policy    = true
-  external_dns_hosted_zone_arns = [var.route53_zone_arn]
+  external_dns_hosted_zone_arns = [data.aws_route53_zone.this.arn]
 
   associations = {
     this = {
@@ -35,7 +39,7 @@ resource "helm_release" "this" {
 
   values = [
     templatefile("${path.module}/values.yaml", {
-      domain      = var.route53_zone_name,
+      domain      = data.aws_route53_zone.this.name,
       clusterName = var.kubernetes_cluster_name
     }),
     var.values_overrides
