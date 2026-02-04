@@ -206,6 +206,7 @@ module "datarobot_infra" {
       }
     }
   }
+  kubernetes_node_groups_scale_from_zero = false
 
 
   ################################################################################

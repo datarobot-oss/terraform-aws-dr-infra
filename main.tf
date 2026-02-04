@@ -302,7 +302,24 @@ locals {
   eks_cluster_endpoint    = try(data.aws_eks_cluster.existing[0].endpoint, module.kubernetes[0].cluster_endpoint, "")
   eks_oidc_issuer_url     = try(data.aws_eks_cluster.existing[0].identity[0].oidc[0].issuer, module.kubernetes[0].cluster_oidc_issuer_url, null)
   kubernetes_node_subnets = var.existing_kubernetes_node_subnets != null ? var.existing_kubernetes_node_subnets : try(module.network[0].private_subnets, null)
-  kubernetes_node_groups  = { for k, v in var.kubernetes_node_groups : "${var.name}-${k}" => v }
+
+  # If scaling from zero is enabled, create a node group in each AZ and name as <name>-<node_group>-<az>.
+  # Otherwise, just rename the node group as <name>-<node_group>
+  kubernetes_node_groups = var.kubernetes_node_groups_scale_from_zero ? merge([
+    for az in local.azs : {
+      for k, v in var.kubernetes_node_groups : "${var.name}-${k}-${az}" => merge(
+        {
+          subnet_ids = [element(local.kubernetes_node_subnets, index(local.azs, az))]
+        },
+        v
+      )
+    }
+    ]...) : { for k, v in var.kubernetes_node_groups : "${var.name}-${k}" => merge(
+    {
+      subnet_ids = null
+    },
+    v
+  ) }
 }
 
 module "kubernetes" {
@@ -356,24 +373,42 @@ module "kubernetes" {
 locals {
   # ASG tags for scaling to and from 0
   # represented as a tuple of objects in the form [{node_group, tag_key, tag_value}]
-  node_group_asg_tags = flatten([
+  node_group_asg_tags = var.kubernetes_node_groups_scale_from_zero ? flatten([
     for node_group_name, node_group_values in local.kubernetes_node_groups : concat(
+      # Labels
       [
-        for k, v in node_group_values.labels : {
+        for label_key, label_value in try(node_group_values.labels, {}) : {
           node_group = node_group_name
-          tag_key    = "k8s.io/cluster-autoscaler/node-template/label/${k}"
-          tag_value  = v
+          tag_key    = "k8s.io/cluster-autoscaler/node-template/label/${label_key}"
+          tag_value  = label_value
         }
       ],
+      # Taints
       [
-        for k, v in node_group_values.taints : {
+        for taint_key, taint_value in try(node_group_values.taints, {}) : {
           node_group = node_group_name
-          tag_key    = "k8s.io/cluster-autoscaler/node-template/taint/${v.key}"
-          tag_value  = "${v.value}:${v.effect}"
+          tag_key    = "k8s.io/cluster-autoscaler/node-template/taint/${taint_value.key}"
+          tag_value  = "${taint_value.value}:${taint_value.effect}"
         }
-      ]
+      ],
+      # Ephemeral storage
+      try(node_group_values.block_device_mappings, null) != null ? [
+        {
+          node_group = node_group_name
+          tag_key    = "k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage"
+          tag_value  = "${sum([for bdm_key, bdm in node_group_values.block_device_mappings : try(bdm.ebs.volume_size, 0)])}Gi"
+        }
+      ] : [],
+      # Topology zone
+      [
+        {
+          node_group = node_group_name
+          tag_key    = "k8s.io/cluster-autoscaler/node-template/label/topology.kubernetes.io/zone"
+          tag_value  = element(local.azs, index(local.kubernetes_node_subnets, node_group_values.subnet_ids[0]))
+        }
+      ],
     )
-  ])
+  ]) : []
 }
 
 resource "aws_autoscaling_group_tag" "this" {
@@ -403,7 +438,8 @@ module "app_identity" {
   version = "~> 6.0"
   count   = var.create_app_identity ? 1 : 0
 
-  name = "${var.name}-app-irsa"
+  name            = "${var.name}-app-irsa"
+  use_name_prefix = false
 
   # trust
   enable_oidc            = true
@@ -465,7 +501,8 @@ module "genai_identity" {
   version = "~> 6.0"
   count   = var.create_app_identity ? 1 : 0
 
-  name = "${var.name}-genai"
+  name            = "${var.name}-genai"
+  use_name_prefix = false
 
   trust_policy_permissions = {
     app = {

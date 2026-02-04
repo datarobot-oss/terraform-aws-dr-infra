@@ -374,7 +374,7 @@ variable "kubernetes_iam_role_name" {
 variable "kubernetes_iam_role_use_name_prefix" {
   description = "Determines whether the IAM role name (`kubernetes_iam_role_name`) is used as a prefix"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "kubernetes_iam_role_permissions_boundary" {
@@ -450,12 +450,14 @@ variable "kubernetes_node_groups" {
   type        = any
   default = {
     r-4x = {
-      create         = true
-      ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
-      desired_size   = 2
-      min_size       = 1
-      max_size       = 10
+      create                   = true
+      use_name_prefix          = false
+      iam_role_use_name_prefix = false
+      ami_type                 = "AL2023_x86_64_STANDARD"
+      instance_types           = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
+      desired_size             = 0
+      min_size                 = 0
+      max_size                 = 10
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
@@ -472,12 +474,14 @@ variable "kubernetes_node_groups" {
       taints = {}
     }
     g4dn-2x = {
-      create         = true
-      ami_type       = "AL2023_x86_64_NVIDIA"
-      instance_types = ["g4dn.2xlarge"]
-      desired_size   = 0
-      min_size       = 0
-      max_size       = 10
+      create                   = true
+      use_name_prefix          = false
+      ami_type                 = "AL2023_x86_64_NVIDIA"
+      instance_types           = ["g4dn.2xlarge"]
+      desired_size             = 0
+      min_size                 = 0
+      max_size                 = 10
+      iam_role_use_name_prefix = false
       block_device_mappings = {
         xvda = {
           device_name = "/dev/xvda"
@@ -501,6 +505,12 @@ variable "kubernetes_node_groups" {
       }
     }
   }
+}
+
+variable "kubernetes_node_groups_scale_from_zero" {
+  description = "Allow cluster-autoscaler to scale node groups to/from zero. This creates copies of each node group in each availability zone and adds node-template tags to the node group autoscaling groups. More info: https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/cloudprovider/aws/README.md#Auto-discovery-setup"
+  type        = bool
+  default     = true
 }
 
 
