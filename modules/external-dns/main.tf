@@ -40,6 +40,7 @@ resource "helm_release" "this" {
   values = [
     templatefile("${path.module}/values.yaml", {
       domain      = data.aws_route53_zone.this.name,
+      zone_id     = var.route53_zone_id,
       clusterName = var.kubernetes_cluster_name
     }),
     var.values_overrides

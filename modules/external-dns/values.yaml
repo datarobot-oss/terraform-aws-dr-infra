@@ -4,3 +4,6 @@ sources:
 - ingress
 policy: sync
 txtOwnerId: ${clusterName}
+extraArgs:
+  - --ingress-class=nginx
+  - --zone-id-filter=${zone_id}
