@@ -455,7 +455,7 @@ variable "kubernetes_node_groups" {
       iam_role_use_name_prefix = false
       ami_type                 = "AL2023_x86_64_STANDARD"
       instance_types           = ["r6a.4xlarge", "r6i.4xlarge", "r5.4xlarge", "r4.4xlarge"]
-      desired_size             = 0
+      desired_size             = 1
       min_size                 = 0
       max_size                 = 10
       block_device_mappings = {
