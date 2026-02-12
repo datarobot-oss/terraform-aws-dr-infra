@@ -52,8 +52,19 @@ variable "notation_aws_values_overrides" {
   default     = null
 }
 
-variable "signer_profile_arn" {
+variable "notation_aws_signer_profile_arn" {
   description = "ARN of the signer profile"
   type        = string
   default     = null
+}
+
+variable "policy_validation_failure_action" {
+  description = "Kyverno policy validation failure action. Determines whether Kyverno will enforce policies or just report violations when a policy validation failure occurs."
+  type        = string
+  default     = "Enforce"
+
+  validation {
+    condition     = contains(["Enforce", "Audit"], var.policy_validation_failure_action)
+    error_message = "Invalid value for policy_validation_failure_action. Allowed values are 'Enforce' or 'Audit'."
+  }
 }

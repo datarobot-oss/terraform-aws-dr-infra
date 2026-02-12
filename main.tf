@@ -858,15 +858,16 @@ module "kyverno" {
 
   eks_cluster_name = local.eks_cluster_name
 
-  chart_version                 = var.kyverno_version
-  values_overrides              = var.kyverno_values_overrides
-  install_policies              = var.kyverno_policies
-  policies_chart_version        = var.kyverno_policies_version
-  policies_values_overrides     = var.kyverno_policies_values_overrides
-  notation_aws                  = var.kyverno_notation_aws
-  notation_aws_chart_version    = var.kyverno_notation_aws_version
-  notation_aws_values_overrides = var.kyverno_notation_aws_values_overrides
-  signer_profile_arn            = var.kyverno_signer_profile_arn
+  chart_version                    = var.kyverno_version
+  values_overrides                 = var.kyverno_values_overrides
+  install_policies                 = var.kyverno_policies
+  policies_chart_version           = var.kyverno_policies_version
+  policies_values_overrides        = var.kyverno_policies_values_overrides
+  notation_aws                     = var.kyverno_notation_aws
+  notation_aws_chart_version       = var.kyverno_notation_aws_version
+  notation_aws_values_overrides    = var.kyverno_notation_aws_values_overrides
+  notation_aws_signer_profile_arn  = var.kyverno_notation_aws_signer_profile_arn
+  policy_validation_failure_action = var.kyverno_policy_validation_failure_action
 
   depends_on = [module.aws_load_balancer_controller]
 }

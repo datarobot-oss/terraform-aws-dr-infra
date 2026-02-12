@@ -1113,10 +1113,21 @@ variable "kyverno_notation_aws_values_overrides" {
   default     = null
 }
 
-variable "kyverno_signer_profile_arn" {
+variable "kyverno_notation_aws_signer_profile_arn" {
   description = "ARN of the signer profile to use for image signature verification with kyverno-notation-aws. Required if kyverno_notation_aws is true."
   type        = string
   default     = null
+}
+
+variable "kyverno_policy_validation_failure_action" {
+  description = "Kyverno policy validation failure action. Determines whether Kyverno will enforce policies or just report violations when a policy validation failure occurs."
+  type        = string
+  default     = "Enforce"
+
+  validation {
+    condition     = contains(["Enforce", "Audit"], var.kyverno_policy_validation_failure_action)
+    error_message = "Invalid value for kyverno_policy_validation_failure_action. Allowed values are 'Enforce' or 'Audit'."
+  }
 }
 
 

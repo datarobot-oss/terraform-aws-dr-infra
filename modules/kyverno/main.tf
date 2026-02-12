@@ -126,7 +126,7 @@ spec:
     trustStores:
     - signingAuthority:aws-signer-ts
     trustedIdentities:
-    - ${var.signer_profile_arn}
+    - ${var.notation_aws_signer_profile_arn}
   YAML
 
   depends_on = [helm_release.notation_aws]
@@ -141,7 +141,7 @@ kind: ClusterPolicy
 metadata:
   name: check-images
 spec:
-  validationFailureAction: Enforce
+  validationFailureAction: ${var.policy_validation_failure_action}
   failurePolicy: Fail
   webhookTimeoutSeconds: 30
   schemaValidation: false
