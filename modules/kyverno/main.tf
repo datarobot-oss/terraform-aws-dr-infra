@@ -167,7 +167,7 @@ spec:
         - key: images
           value: "{{images}}"
         service:
-          url: "https://kyverno-notation-aws-svc/checkimages"
+          url: "https://kyverno-notation-aws-svc.kyverno.svc/checkimages"
           caBundle: '{{ tlscerts }}'
     mutate:
       foreach:
