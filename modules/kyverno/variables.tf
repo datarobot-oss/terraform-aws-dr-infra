@@ -1,3 +1,9 @@
+variable "partition" {
+  description = "AWS partition"
+  type        = string
+  default     = "aws"
+}
+
 variable "eks_cluster_name" {
   description = "EKS cluster name"
   type        = string
@@ -66,5 +72,16 @@ variable "policy_validation_failure_action" {
   validation {
     condition     = contains(["Enforce", "Audit"], var.policy_validation_failure_action)
     error_message = "Invalid value for policy_validation_failure_action. Allowed values are 'Enforce' or 'Audit'."
+  }
+}
+
+variable "policy_failure_policy" {
+  description = "Kyverno policy failure policy. Determines what action to take when a webhook fails to respond."
+  type        = string
+  default     = "Fail"
+
+  validation {
+    condition     = contains(["Fail", "Ignore"], var.policy_failure_policy)
+    error_message = "Invalid value for policy_failure_policy. Allowed values are 'Fail' or 'Ignore'."
   }
 }

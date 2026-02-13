@@ -48,6 +48,10 @@ module "notation_aws_pod_identity" {
     }
   ]
 
+  additional_policy_arns = {
+    ecr_readonly = "arn:${var.partition}:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  }
+
   associations = {
     this = {
       cluster_name    = var.eks_cluster_name
@@ -142,7 +146,7 @@ metadata:
   name: check-images
 spec:
   validationFailureAction: ${var.policy_validation_failure_action}
-  failurePolicy: Fail
+  failurePolicy: ${var.policy_failure_policy}
   webhookTimeoutSeconds: 30
   schemaValidation: false
   rules:

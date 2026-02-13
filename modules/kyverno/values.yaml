@@ -1,5 +1,6 @@
 admissionController:
-  networkPolicy: true
+  networkPolicy:
+    enabled: true
   replicas: 3
   topologySpreadConstraints:
     - maxSkew: 1
@@ -9,7 +10,8 @@ admissionController:
         matchLabels:
           app.kubernetes.io/component: admission-controller
 backgroundController:
-  networkPolicy: true
+  networkPolicy:
+    enabled: true
   replicas: 3
   topologySpreadConstraints:
     - maxSkew: 1
@@ -19,7 +21,8 @@ backgroundController:
         matchLabels:
           app.kubernetes.io/component: background-controller
 cleanupController:
-  networkPolicy: true
+  networkPolicy:
+    enabled: true
   replicas: 3
   topologySpreadConstraints:
     - maxSkew: 1
@@ -29,7 +32,8 @@ cleanupController:
         matchLabels:
           app.kubernetes.io/component: cleanup-controller
 reportsController:
-  networkPolicy: true
+  networkPolicy:
+    enabled: true
   replicas: 3
   topologySpreadConstraints:
     - maxSkew: 1

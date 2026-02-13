@@ -1130,6 +1130,17 @@ variable "kyverno_policy_validation_failure_action" {
   }
 }
 
+variable "kyverno_policy_failure_policy" {
+  description = "Kyverno policy failure policy. Determines what action to take when a webhook fails to respond."
+  type        = string
+  default     = "Fail"
+
+  validation {
+    condition     = contains(["Fail", "Ignore"], var.kyverno_policy_failure_policy)
+    error_message = "Invalid value for kyverno_policy_failure_policy. Allowed values are 'Fail' or 'Ignore'."
+  }
+}
+
 
 ################################################################################
 # Privaete Link Service

@@ -856,6 +856,7 @@ module "kyverno" {
   source = "./modules/kyverno"
   count  = var.install_helm_charts && var.kyverno ? 1 : 0
 
+  partition        = data.aws_partition.current.partition
   eks_cluster_name = local.eks_cluster_name
 
   chart_version                    = var.kyverno_version
@@ -868,6 +869,7 @@ module "kyverno" {
   notation_aws_values_overrides    = var.kyverno_notation_aws_values_overrides
   notation_aws_signer_profile_arn  = var.kyverno_notation_aws_signer_profile_arn
   policy_validation_failure_action = var.kyverno_policy_validation_failure_action
+  policy_failure_policy            = var.kyverno_policy_failure_policy
 
   depends_on = [module.aws_load_balancer_controller]
 }
