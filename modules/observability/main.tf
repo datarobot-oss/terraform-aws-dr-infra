@@ -1,4 +1,5 @@
 data "aws_caller_identity" "current" {}
+data "aws_partition" "current" {}
 data "aws_region" "current" {}
 
 locals {
@@ -21,7 +22,7 @@ data "aws_iam_policy_document" "observability_write_document" {
       "logs:PutLogEvents",
       "logs:DescribeLogStreams"
     ]
-    resources = ["arn:aws:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:*:log-stream:*"]
+    resources = ["arn:${data.aws_partition.current.id}:logs:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:log-group:*:log-stream:*"]
   }
 
   statement {
@@ -85,7 +86,7 @@ data "aws_iam_policy_document" "observability_grafana_amp_trust_policy" {
     condition {
       test     = "StringLike"
       variable = "aws:SourceArn"
-      values   = ["arn:aws:grafana:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:/workspaces/*"]
+      values   = ["arn:${data.aws_partition.current.id}:grafana:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:/workspaces/*"]
     }
   }
 }
