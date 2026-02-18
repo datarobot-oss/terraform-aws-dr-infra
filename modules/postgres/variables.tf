@@ -96,6 +96,20 @@ variable "postgres_deletion_protection" {
   default     = false
 }
 
+variable "postgres_parameters" {
+  description = "Parameters to add to the Postgres parameter group"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = [
+    {
+      name  = "password_encryption"
+      value = "scram-sha-256"
+    }
+  ]
+}
+
 variable "create_route53_cname_record" {
   description = "Whether to create a Route 53 CNAME record for the RDS instance"
   type        = bool

@@ -57,12 +57,7 @@ module "postgres" {
   password                    = random_password.postgres.result
   manage_master_user_password = false
 
-  parameters = [
-    {
-      name  = "password_encryption"
-      value = "scram-sha-256"
-    }
-  ]
+  parameters = var.postgres_parameters
 
   tags = var.tags
 }
