@@ -1,3 +1,8 @@
+output "db_instance_arn" {
+  description = "The ARN of the RDS instance"
+  value       = module.postgres.db_instance_arn
+}
+
 output "endpoint" {
   description = "The hostname of the RDS instance"
   value       = module.postgres.db_instance_address

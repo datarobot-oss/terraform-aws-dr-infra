@@ -162,6 +162,11 @@ output "genai_role_arn" {
 # PostgreSQL
 ################################################################################
 
+output "postgres_db_instance_arn" {
+  description = "The ARN of the RDS instance"
+  value       = try(module.postgres[0].db_instance_arn, null)
+}
+
 output "postgres_endpoint" {
   description = "RDS postgres endpoint"
   value       = try(module.postgres[0].route53_endpoint, module.postgres[0].endpoint, null)

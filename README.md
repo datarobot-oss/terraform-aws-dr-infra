@@ -1212,6 +1212,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="output_kubernetes_cluster_node_groups"></a> [kubernetes\_cluster\_node\_groups](#output\_kubernetes\_cluster\_node\_groups) | EKS cluster node groups |
 | <a name="output_mongodb_endpoint"></a> [mongodb\_endpoint](#output\_mongodb\_endpoint) | MongoDB endpoint |
 | <a name="output_mongodb_password"></a> [mongodb\_password](#output\_mongodb\_password) | MongoDB admin password |
+| <a name="output_postgres_db_instance_arn"></a> [postgres\_db\_instance\_arn](#output\_postgres\_db\_instance\_arn) | The ARN of the RDS instance |
 | <a name="output_postgres_endpoint"></a> [postgres\_endpoint](#output\_postgres\_endpoint) | RDS postgres endpoint |
 | <a name="output_postgres_password"></a> [postgres\_password](#output\_postgres\_password) | RDS postgres master password |
 | <a name="output_private_route53_zone_arn"></a> [private\_route53\_zone\_arn](#output\_private\_route53\_zone\_arn) | Zone ARN of the private Route53 zone |
