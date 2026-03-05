@@ -548,6 +548,8 @@ module "postgres" {
   subnet_group_use_name_prefix = var.postgres_subnet_group_use_name_prefix
   multi_az                     = local.multi_az
   ingress_cidr_blocks          = concat([local.vpc_cidr], var.postgres_additional_ingress_cidr_blocks)
+  egress_rules                 = var.postgres_egress_rules
+  egress_cidr_blocks           = var.postgres_egress_cidr_blocks
   password_constraints         = var.password_constraints
 
   postgres_engine_version          = var.postgres_engine_version

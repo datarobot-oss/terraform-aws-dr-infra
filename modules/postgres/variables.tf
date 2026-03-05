@@ -13,6 +13,18 @@ variable "ingress_cidr_blocks" {
   type        = list(string)
 }
 
+variable "egress_rules" {
+  description = "List of egress rules to create by name"
+  type        = list(string)
+  default     = []
+}
+
+variable "egress_cidr_blocks" {
+  description = "CIDR blocks allowed for egress on the PostgreSQL port"
+  type        = list(string)
+  default     = []
+}
+
 variable "subnets" {
   description = "List of subnet IDs to be used for the RDS postgres instance"
   type        = list(string)

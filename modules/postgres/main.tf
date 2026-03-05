@@ -16,6 +16,8 @@ module "security_group" {
 
   ingress_rules       = ["postgresql-tcp"]
   ingress_cidr_blocks = var.ingress_cidr_blocks
+  egress_rules        = var.egress_rules
+  egress_cidr_blocks  = var.egress_cidr_blocks
 
   tags = var.tags
 }
