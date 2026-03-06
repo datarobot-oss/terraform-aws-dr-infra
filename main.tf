@@ -560,7 +560,7 @@ module "postgres" {
   postgres_deletion_protection     = var.postgres_deletion_protection
   postgres_parameters              = var.postgres_parameters
 
-  create_route53_cname_record = var.create_dns_zones
+  create_route53_cname_record = var.create_dns_zones && var.postgres_create_route53_cname_record
   route_53_zone_id            = local.private_zone_id
 
   tags = var.tags

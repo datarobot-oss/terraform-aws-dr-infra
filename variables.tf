@@ -639,6 +639,12 @@ variable "postgres_parameters" {
   ]
 }
 
+variable "postgres_create_route53_cname_record" {
+  description = "Create `postgres` CNAME in private zone"
+  type        = bool
+  default     = true
+}
+
 
 ################################################################################
 # Redis
