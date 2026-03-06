@@ -169,7 +169,7 @@ output "postgres_db_instance_arn" {
 
 output "postgres_endpoint" {
   description = "RDS postgres endpoint"
-  value       = try(module.postgres[0].route53_endpoint, module.postgres[0].endpoint, null)
+  value       = try(module.postgres[0].route53_endpoint != null ? module.postgres[0].route53_endpoint : module.postgres[0].endpoint, null)
 }
 
 output "postgres_password" {
