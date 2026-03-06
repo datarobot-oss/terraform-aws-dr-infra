@@ -240,6 +240,11 @@ output "ingress_vpce_service_id" {
 # ingress-nginx
 ################################################################################
 
+output "ingress_lb_arn" {
+  description = "The ARN of the ingress load balancer created by ingress-nginx"
+  value       = try(module.ingress_nginx[0].load_balancer_arn, null)
+}
+
 output "ingress_lb_dns_name" {
   description = "The DNS name of the ingress load balancer created by ingress-nginx"
   value       = try(module.ingress_nginx[0].load_balancer_dns_name, null)
