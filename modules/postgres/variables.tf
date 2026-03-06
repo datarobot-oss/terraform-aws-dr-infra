@@ -13,6 +13,12 @@ variable "ingress_cidr_blocks" {
   type        = list(string)
 }
 
+variable "egress_with_cidr_blocks" {
+  description = "List of egress rules to create for the PostgreSQL security group where 'cidr_blocks' is used. See https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/README.md#input_egress_with_cidr_blocks for more details."
+  type        = list(map(string))
+  default     = []
+}
+
 variable "subnets" {
   description = "List of subnet IDs to be used for the RDS postgres instance"
   type        = list(string)

@@ -577,6 +577,12 @@ variable "postgres_additional_ingress_cidr_blocks" {
   default     = []
 }
 
+variable "postgres_egress_with_cidr_blocks" {
+  description = "List of egress rules to create for the PostgreSQL security group where 'cidr_blocks' is used. See https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/README.md#input_egress_with_cidr_blocks for more details."
+  type        = list(map(string))
+  default     = []
+}
+
 variable "postgres_engine_version" {
   description = "The engine version to use"
   type        = string
