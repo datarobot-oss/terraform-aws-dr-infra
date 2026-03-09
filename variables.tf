@@ -261,10 +261,40 @@ variable "create_storage" {
   default     = true
 }
 
-variable "s3_bucket_force_destroy" {
-  description = "Force destroy the public and private Route53 zones"
+variable "storage_force_destroy" {
+  description = "Force destroy the S3 storage bucket. Ignored if create_storage is false."
   type        = bool
   default     = false
+}
+
+variable "storage_versioning" {
+  description = "Map containing versioning configuration."
+  type        = map(string)
+  default     = {}
+}
+
+variable "storage_lifecycle_rule" {
+  description = "List of maps containing configuration of object lifecycle management."
+  type        = any
+  default     = []
+}
+
+variable "storage_replication_configuration" {
+  description = "Map containing cross-region replication configuration."
+  type        = any
+  default     = {}
+}
+
+variable "storage_object_lock_enabled" {
+  description = "Whether S3 bucket should have an Object Lock configuration enabled."
+  type        = bool
+  default     = false
+}
+
+variable "storage_object_lock_configuration" {
+  description = "Map containing S3 object locking configuration."
+  type        = any
+  default     = {}
 }
 
 

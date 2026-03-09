@@ -214,6 +214,8 @@ Uses the [terraform-aws-s3](https://github.com/terraform-aws-modules/terraform-a
 
 The DataRobot application will use this storage bucket for persistent file storage.
 
+Traffic to the bucket is restricted to TLS 1.2+.
+
 #### IAM Policy
 ```
 {
@@ -1198,7 +1200,12 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_redis_node_type"></a> [redis\_node\_type](#input\_redis\_node\_type) | The instance type of the RDS instance | `string` | `"cache.t4g.medium"` | no |
 | <a name="input_redis_snapshot_retention"></a> [redis\_snapshot\_retention](#input\_redis\_snapshot\_retention) | Number of days for which ElastiCache will retain automatic cache cluster snapshots before deleting them | `number` | `7` | no |
 | <a name="input_redis_subnet_group_name"></a> [redis\_subnet\_group\_name](#input\_redis\_subnet\_group\_name) | The name of the Elasticache Redis subnet group. | `string` | `null` | no |
-| <a name="input_s3_bucket_force_destroy"></a> [s3\_bucket\_force\_destroy](#input\_s3\_bucket\_force\_destroy) | Force destroy the public and private Route53 zones | `bool` | `false` | no |
+| <a name="input_storage_force_destroy"></a> [storage\_force\_destroy](#input\_storage\_force\_destroy) | Force destroy the S3 storage bucket. Ignored if create\_storage is false. | `bool` | `false` | no |
+| <a name="input_storage_lifecycle_rule"></a> [storage\_lifecycle\_rule](#input\_storage\_lifecycle\_rule) | List of maps containing configuration of object lifecycle management. | `any` | `[]` | no |
+| <a name="input_storage_object_lock_configuration"></a> [storage\_object\_lock\_configuration](#input\_storage\_object\_lock\_configuration) | Map containing S3 object locking configuration. | `any` | `{}` | no |
+| <a name="input_storage_object_lock_enabled"></a> [storage\_object\_lock\_enabled](#input\_storage\_object\_lock\_enabled) | Whether S3 bucket should have an Object Lock configuration enabled. | `bool` | `false` | no |
+| <a name="input_storage_replication_configuration"></a> [storage\_replication\_configuration](#input\_storage\_replication\_configuration) | Map containing cross-region replication configuration. | `any` | `{}` | no |
+| <a name="input_storage_versioning"></a> [storage\_versioning](#input\_storage\_versioning) | Map containing versioning configuration. | `map(string)` | `{}` | no |
 | <a name="input_tags"></a> [tags](#input\_tags) | A map of tags to add to all created resources | `map(string)` | <pre>{<br/>  "managed-by": "terraform"<br/>}</pre> | no |
 
 ## Outputs

@@ -94,8 +94,43 @@ module "datarobot_infra" {
   ################################################################################
   # Storage
   ################################################################################
-  create_storage          = true
-  s3_bucket_force_destroy = true
+  create_storage        = true
+  storage_force_destroy = false
+  storage_versioning = {
+    enabled = true
+  }
+  storage_lifecycle_rule = [
+    {
+      id = "default-object-lifecycle-rule"
+      noncurrent_version_transition = [
+        {
+          days          = 30
+          storage_class = "STANDARD_IA"
+        },
+        {
+          days          = 60
+          storage_class = "ONEZONE_IA"
+        },
+        {
+          days          = 90
+          storage_class = "GLACIER"
+        },
+      ]
+      noncurrent_version_expiration = {
+        days = 300
+      }
+    }
+  ]
+  storage_replication_configuration = {}
+  storage_object_lock_enabled       = true
+  storage_object_lock_configuration = {
+    rule = {
+      default_retention = {
+        mode = "GOVERNANCE"
+        days = 1
+      }
+    }
+  }
 
   ################################################################################
   # Container Registry
@@ -358,14 +393,16 @@ module "datarobot_infra" {
   ################################################################################
   # kyverno
   ################################################################################
-  kyverno                               = true
-  kyverno_version                       = null
-  kyverno_values_overrides              = file("${path.module}/templates/custom_kyverno_values.yaml")
-  kyverno_policies                      = true
-  kyverno_policies_version              = null
-  kyverno_policies_values_overrides     = file("${path.module}/templates/custom_kyverno_policies_values.yaml")
-  kyverno_notation_aws                  = true
-  kyverno_notation_aws_version          = null
-  kyverno_notation_aws_values_overrides = file("${path.module}/templates/custom_kyverno_notation_aws_values.yaml")
-  kyverno_signer_profile_arn            = "arn:aws:signer:us-west-2:01234567890:/signing-profiles/example_20241231162516984400000001"
+  kyverno                                  = true
+  kyverno_version                          = null
+  kyverno_values_overrides                 = file("${path.module}/templates/custom_kyverno_values.yaml")
+  kyverno_policies                         = true
+  kyverno_policies_version                 = null
+  kyverno_policies_values_overrides        = file("${path.module}/templates/custom_kyverno_policies_values.yaml")
+  kyverno_notation_aws                     = true
+  kyverno_notation_aws_version             = null
+  kyverno_notation_aws_values_overrides    = file("${path.module}/templates/custom_kyverno_notation_aws_values.yaml")
+  kyverno_notation_aws_signer_profile_arn  = "arn:aws:signer:us-west-2:01234567890:/signing-profiles/example_20241231162516984400000001"
+  kyverno_policy_validation_failure_action = "Audit"
+  kyverno_policy_failure_policy            = "Ignore"
 }

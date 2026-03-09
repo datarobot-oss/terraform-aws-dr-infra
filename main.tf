@@ -261,7 +261,16 @@ module "storage" {
   count   = var.create_storage && var.existing_s3_bucket_id == null ? 1 : 0
 
   bucket_prefix = replace(var.name, "_", "-")
-  force_destroy = var.s3_bucket_force_destroy
+  force_destroy = var.storage_force_destroy
+
+  attach_deny_insecure_transport_policy = true
+  attach_require_latest_tls_policy      = true
+
+  versioning                = var.storage_versioning
+  lifecycle_rule            = var.storage_lifecycle_rule
+  replication_configuration = var.storage_replication_configuration
+  object_lock_enabled       = var.storage_object_lock_enabled
+  object_lock_configuration = var.storage_object_lock_configuration
 
   tags = var.tags
 }
@@ -305,7 +314,7 @@ locals {
 
   # If scaling from zero is enabled, create a node group in each AZ and name as <name>-<node_group>-<az>.
   # Otherwise, just rename the node group as <name>-<node_group>
-  kubernetes_node_groups = var.kubernetes_node_groups_scale_from_zero ? merge([
+  kubernetes_node_groups = var.kubernetes_node_groups_scale_from_zero && local.kubernetes_node_subnets != null ? merge([
     for az in local.azs : {
       for k, v in var.kubernetes_node_groups : "${var.name}-${k}-${az}" => merge(
         {
@@ -373,7 +382,7 @@ module "kubernetes" {
 locals {
   # ASG tags for scaling to and from 0
   # represented as a tuple of objects in the form [{node_group, tag_key, tag_value}]
-  node_group_asg_tags = var.kubernetes_node_groups_scale_from_zero ? flatten([
+  node_group_asg_tags = var.kubernetes_node_groups_scale_from_zero && local.kubernetes_node_subnets != null ? flatten([
     for node_group_name, node_group_values in local.kubernetes_node_groups : concat(
       # Labels
       [
