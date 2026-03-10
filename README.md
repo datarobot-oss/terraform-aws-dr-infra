@@ -1217,6 +1217,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="output_ecr_repository_urls"></a> [ecr\_repository\_urls](#output\_ecr\_repository\_urls) | URLs of the image builder repositories |
 | <a name="output_genai_role_arn"></a> [genai\_role\_arn](#output\_genai\_role\_arn) | ARN of the IAM role assumed by the DataRobot app IRSA when accessing Amazon Bedrock AI Foundational Models |
 | <a name="output_ingress_lb_arn"></a> [ingress\_lb\_arn](#output\_ingress\_lb\_arn) | The ARN of the ingress load balancer created by ingress-nginx |
+| <a name="output_ingress_lb_arn_suffix"></a> [ingress\_lb\_arn\_suffix](#output\_ingress\_lb\_arn\_suffix) | The ARN suffix of the ingress load balancer created by ingress-nginx |
 | <a name="output_ingress_lb_dns_name"></a> [ingress\_lb\_dns\_name](#output\_ingress\_lb\_dns\_name) | The DNS name of the ingress load balancer created by ingress-nginx |
 | <a name="output_ingress_vpce_service_id"></a> [ingress\_vpce\_service\_id](#output\_ingress\_vpce\_service\_id) | Ingress VPCE service ID |
 | <a name="output_kubernetes_cluster_certificate_authority_data"></a> [kubernetes\_cluster\_certificate\_authority\_data](#output\_kubernetes\_cluster\_certificate\_authority\_data) | Base64 encoded certificate data required to communicate with the cluster |

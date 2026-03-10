@@ -245,6 +245,11 @@ output "ingress_lb_arn" {
   value       = try(module.ingress_nginx[0].load_balancer_arn, null)
 }
 
+output "ingress_lb_arn_suffix" {
+  description = "The ARN suffix of the ingress load balancer created by ingress-nginx"
+  value       = try(module.ingress_nginx[0].load_balancer_arn_suffix, null)
+}
+
 output "ingress_lb_dns_name" {
   description = "The DNS name of the ingress load balancer created by ingress-nginx"
   value       = try(module.ingress_nginx[0].load_balancer_dns_name, null)
