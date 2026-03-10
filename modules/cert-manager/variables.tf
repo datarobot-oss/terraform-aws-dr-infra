@@ -14,6 +14,16 @@ variable "route53_zone_arn" {
   type        = string
 }
 
+variable "letsencrypt_clusterissuers" {
+  description = "Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers"
+  type        = bool
+}
+
+variable "letsencrypt_clusterissuers_email_address" {
+  description = "Email address for the certificate owner. Let's Encrypt will use this to contact you about expiring certificates, and issues related to your account. Only required if letsencrypt_clusterissuers is true."
+  type        = string
+}
+
 variable "tags" {
   description = "A map of tags to add to all resources"
   type        = map(string)

@@ -1,3 +1,5 @@
+data "aws_region" "current" {}
+
 locals {
   name            = "cert-manager"
   namespace       = "cert-manager"
@@ -39,4 +41,51 @@ resource "helm_release" "this" {
   ]
 
   depends_on = [module.pod_identity]
+}
+
+resource "helm_release" "letsencrypt_clusterissuers" {
+  count = var.letsencrypt_clusterissuers ? 1 : 0
+
+  name       = "letsencrypt-clusterissuers"
+  namespace  = local.namespace
+  repository = "https://dysnix.github.io/charts"
+  chart      = "raw"
+  version    = "0.3.2"
+
+  values = [
+    <<-EOF
+    resources:
+      - apiVersion: cert-manager.io/v1
+        kind: ClusterIssuer
+        metadata:
+          name: letsencrypt-staging
+        spec:
+          acme:
+            server: https://acme-staging-v02.api.letsencrypt.org/directory
+            email: ${var.letsencrypt_clusterissuers_email_address}
+            privateKeySecretRef:
+              name: letsencrypt-staging
+            solvers:
+              - dns01:
+                  route53:
+                    region: ${data.aws_region.current.region}
+      - |
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt-prod
+          spec:
+            acme:
+              server: https://acme-v02.api.letsencrypt.org/directory
+              email: ${var.letsencrypt_clusterissuers_email_address}
+              privateKeySecretRef:
+                name: letsencrypt-prod
+              solvers:
+                - dns01:
+                    route53:
+                      region: ${data.aws_region.current.region}
+    EOF
+  ]
+
+  depends_on = [helm_release.this]
 }

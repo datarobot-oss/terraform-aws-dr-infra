@@ -796,8 +796,10 @@ module "cert_manager" {
   source = "./modules/cert-manager"
   count  = var.install_helm_charts && var.cert_manager ? 1 : 0
 
-  kubernetes_cluster_name = local.eks_cluster_name
-  route53_zone_arn        = local.public_zone_arn
+  kubernetes_cluster_name                  = local.eks_cluster_name
+  route53_zone_arn                         = local.public_zone_arn
+  letsencrypt_clusterissuers               = var.cert_manager_letsencrypt_clusterissuers
+  letsencrypt_clusterissuers_email_address = var.cert_manager_letsencrypt_email_address
 
   chart_version    = var.cert_manager_version
   values_overrides = var.cert_manager_values_overrides

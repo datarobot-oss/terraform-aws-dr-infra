@@ -1013,6 +1013,18 @@ variable "cert_manager_version" {
   default     = null
 }
 
+variable "cert_manager_letsencrypt_clusterissuers" {
+  description = "Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers"
+  type        = bool
+  default     = false
+}
+
+variable "cert_manager_letsencrypt_email_address" {
+  description = "Email address for the certificate owner. Let's Encrypt will use this to contact you about expiring certificates, and issues related to your account. Only required if cert_manager_letsencrypt_clusterissuers is true."
+  type        = string
+  default     = "user@example.com"
+}
+
 variable "cert_manager_values_overrides" {
   description = "Values in raw yaml format to pass to helm."
   type        = string
