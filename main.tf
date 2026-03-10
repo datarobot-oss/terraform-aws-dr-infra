@@ -280,16 +280,19 @@ module "storage" {
 # Container Registry
 ################################################################################
 
+locals {
+  repository_prefix = coalesce(var.container_registry_repo_prefix, var.name)
+}
+
 module "container_registry" {
-  source = "terraform-aws-modules/ecr/aws"
-
+  source   = "terraform-aws-modules/ecr/aws"
   version  = "~> 3.0"
-  for_each = var.create_container_registry ? var.ecr_repositories : []
+  for_each = var.create_container_registry ? var.container_registry_repos : []
 
-  repository_name                   = "${var.name}/${each.key}"
+  repository_name                   = "${local.repository_prefix}/${each.key}"
   repository_read_write_access_arns = [local.app_role_arn]
-  repository_image_scan_on_push     = var.ecr_repositories_scan_on_push
-  repository_force_delete           = var.ecr_repositories_force_destroy
+  repository_image_scan_on_push     = var.container_registry_repos_scan_on_push
+  repository_force_delete           = var.container_registry_repos_force_destroy
   create_lifecycle_policy           = false
 
   tags = var.tags

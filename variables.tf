@@ -308,8 +308,14 @@ variable "create_container_registry" {
   default     = true
 }
 
-variable "ecr_repositories" {
-  description = "Repositories to create. Names are prefixed with `name` variable as in `name`/`repository`."
+variable "container_registry_repo_prefix" {
+  description = "Prefix to apply to created repositories. If not specified, the `name` variable will be used as the prefix. Ignored if create_container_registry is false."
+  type        = string
+  default     = null
+}
+
+variable "container_registry_repos" {
+  description = "Repositories to create. Ignored if create_container_registry is false."
   type        = set(string)
   default = [
     "base-image",
@@ -322,13 +328,13 @@ variable "ecr_repositories" {
   ]
 }
 
-variable "ecr_repositories_scan_on_push" {
-  description = "Indicates whether images are scanned after being pushed to the repository (`true`) or not scanned (`false`)"
+variable "container_registry_repos_scan_on_push" {
+  description = "Indicates whether images are scanned after being pushed to the repository (`true`) or not scanned (`false`). Ignored if create_container_registry is false."
   type        = bool
   default     = false
 }
 
-variable "ecr_repositories_force_destroy" {
+variable "container_registry_repos_force_destroy" {
   description = "Force destroy the ECR repositories. Ignored if create_container_registry is false."
   type        = bool
   default     = false
