@@ -135,8 +135,9 @@ module "datarobot_infra" {
   ################################################################################
   # Container Registry
   ################################################################################
-  create_container_registry = true
-  ecr_repositories = [
+  create_container_registry      = true
+  container_registry_repo_prefix = "custom-prefix" # if null, `name` variable will be used as prefix
+  container_registry_repos = [
     "base-image",
     "custom-apps/managed-image",
     "custom-jobs/managed-image",
@@ -145,8 +146,8 @@ module "datarobot_infra" {
     "services/custom-model-conversion",
     "spark-batch-image"
   ]
-  ecr_repositories_scan_on_push  = false
-  ecr_repositories_force_destroy = true
+  container_registry_repos_scan_on_push  = false
+  container_registry_repos_force_destroy = true
 
   ################################################################################
   # Kubernetes
