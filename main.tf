@@ -318,7 +318,7 @@ locals {
 
   # If scaling from zero is enabled, create a node group in each AZ and name as <name>-<node_group>-<az>.
   # Otherwise, just rename the node group as <name>-<node_group>
-  kubernetes_node_groups = var.kubernetes_node_groups_scale_from_zero && local.kubernetes_node_subnets != null ? merge([
+  kubernetes_node_groups = var.create_kubernetes_cluster && var.kubernetes_node_groups_scale_from_zero ? merge([
     for az in local.azs : {
       for k, v in var.kubernetes_node_groups : "${var.name}-${k}-${az}" => merge(
         {
@@ -386,7 +386,7 @@ module "kubernetes" {
 locals {
   # ASG tags for scaling to and from 0
   # represented as a tuple of objects in the form [{node_group, tag_key, tag_value}]
-  node_group_asg_tags = var.kubernetes_node_groups_scale_from_zero && local.kubernetes_node_subnets != null ? flatten([
+  node_group_asg_tags = var.create_kubernetes_cluster && var.kubernetes_node_groups_scale_from_zero ? flatten([
     for node_group_name, node_group_values in local.kubernetes_node_groups : concat(
       # Labels
       [
