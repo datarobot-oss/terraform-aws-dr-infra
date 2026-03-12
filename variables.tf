@@ -340,7 +340,11 @@ variable "container_registry_repos_force_destroy" {
   default     = false
 }
 
-
+variable "container_registry_create_repository_policy" {
+  description = "Indicates whether to create a repository policy for the ECR repositories. Ignored if create_container_registry is false."
+  type        = bool
+  default     = true
+}
 ################################################################################
 # Kubernetes
 ################################################################################
