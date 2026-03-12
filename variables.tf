@@ -770,13 +770,13 @@ variable "mongodb_atlas_org_id" {
 variable "mongodb_atlas_public_key" {
   description = "Public API key for Mongo Atlas"
   type        = string
-  default     = ""
+  default     = "atlas-public-key"
 }
 
 variable "mongodb_atlas_private_key" {
   description = "Private API key for Mongo Atlas"
   type        = string
-  default     = ""
+  default     = "atlas-private-key"
 }
 
 variable "mongodb_termination_protection_enabled" {
