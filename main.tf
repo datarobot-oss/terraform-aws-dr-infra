@@ -294,6 +294,7 @@ module "container_registry" {
   repository_image_scan_on_push     = var.container_registry_repos_scan_on_push
   repository_force_delete           = var.container_registry_repos_force_destroy
   create_lifecycle_policy           = false
+  create_repository_policy          = var.container_registry_create_repository_policy
 
   tags = var.tags
 }
