@@ -668,8 +668,9 @@ variable "postgres_deletion_protection" {
 variable "postgres_parameters" {
   description = "Parameters to add to the Postgres parameter group"
   type = list(object({
-    name  = string
-    value = string
+    name         = string
+    value        = string
+    apply_method = optional(string)
   }))
   default = [
     {
