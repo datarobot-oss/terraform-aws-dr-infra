@@ -682,6 +682,12 @@ variable "postgres_parameters" {
   ]
 }
 
+variable "postgres_apply_immediately" {
+  description = "Specifies whether any database modifications are applied immediately, or during the next maintenance window"
+  type        = bool
+  default     = false
+}
+
 variable "postgres_create_route53_cname_record" {
   description = "Create `postgres` CNAME in private zone"
   type        = bool

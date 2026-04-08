@@ -38,7 +38,6 @@ module "postgres" {
   engine_version       = var.postgres_engine_version
   family               = var.postgres_family
   major_engine_version = var.postgres_engine_version
-  apply_immediately    = true
 
   instance_class        = var.postgres_instance_class
   allocated_storage     = var.postgres_allocated_storage
@@ -58,7 +57,8 @@ module "postgres" {
   password                    = random_password.postgres.result
   manage_master_user_password = false
 
-  parameters = var.postgres_parameters
+  parameters        = var.postgres_parameters
+  apply_immediately = var.postgres_apply_immediately
 
   tags = var.tags
 }

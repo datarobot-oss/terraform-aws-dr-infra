@@ -572,6 +572,7 @@ module "postgres" {
   postgres_backup_retention_period = var.postgres_backup_retention_period
   postgres_deletion_protection     = var.postgres_deletion_protection
   postgres_parameters              = var.postgres_parameters
+  postgres_apply_immediately       = var.postgres_apply_immediately
 
   create_route53_cname_record = var.create_dns_zones && var.postgres_create_route53_cname_record
   route_53_zone_id            = local.private_zone_id

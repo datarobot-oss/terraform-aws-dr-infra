@@ -117,6 +117,12 @@ variable "postgres_parameters" {
   ]
 }
 
+variable "postgres_apply_immediately" {
+  description = "Specifies whether any database modifications are applied immediately, or during the next maintenance window"
+  type        = bool
+  default     = false
+}
+
 variable "create_route53_cname_record" {
   description = "Whether to create a Route 53 CNAME record for the RDS instance"
   type        = bool
