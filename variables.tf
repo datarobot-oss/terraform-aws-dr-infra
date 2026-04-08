@@ -345,6 +345,8 @@ variable "container_registry_create_repository_policy" {
   type        = bool
   default     = true
 }
+
+
 ################################################################################
 # Kubernetes
 ################################################################################
@@ -955,7 +957,7 @@ variable "cluster_autoscaler" {
 variable "cluster_autoscaler_version" {
   description = "Version of the cluster-autoscaler helm chart to install"
   type        = string
-  default     = null
+  default     = "9.51.0" # app version 1.33.0
 }
 
 variable "cluster_autoscaler_values_overrides" {
