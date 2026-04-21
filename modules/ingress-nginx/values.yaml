@@ -5,7 +5,9 @@ controller:
   config:
     use-forwarded-headers: "true"
     use-proxy-protocol: "true"
+    worker-shutdown-timeout: "600s"
   replicaCount: 3
+  terminationGracePeriodSeconds: 600
   topologySpreadConstraints:
     - maxSkew: 1
       topologyKey: topology.kubernetes.io/zone
