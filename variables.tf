@@ -22,6 +22,7 @@ variable "password_constraints" {
     min_lower        = optional(number)
     min_numeric      = optional(number)
     min_upper        = optional(number)
+    min_special      = optional(number, 0)
     special          = optional(bool)
     override_special = optional(string)
   })

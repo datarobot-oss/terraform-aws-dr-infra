@@ -3,6 +3,7 @@ resource "random_password" "postgres" {
   min_lower        = var.password_constraints.min_lower
   min_upper        = var.password_constraints.min_upper
   min_numeric      = var.password_constraints.min_numeric
+  min_special      = var.password_constraints.min_special
   special          = var.password_constraints.special
   override_special = var.password_constraints.override_special
 }
