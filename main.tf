@@ -576,7 +576,7 @@ module "postgres" {
   postgres_parameters                       = var.postgres_parameters
   postgres_apply_immediately                = var.postgres_apply_immediately
 
-  create_route53_cname_record = var.create_dns_zones && var.postgres_create_route53_cname_record
+  create_route53_cname_record = local.private_zone_id != null && var.postgres_create_route53_cname_record
   route_53_zone_id            = local.private_zone_id
 
   tags = var.tags
