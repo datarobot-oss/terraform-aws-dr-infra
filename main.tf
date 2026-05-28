@@ -564,15 +564,17 @@ module "postgres" {
   egress_with_cidr_blocks      = var.postgres_egress_with_cidr_blocks
   password_constraints         = var.password_constraints
 
-  postgres_engine_version          = var.postgres_engine_version
-  postgres_family                  = var.postgres_family
-  postgres_instance_class          = var.postgres_instance_class
-  postgres_allocated_storage       = var.postgres_allocated_storage
-  postgres_max_allocated_storage   = var.postgres_max_allocated_storage
-  postgres_backup_retention_period = var.postgres_backup_retention_period
-  postgres_deletion_protection     = var.postgres_deletion_protection
-  postgres_parameters              = var.postgres_parameters
-  postgres_apply_immediately       = var.postgres_apply_immediately
+  postgres_engine_version                   = var.postgres_engine_version
+  postgres_family                           = var.postgres_family
+  postgres_instance_class                   = var.postgres_instance_class
+  postgres_allocated_storage                = var.postgres_allocated_storage
+  postgres_max_allocated_storage            = var.postgres_max_allocated_storage
+  postgres_backup_retention_period          = var.postgres_backup_retention_period
+  postgres_skip_final_snapshot              = var.postgres_skip_final_snapshot
+  postgres_final_snapshot_identifier_prefix = var.postgres_final_snapshot_identifier_prefix
+  postgres_deletion_protection              = var.postgres_deletion_protection
+  postgres_parameters                       = var.postgres_parameters
+  postgres_apply_immediately                = var.postgres_apply_immediately
 
   create_route53_cname_record = var.create_dns_zones && var.postgres_create_route53_cname_record
   route_53_zone_id            = local.private_zone_id
