@@ -971,7 +971,7 @@ The default installation supports DataRobot versions >= 10.1.
 ## Requirements
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5.7 |
 | <a name="requirement_aws"></a> [aws](#requirement\_aws) | ~> 6.0 |
 | <a name="requirement_helm"></a> [helm](#requirement\_helm) | ~> 3.0 |
@@ -981,13 +981,13 @@ The default installation supports DataRobot versions >= 10.1.
 ## Providers
 
 | Name | Version |
-|------|---------|
+| ---- | ------- |
 | <a name="provider_aws"></a> [aws](#provider\_aws) | ~> 6.0 |
 
 ## Modules
 
 | Name | Source | Version |
-|------|--------|---------|
+| ---- | ------ | ------- |
 | <a name="module_acm"></a> [acm](#module\_acm) | terraform-aws-modules/acm/aws | ~> 5.0 |
 | <a name="module_app_identity"></a> [app\_identity](#module\_app\_identity) | terraform-aws-modules/iam/aws//modules/iam-role | ~> 6.0 |
 | <a name="module_aws_ebs_csi_driver"></a> [aws\_ebs\_csi\_driver](#module\_aws\_ebs\_csi\_driver) | ./modules/aws-ebs-csi-driver | n/a |
@@ -1022,7 +1022,7 @@ The default installation supports DataRobot versions >= 10.1.
 ## Resources
 
 | Name | Type |
-|------|------|
+| ---- | ---- |
 | [aws_autoscaling_group_tag.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group_tag) | resource |
 | [aws_route53_record.endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_zone.endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone) | resource |
@@ -1039,7 +1039,7 @@ The default installation supports DataRobot versions >= 10.1.
 ## Inputs
 
 | Name | Description | Type | Default | Required |
-|------|-------------|------|---------|:--------:|
+| ---- | ----------- | ---- | ------- | :------: |
 | <a name="input_application_dns_name"></a> [application\_dns\_name](#input\_application\_dns\_name) | Application dns name | `string` | `null` | no |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | Number of availability zones to deploy into | `number` | `2` | no |
 | <a name="input_aws_ebs_csi_driver"></a> [aws\_ebs\_csi\_driver](#input\_aws\_ebs\_csi\_driver) | Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs\_csi\_driver variables are ignored if this variable is false | `bool` | `true` | no |
@@ -1177,7 +1177,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_nvidia_gpu_operator"></a> [nvidia\_gpu\_operator](#input\_nvidia\_gpu\_operator) | Install the nvidia-gpu-operator helm chart to manage NVIDIA GPU resources in the EKS cluster. All other nvidia\_gpu\_operator variables are ignored if this variable is false. | `bool` | `false` | no |
 | <a name="input_nvidia_gpu_operator_values_overrides"></a> [nvidia\_gpu\_operator\_values\_overrides](#input\_nvidia\_gpu\_operator\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_nvidia_gpu_operator_version"></a> [nvidia\_gpu\_operator\_version](#input\_nvidia\_gpu\_operator\_version) | Version of the nvidia-gpu-operator helm chart to install | `string` | `null` | no |
-| <a name="input_password_constraints"></a> [password\_constraints](#input\_password\_constraints) | Constraints to put on any generated passwords | <pre>object({<br/>    length           = number<br/>    min_lower        = optional(number)<br/>    min_numeric      = optional(number)<br/>    min_upper        = optional(number)<br/>    special          = optional(bool)<br/>    override_special = optional(string)<br/>  })</pre> | <pre>{<br/>  "length": 32,<br/>  "min_lower": 1,<br/>  "min_numeric": 1,<br/>  "min_upper": 1,<br/>  "override_special": "-"<br/>}</pre> | no |
+| <a name="input_password_constraints"></a> [password\_constraints](#input\_password\_constraints) | Constraints to put on any generated passwords | <pre>object({<br/>    length           = number<br/>    min_lower        = optional(number)<br/>    min_numeric      = optional(number)<br/>    min_upper        = optional(number)<br/>    min_special      = optional(number, 0)<br/>    special          = optional(bool)<br/>    override_special = optional(string)<br/>  })</pre> | <pre>{<br/>  "length": 32,<br/>  "min_lower": 1,<br/>  "min_numeric": 1,<br/>  "min_upper": 1,<br/>  "override_special": "-"<br/>}</pre> | no |
 | <a name="input_postgres_additional_ingress_cidr_blocks"></a> [postgres\_additional\_ingress\_cidr\_blocks](#input\_postgres\_additional\_ingress\_cidr\_blocks) | Additional CIDR blocks allowed to reach the PostgreSQL port | `list(string)` | `[]` | no |
 | <a name="input_postgres_allocated_storage"></a> [postgres\_allocated\_storage](#input\_postgres\_allocated\_storage) | The allocated storage in gigabytes | `number` | `20` | no |
 | <a name="input_postgres_apply_immediately"></a> [postgres\_apply\_immediately](#input\_postgres\_apply\_immediately) | Specifies whether any database modifications are applied immediately, or during the next maintenance window | `bool` | `false` | no |
@@ -1187,10 +1187,12 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_postgres_egress_with_cidr_blocks"></a> [postgres\_egress\_with\_cidr\_blocks](#input\_postgres\_egress\_with\_cidr\_blocks) | List of egress rules to create for the PostgreSQL security group where 'cidr\_blocks' is used. See https://github.com/terraform-aws-modules/terraform-aws-security-group/blob/master/README.md#input_egress_with_cidr_blocks for more details. | `list(map(string))` | `[]` | no |
 | <a name="input_postgres_engine_version"></a> [postgres\_engine\_version](#input\_postgres\_engine\_version) | The engine version to use | `string` | `"14.20"` | no |
 | <a name="input_postgres_family"></a> [postgres\_family](#input\_postgres\_family) | Postgres family variable to support major version upgrades | `string` | `"postgres14"` | no |
+| <a name="input_postgres_final_snapshot_identifier_prefix"></a> [postgres\_final\_snapshot\_identifier\_prefix](#input\_postgres\_final\_snapshot\_identifier\_prefix) | Prefix for the final snapshot identifier when postgres\_skip\_final\_snapshot is false | `string` | `"final"` | no |
 | <a name="input_postgres_instance_class"></a> [postgres\_instance\_class](#input\_postgres\_instance\_class) | The instance type of the RDS instance | `string` | `"db.m6g.large"` | no |
 | <a name="input_postgres_max_allocated_storage"></a> [postgres\_max\_allocated\_storage](#input\_postgres\_max\_allocated\_storage) | Specifies the value for Storage Autoscaling | `number` | `500` | no |
 | <a name="input_postgres_name"></a> [postgres\_name](#input\_postgres\_name) | Name of the RDS postgres instance. If not specified, the `name` variable will be used. | `string` | `null` | no |
 | <a name="input_postgres_parameters"></a> [postgres\_parameters](#input\_postgres\_parameters) | Parameters to add to the Postgres parameter group | <pre>list(object({<br/>    name         = string<br/>    value        = string<br/>    apply_method = optional(string)<br/>  }))</pre> | <pre>[<br/>  {<br/>    "name": "password_encryption",<br/>    "value": "scram-sha-256"<br/>  }<br/>]</pre> | no |
+| <a name="input_postgres_skip_final_snapshot"></a> [postgres\_skip\_final\_snapshot](#input\_postgres\_skip\_final\_snapshot) | Whether to skip the final snapshot before the DB instance is deleted | `bool` | `true` | no |
 | <a name="input_postgres_subnet_group_name"></a> [postgres\_subnet\_group\_name](#input\_postgres\_subnet\_group\_name) | Name of RDS postgres instance DB subnet group. | `string` | `null` | no |
 | <a name="input_postgres_subnet_group_use_name_prefix"></a> [postgres\_subnet\_group\_use\_name\_prefix](#input\_postgres\_subnet\_group\_use\_name\_prefix) | Determines whether to use subnet\_group\_name as is or create a unique name beginning with the subnet\_group\_name as the prefix | `bool` | `true` | no |
 | <a name="input_rabbitmq_authentication_strategy"></a> [rabbitmq\_authentication\_strategy](#input\_rabbitmq\_authentication\_strategy) | Authentication strategy used to secure the broker | `string` | `"simple"` | no |
@@ -1216,7 +1218,7 @@ The default installation supports DataRobot versions >= 10.1.
 ## Outputs
 
 | Name | Description |
-|------|-------------|
+| ---- | ----------- |
 | <a name="output_acm_certificate_arn"></a> [acm\_certificate\_arn](#output\_acm\_certificate\_arn) | ARN of the ACM certificate |
 | <a name="output_app_role_arn"></a> [app\_role\_arn](#output\_app\_role\_arn) | ARN of the IAM role to be assumed by the DataRobot app service accounts |
 | <a name="output_ecr_repository_urls"></a> [ecr\_repository\_urls](#output\_ecr\_repository\_urls) | URLs of the image builder repositories |

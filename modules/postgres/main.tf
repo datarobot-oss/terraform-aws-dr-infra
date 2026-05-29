@@ -3,6 +3,7 @@ resource "random_password" "postgres" {
   min_lower        = var.password_constraints.min_lower
   min_upper        = var.password_constraints.min_upper
   min_numeric      = var.password_constraints.min_numeric
+  min_special      = var.password_constraints.min_special
   special          = var.password_constraints.special
   override_special = var.password_constraints.override_special
 }
@@ -47,10 +48,11 @@ module "postgres" {
   create_cloudwatch_log_group     = true
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
 
-  backup_retention_period = var.postgres_backup_retention_period
-  skip_final_snapshot     = true
-  deletion_protection     = var.postgres_deletion_protection
-  storage_encrypted       = true
+  backup_retention_period          = var.postgres_backup_retention_period
+  skip_final_snapshot              = var.postgres_skip_final_snapshot
+  final_snapshot_identifier_prefix = var.postgres_final_snapshot_identifier_prefix
+  deletion_protection              = var.postgres_deletion_protection
+  storage_encrypted                = true
 
   db_name                     = "postgres"
   username                    = "postgres"

@@ -48,6 +48,7 @@ variable "password_constraints" {
     min_lower        = optional(number)
     min_numeric      = optional(number)
     min_upper        = optional(number)
+    min_special      = optional(number)
     special          = optional(bool)
     override_special = optional(string)
   })
@@ -94,6 +95,18 @@ variable "postgres_backup_retention_period" {
   description = "The days to retain backups for"
   type        = number
   default     = 7
+}
+
+variable "postgres_skip_final_snapshot" {
+  description = "Whether to skip the final snapshot before the DB instance is deleted"
+  type        = bool
+  default     = true
+}
+
+variable "postgres_final_snapshot_identifier_prefix" {
+  description = "Prefix for the final snapshot identifier when skip_final_snapshot is false"
+  type        = string
+  default     = "final"
 }
 
 variable "postgres_deletion_protection" {
