@@ -504,6 +504,23 @@ module "app_identity" {
       ]
       resources = ["arn:${data.aws_partition.current.id}:iam::${data.aws_caller_identity.current.account_id}:role/*"]
     }
+    ecrBatchDelete = {
+      actions = [
+        "ecr:BatchDeleteImage",
+        "ecr:CreateRepository",
+        "ecr:BatchImportUpstreamImage",
+      ]
+      resources = ["*"]
+    }
+    assumeCustomerRoles = {
+      actions   = ["sts:AssumeRole"]
+      resources = ["*"]
+      condition = length(coalesce(var.ingress_vpce_service_allowed_principals, [])) > 0 ? [{
+        test     = "StringLike"
+        variable = "aws:ResourceAccount"
+        values   = [for arn in var.ingress_vpce_service_allowed_principals : split(":", arn)[4]]
+      }] : null
+    }
   }
 
   tags = var.tags
