@@ -573,6 +573,12 @@ variable "create_app_identity" {
   default     = true
 }
 
+variable "app_identity_name" {
+  description = "Name of the IAM role for the DataRobot application. Defaults to <name>-app-irsa."
+  type        = string
+  default     = null
+}
+
 variable "datarobot_namespace" {
   description = "Kubernetes namespace in which the DataRobot application will be installed"
   type        = string

@@ -451,7 +451,7 @@ module "app_identity" {
   version = "~> 6.0"
   count   = var.create_app_identity ? 1 : 0
 
-  name            = "${var.name}-app-irsa"
+  name            = coalesce(var.app_identity_name, "${var.name}-app-irsa")
   use_name_prefix = false
 
   # trust

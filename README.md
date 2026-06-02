@@ -1040,6 +1040,7 @@ The default installation supports DataRobot versions >= 10.1.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_app_identity_name"></a> [app\_identity\_name](#input\_app\_identity\_name) | Name of the IAM role for the DataRobot application. Defaults to <name>-app-irsa. | `string` | `null` | no |
 | <a name="input_application_dns_name"></a> [application\_dns\_name](#input\_application\_dns\_name) | Application dns name | `string` | `null` | no |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | Number of availability zones to deploy into | `number` | `2` | no |
 | <a name="input_aws_ebs_csi_driver"></a> [aws\_ebs\_csi\_driver](#input\_aws\_ebs\_csi\_driver) | Install the aws-ebs-csi-driver helm chart to enable use of EBS for Kubernetes persistent volumes. All other ebs\_csi\_driver variables are ignored if this variable is false | `bool` | `true` | no |
