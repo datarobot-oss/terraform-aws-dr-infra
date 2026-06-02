@@ -512,15 +512,6 @@ module "app_identity" {
       ]
       resources = ["*"]
     }
-    assumeCustomerRoles = {
-      actions   = ["sts:AssumeRole"]
-      resources = ["*"]
-      condition = length(coalesce(var.ingress_vpce_service_allowed_principals, [])) > 0 ? [{
-        test     = "StringLike"
-        variable = "aws:ResourceAccount"
-        values   = [for arn in var.ingress_vpce_service_allowed_principals : split(":", arn)[4]]
-      }] : null
-    }
   }
 
   tags = var.tags
