@@ -169,46 +169,27 @@ resource "aws_route53_record" "endpoint" {
 # DNS
 ################################################################################
 
-data "aws_route53_zone" "existing_public" {
-  count   = var.existing_public_route53_zone_id != null ? 1 : 0
-  zone_id = var.existing_public_route53_zone_id
-}
-
-data "aws_route53_zone" "existing_private" {
-  count   = var.existing_private_route53_zone_id != null ? 1 : 0
-  zone_id = var.existing_private_route53_zone_id
+data "aws_route53_zone" "existing" {
+  count   = var.existing_route53_zone_id != null ? 1 : 0
+  zone_id = var.existing_route53_zone_id
 }
 
 locals {
-  public_zone_id           = var.existing_public_route53_zone_id != null ? var.existing_public_route53_zone_id : try(module.public_dns[0].id, null)
-  public_zone_arn          = try(data.aws_route53_zone.existing_public[0].arn, module.public_dns[0].arn, null)
-  public_zone_name_servers = try(data.aws_route53_zone.existing_public[0].name_servers, module.public_dns[0].name_servers, null)
-
-  private_zone_id  = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.private_dns[0].id, null)
-  private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.private_dns[0].arn, null)
+  dns_zone_id           = var.existing_route53_zone_id != null ? var.existing_route53_zone_id : try(module.dns[0].id, null)
+  dns_zone_arn          = try(data.aws_route53_zone.existing[0].arn, module.dns[0].arn, null)
+  dns_zone_name         = try(data.aws_route53_zone.existing[0].name, module.dns[0].name, null)
+  dns_zone_name_servers = try(data.aws_route53_zone.existing[0].name_servers, module.dns[0].name_servers, null)
 }
 
-module "public_dns" {
+module "dns" {
   source  = "terraform-aws-modules/route53/aws"
   version = "~> 6.0"
-  count   = var.existing_public_route53_zone_id == null && var.create_dns_zones ? 1 : 0
+  count   = var.existing_route53_zone_id == null && var.create_dns_zone ? 1 : 0
 
-  name          = var.domain_name
-  comment       = "${var.domain_name} public zone"
-  force_destroy = var.dns_zones_force_destroy
+  name          = var.dns_zone_name
+  force_destroy = var.dns_zone_force_destroy
 
-  tags = var.tags
-}
-
-module "private_dns" {
-  source  = "terraform-aws-modules/route53/aws"
-  version = "~> 6.0"
-  count   = var.existing_private_route53_zone_id == null && var.create_dns_zones ? 1 : 0
-
-  name          = var.domain_name
-  comment       = "${var.domain_name} private zone"
-  force_destroy = var.dns_zones_force_destroy
-  vpc = {
+  vpc = var.dns_zone_public ? null : {
     this = {
       vpc_id = local.vpc_id
     }
@@ -231,12 +212,11 @@ module "acm" {
   version = "~> 5.0" # 6.0 requires TF >= 1.10
   count   = var.create_acm_certificate && var.existing_acm_certificate_arn == null ? 1 : 0
 
-  domain_name = var.domain_name
-  zone_id     = local.public_zone_id
+  domain_name = local.dns_zone_name
+  zone_id     = local.dns_zone_id
 
   subject_alternative_names = [
-    var.domain_name,
-    "*.${var.domain_name}"
+    "*.${local.dns_zone_name}",
   ]
 
   wait_for_validation = true
@@ -576,8 +556,8 @@ module "postgres" {
   postgres_parameters                       = var.postgres_parameters
   postgres_apply_immediately                = var.postgres_apply_immediately
 
-  create_route53_cname_record = local.private_zone_id != null && var.postgres_create_route53_cname_record
-  route_53_zone_id            = local.private_zone_id
+  create_route53_cname_record = var.create_dns_zone && var.postgres_create_route53_cname_record
+  route_53_zone_id            = local.dns_zone_id
 
   tags = var.tags
 }
@@ -702,10 +682,9 @@ module "private_link_service" {
   vpce_service_allowed_principals = var.ingress_vpce_service_allowed_principals
   vpce_service_private_dns_name   = var.application_dns_name
   ingress_lb_arns                 = local.load_balancer_arns
-  route53_zone_id                 = local.public_zone_id
+  route53_zone_id                 = local.dns_zone_id
 
   tags = var.tags
-
 }
 
 ################################################################################
@@ -804,7 +783,7 @@ module "cert_manager" {
   count  = var.install_helm_charts && var.cert_manager ? 1 : 0
 
   kubernetes_cluster_name                  = local.eks_cluster_name
-  route53_zone_arn                         = local.public_zone_arn
+  route53_zone_arn                         = local.dns_zone_arn
   letsencrypt_clusterissuers               = var.cert_manager_letsencrypt_clusterissuers
   letsencrypt_clusterissuers_email_address = var.cert_manager_letsencrypt_email_address
 
@@ -821,7 +800,7 @@ module "external_dns" {
   count  = var.install_helm_charts && var.external_dns ? 1 : 0
 
   kubernetes_cluster_name = local.eks_cluster_name
-  route53_zone_id         = var.internet_facing_ingress_lb ? local.public_zone_id : local.private_zone_id
+  route53_zone_id         = local.dns_zone_id
 
   chart_version    = var.external_dns_version
   values_overrides = var.external_dns_values_overrides

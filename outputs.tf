@@ -62,34 +62,24 @@ output "vpc_intra_route_table_ids" {
 # DNS
 ################################################################################
 
-output "public_route53_zone_id" {
-  description = "Zone ID of the public Route53 zone"
-  value       = local.public_zone_id
+output "route53_zone_id" {
+  description = "Zone ID of the Route53 zone"
+  value       = local.dns_zone_id
 }
 
-output "public_route53_zone_arn" {
-  description = "Zone ARN of the public Route53 zone"
-  value       = local.public_zone_arn
+output "route53_zone_arn" {
+  description = "Zone ARN of the Route53 zone"
+  value       = local.dns_zone_arn
 }
 
-output "public_route53_zone_name_servers" {
+output "route53_zone_name" {
+  description = "Name of the Route53 zone"
+  value       = local.dns_zone_name
+}
+
+output "route53_zone_name_servers" {
   description = "Name servers of Route53 zone"
-  value       = local.public_zone_name_servers
-}
-
-output "public_dns_zone_name_servers" {
-  description = "Name servers of Route53 zone"
-  value       = local.public_zone_name_servers
-}
-
-output "private_route53_zone_id" {
-  description = "Zone ID of the private Route53 zone"
-  value       = local.private_zone_id
-}
-
-output "private_route53_zone_arn" {
-  description = "Zone ARN of the private Route53 zone"
-  value       = local.private_zone_arn
+  value       = local.dns_zone_name_servers
 }
 
 

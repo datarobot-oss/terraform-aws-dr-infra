@@ -1,7 +1,5 @@
 controller:
   service:
-    targetPorts:
-      https: https
     loadBalancerSourceRanges:
     %{ for ip_range in lb_source_ranges ~}
       - ${ip_range}

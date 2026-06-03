@@ -6,37 +6,11 @@ Terraform module to create AWS Cloud infrastructure resources required to run Da
 module "datarobot_infra" {
   source = "datarobot-oss/dr-infra/aws"
 
-  name        = "datarobot"
-  domain_name = "yourdomain.com"
-
-  create_network                  = true
-  network_address_space           = "10.7.0.0/16"
-  create_dns_zones                = false
-  existing_public_route53_zone_id = "Z06110132R7HO9BLI64XY"
-  create_acm_certificate          = false
-  existing_acm_certificate_arn    = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
-  create_storage                  = true
-  create_container_registry       = true
-  create_kubernetes_cluster       = true
-  create_app_identity             = true
-  create_postgres                 = true
-  create_redis                    = true
-  create_mongodb                  = true
-  create_rabbitmq                 = true
-
-  cluster_autoscaler           = true
-  descheduler                  = true
-  aws_ebs_csi_driver           = true
-  aws_load_balancer_controller = true
-  ingress_nginx                = true
-  internet_facing_ingress_lb   = true
-  cert_manager                 = true
-  external_dns                 = true
-  nvidia_gpu_operator          = true
-  metrics_server               = true
+  name = "datarobot"
+  dns_zone_name = "datarobot.example.com"
+  cert_manager_letsencrypt_email_address = "you@example.com"
 
   tags = {
-    application = "datarobot"
     environment = "dev"
     managed-by  = "terraform"
   }
@@ -44,26 +18,24 @@ module "datarobot_infra" {
 ```
 
 ## Examples
-- [Complete](examples/complete) - Demonstrates all input variables
-- [Partial](examples/partial) - Demonstrates the use of existing resources
-- [Minimal](examples/minimal) - Demonstrates the minimum set of input variables needed to deploy all infrastructure
+- [Complete](examples/complete) - Demonstrates all available input variables.
+- [Public](examples/public) - Minimal configuration for a publicly accessible deployment (internet-facing NLB, public EKS API endpoint).
+- [Private](examples/private) - Minimal configuration for a private deployment (internal NLB, private-only EKS API endpoint, existing VPC).
 
 ### Using an example directly from source
 1. Clone the repo
 ```bash
 git clone https://github.com/datarobot-oss/terraform-aws-dr-infra.git
 ```
-2. Change directories into the example that best suits your needs
+2. Change directories into the example that best aligns with your use-case.
 ```bash
-cd terraform-aws-dr-infra/examples/minimal
+cd terraform-aws-dr-infra/examples/public
 ```
-3. Modify `main.tf` as needed with any changes to the input variables passed to the `datarobot_infra` module
-4. Run terraform commands
+3. Modify `main.tf` to suit your specific use-case.
+4. Run terraform.
 ```bash
 terraform init
-terraform plan
 terraform apply
-terraform destroy
 ```
 
 
@@ -136,15 +108,13 @@ An interface VPC endpoint for the S3 service is created by default. More can be 
 
 ### DNS
 #### Toggle
-- `create_dns_zones` to create new Route53 zones
-- `existing_public_route53_zone_id` / `existing_private_route53_zone_id` to use an existing Route53 zone
+- `create_dns_zone` to create a new Route53 zone
+- `existing_route53_zone_id` to use an existing Route53 zone
 
 #### Description
-Uses the [terraform-aws-route53](https://github.com/terraform-aws-modules/terraform-aws-route53) module to create new public and/or private Route53 hosted zone with name `domain_name`.
+Uses the [terraform-aws-route53](https://github.com/terraform-aws-modules/terraform-aws-route53) module to create a new Route53 hosted zone with name `dns_zone_name`. When `dns_zone_public` is `true` (the default) a public zone is created; when `false` a private zone is created for the given VPC.
 
-A public Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources when `internet_facing_ingress_lb` is `true`. It is also used for DNS validation when creating a new ACM certificate.
-
-A private Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources when `internet_facing_ingress_lb` is `false`. It is also used to create CNAME records for AWS service private endpoints that do not have `private_dns_enabled`.
+The Route53 zone is used by `external_dns` to create records for the DataRobot ingress resources. It is also used for DNS validation when creating a new certificate either with ACM or cert-manager and to create CNAME records for AWS service private endpoints that do not have `private_dns_enabled`.
 
 #### IAM Policy
 ```
@@ -997,6 +967,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="module_cluster_autoscaler"></a> [cluster\_autoscaler](#module\_cluster\_autoscaler) | ./modules/cluster-autoscaler | n/a |
 | <a name="module_container_registry"></a> [container\_registry](#module\_container\_registry) | terraform-aws-modules/ecr/aws | ~> 3.0 |
 | <a name="module_descheduler"></a> [descheduler](#module\_descheduler) | ./modules/descheduler | n/a |
+| <a name="module_dns"></a> [dns](#module\_dns) | terraform-aws-modules/route53/aws | ~> 6.0 |
 | <a name="module_endpoints"></a> [endpoints](#module\_endpoints) | terraform-aws-modules/vpc/aws//modules/vpc-endpoints | ~> 6.0 |
 | <a name="module_external_dns"></a> [external\_dns](#module\_external\_dns) | ./modules/external-dns | n/a |
 | <a name="module_external_secrets"></a> [external\_secrets](#module\_external\_secrets) | ./modules/external-secrets | n/a |
@@ -1012,9 +983,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="module_nvidia_gpu_operator"></a> [nvidia\_gpu\_operator](#module\_nvidia\_gpu\_operator) | ./modules/nvidia-gpu-operator | n/a |
 | <a name="module_observability"></a> [observability](#module\_observability) | ./modules/observability | n/a |
 | <a name="module_postgres"></a> [postgres](#module\_postgres) | ./modules/postgres | n/a |
-| <a name="module_private_dns"></a> [private\_dns](#module\_private\_dns) | terraform-aws-modules/route53/aws | ~> 6.0 |
 | <a name="module_private_link_service"></a> [private\_link\_service](#module\_private\_link\_service) | ./modules/private-link-service | n/a |
-| <a name="module_public_dns"></a> [public\_dns](#module\_public\_dns) | terraform-aws-modules/route53/aws | ~> 6.0 |
 | <a name="module_rabbitmq"></a> [rabbitmq](#module\_rabbitmq) | ./modules/rabbitmq | n/a |
 | <a name="module_redis"></a> [redis](#module\_redis) | ./modules/redis | n/a |
 | <a name="module_storage"></a> [storage](#module\_storage) | terraform-aws-modules/s3-bucket/aws | ~> 5.0 |
@@ -1032,8 +1001,7 @@ The default installation supports DataRobot versions >= 10.1.
 | [aws_eks_cluster_auth.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster_auth) | data source |
 | [aws_lb.existing](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/lb) | data source |
 | [aws_partition.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/partition) | data source |
-| [aws_route53_zone.existing_private](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
-| [aws_route53_zone.existing_public](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
+| [aws_route53_zone.existing](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/route53_zone) | data source |
 | [aws_vpc.existing](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/vpc) | data source |
 
 ## Inputs
@@ -1049,7 +1017,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_aws_load_balancer_controller_values_overrides"></a> [aws\_load\_balancer\_controller\_values\_overrides](#input\_aws\_load\_balancer\_controller\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_aws_load_balancer_controller_version"></a> [aws\_load\_balancer\_controller\_version](#input\_aws\_load\_balancer\_controller\_version) | Version of the aws-load-balancer-controller helm chart to install | `string` | `null` | no |
 | <a name="input_cert_manager"></a> [cert\_manager](#input\_cert\_manager) | Install the cert-manager helm chart. All other cert\_manager variables are ignored if this variable is false. | `bool` | `true` | no |
-| <a name="input_cert_manager_letsencrypt_clusterissuers"></a> [cert\_manager\_letsencrypt\_clusterissuers](#input\_cert\_manager\_letsencrypt\_clusterissuers) | Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers | `bool` | `false` | no |
+| <a name="input_cert_manager_letsencrypt_clusterissuers"></a> [cert\_manager\_letsencrypt\_clusterissuers](#input\_cert\_manager\_letsencrypt\_clusterissuers) | Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers. This will only work if the Route53 zone is public. | `bool` | `true` | no |
 | <a name="input_cert_manager_letsencrypt_email_address"></a> [cert\_manager\_letsencrypt\_email\_address](#input\_cert\_manager\_letsencrypt\_email\_address) | Email address for the certificate owner. Let's Encrypt will use this to contact you about expiring certificates, and issues related to your account. Only required if cert\_manager\_letsencrypt\_clusterissuers is true. | `string` | `"user@example.com"` | no |
 | <a name="input_cert_manager_values_overrides"></a> [cert\_manager\_values\_overrides](#input\_cert\_manager\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_cert_manager_version"></a> [cert\_manager\_version](#input\_cert\_manager\_version) | Version of the cert-manager helm chart to install | `string` | `null` | no |
@@ -1064,10 +1032,10 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_container_registry_repos"></a> [container\_registry\_repos](#input\_container\_registry\_repos) | Repositories to create. Ignored if create\_container\_registry is false. | `set(string)` | <pre>[<br/>  "base-image",<br/>  "custom-apps-managed-image",<br/>  "custom-jobs/managed-image",<br/>  "ephemeral-image",<br/>  "managed-image",<br/>  "services/custom-model-conversion",<br/>  "spark-batch-image"<br/>]</pre> | no |
 | <a name="input_container_registry_repos_force_destroy"></a> [container\_registry\_repos\_force\_destroy](#input\_container\_registry\_repos\_force\_destroy) | Force destroy the ECR repositories. Ignored if create\_container\_registry is false. | `bool` | `false` | no |
 | <a name="input_container_registry_repos_scan_on_push"></a> [container\_registry\_repos\_scan\_on\_push](#input\_container\_registry\_repos\_scan\_on\_push) | Indicates whether images are scanned after being pushed to the repository (`true`) or not scanned (`false`). Ignored if create\_container\_registry is false. | `bool` | `false` | no |
-| <a name="input_create_acm_certificate"></a> [create\_acm\_certificate](#input\_create\_acm\_certificate) | Create a new ACM certificate for the ingress load balancer to use. Ignored if existing\_acm\_certificate\_arn is specified. | `bool` | `true` | no |
+| <a name="input_create_acm_certificate"></a> [create\_acm\_certificate](#input\_create\_acm\_certificate) | Create a new ACM certificate for the ingress load balancer to use. Ignored if existing\_acm\_certificate\_arn is specified. This will only work if the Route53 zone is public. | `bool` | `false` | no |
 | <a name="input_create_app_identity"></a> [create\_app\_identity](#input\_create\_app\_identity) | Create an IAM role for the DataRobot application service accounts | `bool` | `true` | no |
 | <a name="input_create_container_registry"></a> [create\_container\_registry](#input\_create\_container\_registry) | Create DataRobot image builder container repositories in Amazon Elastic Container Registry | `bool` | `true` | no |
-| <a name="input_create_dns_zones"></a> [create\_dns\_zones](#input\_create\_dns\_zones) | Create DNS zones for domain\_name. Ignored if existing\_public\_route53\_zone\_id and existing\_private\_route53\_zone\_id are specified. | `bool` | `true` | no |
+| <a name="input_create_dns_zone"></a> [create\_dns\_zone](#input\_create\_dns\_zone) | Create Route53 hosted DNS zone. Ignored if existing\_route53\_zone\_id is specified. | `bool` | `true` | no |
 | <a name="input_create_ingress_vpce_service"></a> [create\_ingress\_vpce\_service](#input\_create\_ingress\_vpce\_service) | Expose the internal NLB created by the ingress-nginx controller as a VPC Endpoint Service. Only applies if internet\_facing\_ingress\_lb is false. | `bool` | `false` | no |
 | <a name="input_create_kubernetes_cluster"></a> [create\_kubernetes\_cluster](#input\_create\_kubernetes\_cluster) | Create a new Amazon Elastic Kubernetes Cluster. All kubernetes and helm chart variables are ignored if this variable is false. | `bool` | `true` | no |
 | <a name="input_create_mongodb"></a> [create\_mongodb](#input\_create\_mongodb) | Whether to create a MongoDB Atlas instance | `bool` | `false` | no |
@@ -1081,8 +1049,9 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_descheduler"></a> [descheduler](#input\_descheduler) | Install the descheduler helm chart to enable rescheduling of pods. All other descheduler variables are ignored if this variable is false | `bool` | `true` | no |
 | <a name="input_descheduler_values_overrides"></a> [descheduler\_values\_overrides](#input\_descheduler\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_descheduler_version"></a> [descheduler\_version](#input\_descheduler\_version) | Version of the descheduler helm chart to install | `string` | `null` | no |
-| <a name="input_dns_zones_force_destroy"></a> [dns\_zones\_force\_destroy](#input\_dns\_zones\_force\_destroy) | Force destroy the public and private Route53 zones. Ignored if an existing route53\_zone\_id is specified or create\_dns\_zones is false. | `bool` | `false` | no |
-| <a name="input_domain_name"></a> [domain\_name](#input\_domain\_name) | Name of the domain to use for the DataRobot application. If create\_dns\_zones is true then zones will be created for this domain. It is also used by ACM for DNS validation and as a domain filter by the external-dns helm chart. | `string` | `""` | no |
+| <a name="input_dns_zone_force_destroy"></a> [dns\_zone\_force\_destroy](#input\_dns\_zone\_force\_destroy) | Force destroy the Route53 zone. Ignored if an existing\_route53\_zone\_id is specified or create\_dns\_zone is false. | `bool` | `false` | no |
+| <a name="input_dns_zone_name"></a> [dns\_zone\_name](#input\_dns\_zone\_name) | Name of the Route53 hosted DNS zone to create. Ignored if existing\_route53\_zone\_id is specified. | `string` | `null` | no |
+| <a name="input_dns_zone_public"></a> [dns\_zone\_public](#input\_dns\_zone\_public) | Create public Route53 hosted DNS zone. When `false`, a private zone will be created for the given VPC. | `bool` | `true` | no |
 | <a name="input_existing_acm_certificate_arn"></a> [existing\_acm\_certificate\_arn](#input\_existing\_acm\_certificate\_arn) | ARN of existing ACM certificate to use with the ingress load balancer created by the ingress\_nginx module. When specified, create\_acm\_certificate will be ignored. | `string` | `null` | no |
 | <a name="input_existing_app_role_arn"></a> [existing\_app\_role\_arn](#input\_existing\_app\_role\_arn) | ARN of existing IAM role which represents the DataRobot application | `string` | `null` | no |
 | <a name="input_existing_eks_cluster_name"></a> [existing\_eks\_cluster\_name](#input\_existing\_eks\_cluster\_name) | Name of existing EKS cluster to use. When specified, all other kubernetes variables will be ignored. | `string` | `null` | no |
@@ -1090,13 +1059,12 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_existing_kubernetes_node_subnets"></a> [existing\_kubernetes\_node\_subnets](#input\_existing\_kubernetes\_node\_subnets) | List of existing subnet IDs to be used for the EKS cluster. Required when an existing\_network\_id is specified. Ignored if create\_network is true and no existing\_network\_id is specified. Subnets must adhere to VPC requirements and considerations https://docs.aws.amazon.com/eks/latest/userguide/network_reqs.html. | `list(string)` | `null` | no |
 | <a name="input_existing_mongodb_subnets"></a> [existing\_mongodb\_subnets](#input\_existing\_mongodb\_subnets) | List of existing subnet IDs to be used for the MongoDB Atlas instance. Required when an existing\_network\_id is specified. | `list(string)` | `null` | no |
 | <a name="input_existing_postgres_subnets"></a> [existing\_postgres\_subnets](#input\_existing\_postgres\_subnets) | List of existing subnet IDs to be used for the RDS postgres instance. Required when an existing\_network\_id is specified. | `list(string)` | `null` | no |
-| <a name="input_existing_private_route53_zone_id"></a> [existing\_private\_route53\_zone\_id](#input\_existing\_private\_route53\_zone\_id) | ID of existing private Route53 hosted zone to use for private DNS records created by external-dns. This is required when create\_dns\_zones is false and ingress\_nginx is true with internet\_facing\_ingress\_lb false. | `string` | `null` | no |
-| <a name="input_existing_public_route53_zone_id"></a> [existing\_public\_route53\_zone\_id](#input\_existing\_public\_route53\_zone\_id) | ID of existing public Route53 hosted zone to use for public DNS records created by external-dns and ACM certificate validation. This is required when create\_dns\_zones is false and ingress\_nginx and internet\_facing\_ingress\_lb are true or when create\_acm\_certificate is true. | `string` | `null` | no |
 | <a name="input_existing_rabbitmq_subnets"></a> [existing\_rabbitmq\_subnets](#input\_existing\_rabbitmq\_subnets) | List of existing subnet IDs to be used for the AMQ RabbitMQ instance. Required when an existing\_network\_id is specified. | `list(string)` | `null` | no |
 | <a name="input_existing_redis_subnets"></a> [existing\_redis\_subnets](#input\_existing\_redis\_subnets) | List of existing subnet IDs to be used for the Elasticache Redis instance. Required when an existing\_network\_id is specified. | `list(string)` | `null` | no |
+| <a name="input_existing_route53_zone_id"></a> [existing\_route53\_zone\_id](#input\_existing\_route53\_zone\_id) | ID of existing Route53 hosted zone to use. When specified, all other DNS variables will be ignored. | `string` | `null` | no |
 | <a name="input_existing_s3_bucket_id"></a> [existing\_s3\_bucket\_id](#input\_existing\_s3\_bucket\_id) | ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, all other storage variables will be ignored. | `string` | `null` | no |
 | <a name="input_existing_vpc_id"></a> [existing\_vpc\_id](#input\_existing\_vpc\_id) | ID of an existing VPC to use. When specified, other network variables are ignored. | `string` | `null` | no |
-| <a name="input_external_dns"></a> [external\_dns](#input\_external\_dns) | Install the external\_dns helm chart to create DNS records for ingress resources matching the domain\_name variable. All other external\_dns variables are ignored if this variable is false. | `bool` | `true` | no |
+| <a name="input_external_dns"></a> [external\_dns](#input\_external\_dns) | Install the external\_dns helm chart to manage DNS records for resources created by the application. All other external\_dns variables are ignored if this variable is false. | `bool` | `true` | no |
 | <a name="input_external_dns_values_overrides"></a> [external\_dns\_values\_overrides](#input\_external\_dns\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_external_dns_version"></a> [external\_dns\_version](#input\_external\_dns\_version) | Version of the external-dns helm chart to install | `string` | `null` | no |
 | <a name="input_external_secrets"></a> [external\_secrets](#input\_external\_secrets) | Install the external\_secrets helm chart to manage external secrets resources in the EKS cluster. All other external\_secrets variables are ignored if this variable is false. | `bool` | `false` | no |
@@ -1112,7 +1080,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_internet_facing_ingress_lb"></a> [internet\_facing\_ingress\_lb](#input\_internet\_facing\_ingress\_lb) | Determines the type of NLB created for EKS ingress. If true, an internet-facing NLB will be created. If false, an internal NLB will be created. Ignored when ingress\_nginx is false. | `bool` | `true` | no |
 | <a name="input_kubernetes_authentication_mode"></a> [kubernetes\_authentication\_mode](#input\_kubernetes\_authentication\_mode) | The authentication mode for the cluster. Valid values are `CONFIG_MAP`, `API` or `API_AND_CONFIG_MAP` | `string` | `"API_AND_CONFIG_MAP"` | no |
 | <a name="input_kubernetes_cluster_access_entries"></a> [kubernetes\_cluster\_access\_entries](#input\_kubernetes\_cluster\_access\_entries) | Map of access entries to add to the cluster | `any` | `{}` | no |
-| <a name="input_kubernetes_cluster_addons"></a> [kubernetes\_cluster\_addons](#input\_kubernetes\_cluster\_addons) | Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name` | `any` | <pre>{<br/>  "coredns": {},<br/>  "eks-pod-identity-agent": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"agent\": {\"additionalArgs\": {\"-b\": \"169.254.170.23\"}}}"<br/>  },<br/>  "kube-proxy": {},<br/>  "vpc-cni": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}",<br/>    "resolve_conflicts_on_create": "OVERWRITE"<br/>  }<br/>}</pre> | no |
+| <a name="input_kubernetes_cluster_addons"></a> [kubernetes\_cluster\_addons](#input\_kubernetes\_cluster\_addons) | Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name` | `any` | <pre>{<br/>  "coredns": {},<br/>  "eks-pod-identity-agent": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"agent\": {\"additionalArgs\": {\"-b\": \"169.254.170.23\"}}}"<br/>  },<br/>  "kube-proxy": {},<br/>  "vpc-cni": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}",<br/>    "resolve_conflicts_on_create": "OVERWRITE"<br/>  }<br/>}</pre> | no |
 | <a name="input_kubernetes_cluster_encryption_config"></a> [kubernetes\_cluster\_encryption\_config](#input\_kubernetes\_cluster\_encryption\_config) | Configuration block with encryption configuration for the cluster. To disable secret encryption, set this value to `{}` | `any` | <pre>{<br/>  "resources": [<br/>    "secrets"<br/>  ]<br/>}</pre> | no |
 | <a name="input_kubernetes_cluster_endpoint_private_access_cidrs"></a> [kubernetes\_cluster\_endpoint\_private\_access\_cidrs](#input\_kubernetes\_cluster\_endpoint\_private\_access\_cidrs) | List of additional CIDR blocks allowed to access the Amazon EKS private API server endpoint. By default only the kubernetes nodes are allowed, if any other hosts such as a provisioner need to access the EKS private API endpoint they need to be added here. | `list(string)` | `[]` | no |
 | <a name="input_kubernetes_cluster_endpoint_public_access"></a> [kubernetes\_cluster\_endpoint\_public\_access](#input\_kubernetes\_cluster\_endpoint\_public\_access) | Indicates whether or not the Amazon EKS public API server endpoint is enabled | `bool` | `true` | no |
@@ -1177,7 +1145,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_nvidia_gpu_operator"></a> [nvidia\_gpu\_operator](#input\_nvidia\_gpu\_operator) | Install the nvidia-gpu-operator helm chart to manage NVIDIA GPU resources in the EKS cluster. All other nvidia\_gpu\_operator variables are ignored if this variable is false. | `bool` | `false` | no |
 | <a name="input_nvidia_gpu_operator_values_overrides"></a> [nvidia\_gpu\_operator\_values\_overrides](#input\_nvidia\_gpu\_operator\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_nvidia_gpu_operator_version"></a> [nvidia\_gpu\_operator\_version](#input\_nvidia\_gpu\_operator\_version) | Version of the nvidia-gpu-operator helm chart to install | `string` | `null` | no |
-| <a name="input_password_constraints"></a> [password\_constraints](#input\_password\_constraints) | Constraints to put on any generated passwords | <pre>object({<br/>    length           = number<br/>    min_lower        = optional(number)<br/>    min_numeric      = optional(number)<br/>    min_upper        = optional(number)<br/>    min_special      = optional(number, 0)<br/>    special          = optional(bool)<br/>    override_special = optional(string)<br/>  })</pre> | <pre>{<br/>  "length": 32,<br/>  "min_lower": 1,<br/>  "min_numeric": 1,<br/>  "min_upper": 1,<br/>  "override_special": "-"<br/>}</pre> | no |
+| <a name="input_password_constraints"></a> [password\_constraints](#input\_password\_constraints) | Constraints to apply to any generated passwords | <pre>object({<br/>    length           = number<br/>    min_lower        = optional(number)<br/>    min_numeric      = optional(number)<br/>    min_upper        = optional(number)<br/>    min_special      = optional(number, 0)<br/>    special          = optional(bool)<br/>    override_special = optional(string)<br/>  })</pre> | <pre>{<br/>  "length": 32,<br/>  "min_lower": 1,<br/>  "min_numeric": 1,<br/>  "min_upper": 1,<br/>  "override_special": "-"<br/>}</pre> | no |
 | <a name="input_postgres_additional_ingress_cidr_blocks"></a> [postgres\_additional\_ingress\_cidr\_blocks](#input\_postgres\_additional\_ingress\_cidr\_blocks) | Additional CIDR blocks allowed to reach the PostgreSQL port | `list(string)` | `[]` | no |
 | <a name="input_postgres_allocated_storage"></a> [postgres\_allocated\_storage](#input\_postgres\_allocated\_storage) | The allocated storage in gigabytes | `number` | `20` | no |
 | <a name="input_postgres_apply_immediately"></a> [postgres\_apply\_immediately](#input\_postgres\_apply\_immediately) | Specifies whether any database modifications are applied immediately, or during the next maintenance window | `bool` | `false` | no |
@@ -1236,16 +1204,14 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="output_postgres_db_instance_arn"></a> [postgres\_db\_instance\_arn](#output\_postgres\_db\_instance\_arn) | The ARN of the RDS instance |
 | <a name="output_postgres_endpoint"></a> [postgres\_endpoint](#output\_postgres\_endpoint) | RDS postgres endpoint |
 | <a name="output_postgres_password"></a> [postgres\_password](#output\_postgres\_password) | RDS postgres master password |
-| <a name="output_private_route53_zone_arn"></a> [private\_route53\_zone\_arn](#output\_private\_route53\_zone\_arn) | Zone ARN of the private Route53 zone |
-| <a name="output_private_route53_zone_id"></a> [private\_route53\_zone\_id](#output\_private\_route53\_zone\_id) | Zone ID of the private Route53 zone |
-| <a name="output_public_dns_zone_name_servers"></a> [public\_dns\_zone\_name\_servers](#output\_public\_dns\_zone\_name\_servers) | Name servers of Route53 zone |
-| <a name="output_public_route53_zone_arn"></a> [public\_route53\_zone\_arn](#output\_public\_route53\_zone\_arn) | Zone ARN of the public Route53 zone |
-| <a name="output_public_route53_zone_id"></a> [public\_route53\_zone\_id](#output\_public\_route53\_zone\_id) | Zone ID of the public Route53 zone |
-| <a name="output_public_route53_zone_name_servers"></a> [public\_route53\_zone\_name\_servers](#output\_public\_route53\_zone\_name\_servers) | Name servers of Route53 zone |
 | <a name="output_rabbitmq_endpoint"></a> [rabbitmq\_endpoint](#output\_rabbitmq\_endpoint) | RabbitMQ AMQP(S) endpoint |
 | <a name="output_rabbitmq_password"></a> [rabbitmq\_password](#output\_rabbitmq\_password) | RabbitMQ broker password |
 | <a name="output_redis_endpoint"></a> [redis\_endpoint](#output\_redis\_endpoint) | ElastiCache redis endpoint |
 | <a name="output_redis_password"></a> [redis\_password](#output\_redis\_password) | ElastiCache redis auth token |
+| <a name="output_route53_zone_arn"></a> [route53\_zone\_arn](#output\_route53\_zone\_arn) | Zone ARN of the Route53 zone |
+| <a name="output_route53_zone_id"></a> [route53\_zone\_id](#output\_route53\_zone\_id) | Zone ID of the Route53 zone |
+| <a name="output_route53_zone_name"></a> [route53\_zone\_name](#output\_route53\_zone\_name) | Name of the Route53 zone |
+| <a name="output_route53_zone_name_servers"></a> [route53\_zone\_name\_servers](#output\_route53\_zone\_name\_servers) | Name servers of Route53 zone |
 | <a name="output_s3_bucket_id"></a> [s3\_bucket\_id](#output\_s3\_bucket\_id) | Name of the S3 bucket |
 | <a name="output_vpc_cidr_block"></a> [vpc\_cidr\_block](#output\_vpc\_cidr\_block) | The CIDR block of the VPC |
 | <a name="output_vpc_id"></a> [vpc\_id](#output\_vpc\_id) | The ID of the VPC |
