@@ -117,7 +117,7 @@ module "endpoints" {
         service             = endpoint.service
         service_name        = endpoint.service_name
         service_type        = endpoint.service_type
-        subnet_ids          = local.kubernetes_node_subnets
+        subnet_ids          = endpoint.subnet_ids != null ? endpoint.subnet_ids : local.kubernetes_node_subnets
         route_table_ids     = try(module.network[0].private_route_table_ids, null)
         private_dns_enabled = endpoint.private_dns_enabled
       },

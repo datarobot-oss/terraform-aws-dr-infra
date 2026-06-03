@@ -78,6 +78,7 @@ variable "network_endpoints" {
     custom_private_dns_type  = optional(string, "CNAME")
     custom_private_dns_ttl   = optional(number, 60)
     custom_private_dns_alias = optional(bool, false)
+    subnet_ids               = optional(list(string))
   }))
   default = [
     {
