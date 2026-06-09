@@ -72,6 +72,7 @@ variable "network_endpoints" {
     custom_private_dns_type  = optional(string, "CNAME")
     custom_private_dns_ttl   = optional(number, 60)
     custom_private_dns_alias = optional(bool, false)
+    subnet_ids               = optional(list(string))
   }))
   default = [
     {
@@ -572,6 +573,12 @@ variable "create_app_identity" {
   description = "Create an IAM role for the DataRobot application service accounts"
   type        = bool
   default     = true
+}
+
+variable "app_identity_name" {
+  description = "Name of the IAM role for the DataRobot application. Defaults to <name>-app-irsa."
+  type        = string
+  default     = null
 }
 
 variable "datarobot_namespace" {

@@ -117,7 +117,7 @@ module "endpoints" {
         service             = endpoint.service
         service_name        = endpoint.service_name
         service_type        = endpoint.service_type
-        subnet_ids          = local.kubernetes_node_subnets
+        subnet_ids          = endpoint.subnet_ids != null ? endpoint.subnet_ids : local.kubernetes_node_subnets
         route_table_ids     = try(module.network[0].private_route_table_ids, null)
         private_dns_enabled = endpoint.private_dns_enabled
       },
@@ -431,7 +431,7 @@ module "app_identity" {
   version = "~> 6.0"
   count   = var.create_app_identity ? 1 : 0
 
-  name            = "${var.name}-app-irsa"
+  name            = coalesce(var.app_identity_name, "${var.name}-app-irsa")
   use_name_prefix = false
 
   # trust
@@ -483,6 +483,14 @@ module "app_identity" {
         "sts:AssumeRole"
       ]
       resources = ["arn:${data.aws_partition.current.id}:iam::${data.aws_caller_identity.current.account_id}:role/*"]
+    }
+    ecrBatchDelete = {
+      actions = [
+        "ecr:BatchDeleteImage",
+        "ecr:CreateRepository",
+        "ecr:BatchImportUpstreamImage",
+      ]
+      resources = ["*"]
     }
   }
 
