@@ -637,13 +637,13 @@ variable "postgres_egress_with_cidr_blocks" {
 variable "postgres_engine_version" {
   description = "The engine version to use"
   type        = string
-  default     = "14.20"
+  default     = "17"
 }
 
 variable "postgres_family" {
   description = "Postgres family variable to support major version upgrades"
   type        = string
-  default     = "postgres14"
+  default     = "postgres17"
 }
 
 variable "postgres_instance_class" {
