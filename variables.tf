@@ -718,7 +718,7 @@ variable "postgres_create_route53_cname_record" {
 variable "postgres_allow_major_version_upgrade" {
   description = "Indicates that major version upgrades are allowed. Changing this parameter does not result in an outage and the change is asynchronously applied as soon as possible"
   type        = bool
-  default     = false
+  default     = true
 }
 
 ################################################################################
