@@ -59,8 +59,9 @@ module "postgres" {
   password                    = random_password.postgres.result
   manage_master_user_password = false
 
-  parameters        = var.postgres_parameters
-  apply_immediately = var.postgres_apply_immediately
+  parameters                  = var.postgres_parameters
+  apply_immediately           = var.postgres_apply_immediately
+  allow_major_version_upgrade = var.postgres_allow_major_version_upgrade
 
   tags = var.tags
 }

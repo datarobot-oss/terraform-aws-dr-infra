@@ -553,6 +553,7 @@ module "postgres" {
   password_constraints         = var.password_constraints
 
   postgres_engine_version                   = var.postgres_engine_version
+  postgres_allow_major_version_upgrade      = var.postgres_allow_major_version_upgrade
   postgres_family                           = var.postgres_family
   postgres_instance_class                   = var.postgres_instance_class
   postgres_allocated_storage                = var.postgres_allocated_storage
