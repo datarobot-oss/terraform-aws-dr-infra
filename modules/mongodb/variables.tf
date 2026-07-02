@@ -63,6 +63,21 @@ variable "atlas_auto_scaling_disk_gb_enabled" {
   type        = bool
 }
 
+variable "enable_mongoatlas_autoscaling" {
+  description = "Enable compute autoscaling on the MongoDB Atlas cluster"
+  type        = bool
+}
+
+variable "atlas_autoscaling_min_instance_size" {
+  description = "Minimum instance size when compute autoscaling is enabled"
+  type        = string
+}
+
+variable "atlas_autoscaling_max_instance_size" {
+  description = "Maximum instance size when compute autoscaling is enabled"
+  type        = string
+}
+
 variable "atlas_disk_size" {
   description = "Starting atlas disk size"
   type        = string

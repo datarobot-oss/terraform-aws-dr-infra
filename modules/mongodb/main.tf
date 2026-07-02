@@ -62,7 +62,11 @@ resource "mongodbatlas_advanced_cluster" "this" {
       }
 
       auto_scaling = {
-        disk_gb_enabled = var.atlas_auto_scaling_disk_gb_enabled
+        disk_gb_enabled            = var.atlas_auto_scaling_disk_gb_enabled
+        compute_enabled            = var.enable_mongoatlas_autoscaling
+        compute_scale_down_enabled = var.enable_mongoatlas_autoscaling
+        compute_min_instance_size  = var.enable_mongoatlas_autoscaling ? var.atlas_autoscaling_min_instance_size : null
+        compute_max_instance_size  = var.enable_mongoatlas_autoscaling ? var.atlas_autoscaling_max_instance_size : null
       }
     }]
   }]
@@ -73,7 +77,10 @@ resource "mongodbatlas_advanced_cluster" "this" {
   }
 
   lifecycle {
-    ignore_changes = [replication_specs[0].region_configs[0].electable_specs.disk_size_gb]
+    ignore_changes = [
+      replication_specs[0].region_configs[0].electable_specs.disk_size_gb,
+      replication_specs[0].region_configs[0].electable_specs.instance_size,
+    ]
   }
 
   depends_on = [mongodbatlas_privatelink_endpoint_service.this]

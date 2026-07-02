@@ -844,6 +844,24 @@ variable "mongodb_atlas_instance_type" {
   default     = "M30"
 }
 
+variable "mongodb_enable_mongoatlas_autoscaling" {
+  description = "Enable compute autoscaling on the MongoDB Atlas cluster"
+  type        = bool
+  default     = true
+}
+
+variable "mongodb_atlas_autoscaling_min_instance_size" {
+  description = "Minimum instance size when compute autoscaling is enabled"
+  type        = string
+  default     = "M10"
+}
+
+variable "mongodb_atlas_autoscaling_max_instance_size" {
+  description = "Maximum instance size when compute autoscaling is enabled"
+  type        = string
+  default     = "M80"
+}
+
 variable "mongodb_admin_username" {
   description = "MongoDB admin username"
   type        = string
