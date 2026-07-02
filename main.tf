@@ -625,18 +625,21 @@ module "mongodb" {
   subnets              = local.mongodb_subnets
   password_constraints = var.password_constraints
 
-  mongodb_version                    = var.mongodb_version
-  atlas_org_id                       = var.mongodb_atlas_org_id
-  termination_protection_enabled     = var.mongodb_termination_protection_enabled
-  db_audit_enable                    = var.mongodb_audit_enable
-  atlas_auto_scaling_disk_gb_enabled = var.mongodb_atlas_auto_scaling_disk_gb_enabled
-  atlas_disk_size                    = var.mongodb_atlas_disk_size
-  atlas_instance_type                = var.mongodb_atlas_instance_type
-  mongodb_admin_username             = var.mongodb_admin_username
-  mongodb_admin_arns                 = var.mongodb_admin_arns
-  enable_slack_alerts                = var.mongodb_enable_slack_alerts
-  slack_api_token                    = var.mongodb_slack_api_token
-  slack_notification_channel         = var.mongodb_slack_notification_channel
+  mongodb_version                     = var.mongodb_version
+  atlas_org_id                        = var.mongodb_atlas_org_id
+  termination_protection_enabled      = var.mongodb_termination_protection_enabled
+  db_audit_enable                     = var.mongodb_audit_enable
+  atlas_auto_scaling_disk_gb_enabled  = var.mongodb_atlas_auto_scaling_disk_gb_enabled
+  atlas_disk_size                     = var.mongodb_atlas_disk_size
+  atlas_instance_type                 = var.mongodb_atlas_instance_type
+  enable_mongoatlas_autoscaling       = var.mongodb_enable_mongoatlas_autoscaling
+  atlas_autoscaling_min_instance_size = var.mongodb_atlas_autoscaling_min_instance_size
+  atlas_autoscaling_max_instance_size = var.mongodb_atlas_autoscaling_max_instance_size
+  mongodb_admin_username              = var.mongodb_admin_username
+  mongodb_admin_arns                  = var.mongodb_admin_arns
+  enable_slack_alerts                 = var.mongodb_enable_slack_alerts
+  slack_api_token                     = var.mongodb_slack_api_token
+  slack_notification_channel          = var.mongodb_slack_notification_channel
 
   tags = var.tags
 }
