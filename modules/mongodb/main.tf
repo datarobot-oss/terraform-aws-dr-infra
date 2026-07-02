@@ -26,7 +26,7 @@ resource "mongodbatlas_privatelink_endpoint" "this" {
 resource "mongodbatlas_privatelink_endpoint_service" "this" {
   project_id          = mongodbatlas_privatelink_endpoint.this.project_id
   endpoint_service_id = aws_vpc_endpoint.this.id
-  private_link_id     = mongodbatlas_privatelink_endpoint.this.id
+  private_link_id     = mongodbatlas_privatelink_endpoint.this.private_link_id
   provider_name       = "AWS"
 }
 
