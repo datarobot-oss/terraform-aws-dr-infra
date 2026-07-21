@@ -64,7 +64,7 @@ output "vpc_intra_route_table_ids" {
 
 output "network_endpoints" {
   description = "Map of created VPC endpoints keyed by service name."
-  value       = length(module.endpoints) > 0 ? module.endpoints[0].endpoints : {}
+  value       = try(module.endpoints[0].endpoints, null)
 }
 
 
