@@ -59,6 +59,16 @@ output "vpc_intra_route_table_ids" {
 
 
 ################################################################################
+# VPC Endpoints
+################################################################################
+
+output "network_endpoints" {
+  description = "Map of created VPC endpoints keyed by service name, exposing the underlying aws_vpc_endpoint attributes (id, vpc_endpoint_type, dns_entry, network_interface_ids, ...). Useful for downstream consumers that need to build Kubernetes NetworkPolicy egress rules to interface endpoints."
+  value       = length(module.endpoints) > 0 ? module.endpoints[0].endpoints : {}
+}
+
+
+################################################################################
 # DNS
 ################################################################################
 
