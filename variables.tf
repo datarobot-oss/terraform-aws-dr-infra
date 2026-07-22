@@ -37,6 +37,12 @@ variable "tags" {
   }
 }
 
+variable "ebs_encryption_by_default" {
+  description = "Enable EBS encryption by default for all new EBS volumes in the current region"
+  type        = bool
+  default     = false
+}
+
 
 ################################################################################
 # Network
@@ -326,7 +332,8 @@ variable "container_registry_repos" {
     "ephemeral-image",
     "managed-image",
     "services/custom-model-conversion",
-    "spark-batch-image"
+    "spark-batch-image",
+    "workload-api/managed-workloads"
   ]
 }
 
