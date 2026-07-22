@@ -9,7 +9,8 @@ data "aws_availability_zones" "available" {
 }
 
 resource "aws_ebs_encryption_by_default" "this" {
-  enabled = var.ebs_encryption_by_default
+  count   = var.ebs_encryption_by_default ? 1 : 0
+  enabled = true
 }
 
 
