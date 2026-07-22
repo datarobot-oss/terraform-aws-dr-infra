@@ -61,7 +61,7 @@ variable "network_address_space" {
 }
 
 variable "network_endpoints" {
-  description = "A map of interface and/or gateway endpoints containing their properties and configurations. See https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/modules/vpc-endpoints/variables.tf#L19 for available options. If `private_dns_enabled` is `false`, `custom_private_dns_name` and `custom_private_dns_zone` can be used to create a private DNS record for the endpoint. Use `ports` to open additional TCP ports on the endpoint security group; 443 is always allowed. PrivateLink endpoints that listen on a non-443 port require the port to be listed here."
+  description = "A map of interface and/or gateway endpoints containing their properties and configurations. See https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/modules/vpc-endpoints/variables.tf#L19 for available options. If `private_dns_enabled` is `false`, `custom_private_dns_name` and `custom_private_dns_zone` can be used to create a private DNS record for the endpoint."
   type = list(object({
     service                  = optional(string)
     service_name             = optional(string)
@@ -73,7 +73,6 @@ variable "network_endpoints" {
     custom_private_dns_ttl   = optional(number, 60)
     custom_private_dns_alias = optional(bool, false)
     subnet_ids               = optional(list(string))
-    ports                    = optional(list(number))
   }))
   default = [
     {
