@@ -110,8 +110,11 @@ module "endpoints" {
   security_group_name        = "${var.name}-endpoints"
   security_group_description = "VPC endpoint default security group"
   security_group_rules = {
-    ingress_https = {
-      description = "HTTPS from VPC"
+    ingress_all_tcp = {
+      description = "All TCP from VPC"
+      from_port   = 0
+      to_port     = 65535
+      protocol    = "tcp"
       cidr_blocks = [local.vpc_cidr]
     }
   }
