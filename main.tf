@@ -104,9 +104,18 @@ module "endpoints" {
   create_security_group      = true
   security_group_name        = "${var.name}-endpoints"
   security_group_description = "VPC endpoint default security group"
+  # Always allow 443, plus any additional TCP ports declared on the endpoints
+  # (e.g. non-443 PrivateLink services). Without this the endpoint ENIs would
+  # reject non-443 traffic regardless of any Kubernetes NetworkPolicy.
   security_group_rules = {
-    ingress_https = {
-      description = "HTTPS from VPC"
+    for port in distinct(concat([443], flatten([
+      for endpoint in var.network_endpoints : coalesce(endpoint.ports, [])
+    ]))) :
+    "ingress_tcp_${port}" => {
+      description = "TCP ${port} from VPC"
+      from_port   = port
+      to_port     = port
+      protocol    = "tcp"
       cidr_blocks = [local.vpc_cidr]
     }
   }
