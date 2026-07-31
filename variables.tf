@@ -258,7 +258,13 @@ variable "create_acm_certificate" {
 ################################################################################
 
 variable "existing_s3_bucket_id" {
-  description = "ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, all other storage variables will be ignored."
+  description = "ID of existing S3 storage bucket to use for DataRobot application file storage. When specified, all other storage variables will be ignored with the exception of s3_bucket_kms_key_arn."
+  type        = string
+  default     = null
+}
+
+variable "s3_bucket_kms_key_arn" {
+  description = "ARN of a KMS key used to encrypt the S3 storage bucket. The DataRobot application is granted permission to use this key. When create_storage is true, the created bucket is configured to use this key for default server-side encryption (SSE-KMS) instead of SSE-S3 (AES256). Unlike the other storage variables, this is also applied when an existing_s3_bucket_id is specified, so that the application can read and write objects in an externally managed bucket encrypted with a customer managed key."
   type        = string
   default     = null
 }

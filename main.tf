@@ -260,6 +260,17 @@ module "storage" {
   object_lock_enabled       = var.storage_object_lock_enabled
   object_lock_configuration = var.storage_object_lock_configuration
 
+  # SSE-KMS when a key is supplied, otherwise leave the bucket on the S3 default (SSE-S3).
+  server_side_encryption_configuration = var.s3_bucket_kms_key_arn != null ? {
+    rule = {
+      apply_server_side_encryption_by_default = {
+        sse_algorithm     = "aws:kms"
+        kms_master_key_id = var.s3_bucket_kms_key_arn
+      }
+      bucket_key_enabled = true
+    }
+  } : {}
+
   tags = var.tags
 }
 
@@ -432,6 +443,20 @@ resource "aws_autoscaling_group_tag" "this" {
 
 locals {
   app_role_arn = var.existing_app_role_arn != null ? var.existing_app_role_arn : try(module.app_identity[0].arn, null)
+
+  # Allow the application to use the customer managed key protecting the S3 storage bucket.
+  app_s3_kms_inline_policy = var.s3_bucket_kms_key_arn != null ? {
+    s3BucketKms = {
+      actions = [
+        "kms:Encrypt",
+        "kms:Decrypt",
+        "kms:ReEncrypt*",
+        "kms:GenerateDataKey*",
+        "kms:DescribeKey"
+      ]
+      resources = [var.s3_bucket_kms_key_arn]
+    }
+  } : {}
 }
 
 module "app_identity" {
@@ -464,7 +489,7 @@ module "app_identity" {
 
   # inline policies
   create_inline_policy = true
-  inline_policy_permissions = {
+  inline_policy_permissions = merge({
     s3bucket = {
       actions = [
         "s3:DeleteObject",
@@ -500,7 +525,7 @@ module "app_identity" {
       ]
       resources = ["*"]
     }
-  }
+  }, local.app_s3_kms_inline_policy)
 
   tags = var.tags
 }
