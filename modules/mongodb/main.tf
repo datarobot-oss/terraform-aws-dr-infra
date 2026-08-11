@@ -114,15 +114,11 @@ resource "mongodbatlas_cloud_backup_schedule" "aws_mongo_atlas_automated_cloud_b
   copy_settings {
     cloud_provider = "AWS"
     frequencies = [
-      "HOURLY",
-      "DAILY",
-      "WEEKLY",
-      "MONTHLY",
-      "ON_DEMAND"
+      "DAILY"
     ]
     region_name        = local.copy_region
     zone_id            = mongodbatlas_advanced_cluster.this.replication_specs[0].zone_id
-    should_copy_oplogs = true
+    should_copy_oplogs = false
   }
 }
 
