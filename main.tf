@@ -673,6 +673,7 @@ module "mongodb" {
   enable_slack_alerts                 = var.mongodb_enable_slack_alerts
   slack_api_token                     = var.mongodb_slack_api_token
   slack_notification_channel          = var.mongodb_slack_notification_channel
+  backup_schedule                     = var.mongodb_backup_schedule
 
   tags = var.tags
 }
