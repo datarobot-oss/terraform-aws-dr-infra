@@ -91,34 +91,36 @@ resource "mongodbatlas_cloud_backup_schedule" "aws_mongo_atlas_automated_cloud_b
   cluster_name = mongodbatlas_advanced_cluster.this.name
 
   policy_item_hourly {
-    frequency_interval = 6 #accepted values = 1, 2, 4, 6, 8, 12 -> every n hours
-    retention_unit     = "days"
-    retention_value    = 7
+    frequency_interval = var.backup_schedule.policy_item_hourly.frequency_interval #accepted values = 1, 2, 4, 6, 8, 12 -> every n hours
+    retention_unit     = var.backup_schedule.policy_item_hourly.retention_unit
+    retention_value    = var.backup_schedule.policy_item_hourly.retention_value
   }
   policy_item_daily {
-    frequency_interval = 1 #accepted values = 1 -> every 1 day
-    retention_unit     = "days"
-    retention_value    = 30
+    frequency_interval = var.backup_schedule.policy_item_daily.frequency_interval #accepted values = 1 -> every 1 day
+    retention_unit     = var.backup_schedule.policy_item_daily.retention_unit
+    retention_value    = var.backup_schedule.policy_item_daily.retention_value
   }
   policy_item_weekly {
-    frequency_interval = 6 # accepted values = 1 to 7 -> every 1=Monday,2=Tuesday,3=Wednesday,4=Thursday,5=Friday,6=Saturday,7=Sunday day of the week
-    retention_unit     = "days"
-    retention_value    = 30
+    frequency_interval = var.backup_schedule.policy_item_weekly.frequency_interval # accepted values = 1 to 7 -> every 1=Monday,2=Tuesday,3=Wednesday,4=Thursday,5=Friday,6=Saturday,7=Sunday day of the week
+    retention_unit     = var.backup_schedule.policy_item_weekly.retention_unit
+    retention_value    = var.backup_schedule.policy_item_weekly.retention_value
   }
   policy_item_monthly {
-    frequency_interval = 1 # accepted values = 1 to 28 -> 1 to 28 every nth day of the month
+    frequency_interval = var.backup_schedule.policy_item_monthly.frequency_interval # accepted values = 1 to 28 -> 1 to 28 every nth day of the month
     # accepted values = 40 -> every last day of the month
-    retention_unit  = "months"
-    retention_value = 1
+    retention_unit  = var.backup_schedule.policy_item_monthly.retention_unit
+    retention_value = var.backup_schedule.policy_item_monthly.retention_value
   }
-  copy_settings {
-    cloud_provider = "AWS"
-    frequencies = [
-      "DAILY"
-    ]
-    region_name        = local.copy_region
-    zone_id            = mongodbatlas_advanced_cluster.this.replication_specs[0].zone_id
-    should_copy_oplogs = false
+
+  dynamic "copy_settings" {
+    for_each = var.backup_schedule.copy_settings.enabled ? [var.backup_schedule.copy_settings] : []
+    content {
+      cloud_provider     = copy_settings.value.cloud_provider
+      frequencies        = copy_settings.value.frequencies
+      region_name        = local.copy_region
+      zone_id            = mongodbatlas_advanced_cluster.this.replication_specs[0].zone_id
+      should_copy_oplogs = copy_settings.value.should_copy_oplogs
+    }
   }
 }
 
