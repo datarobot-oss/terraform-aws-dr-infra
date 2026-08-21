@@ -1248,7 +1248,6 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="output_postgres_password"></a> [postgres\_password](#output\_postgres\_password) | RDS postgres master password |
 | <a name="output_private_route53_zone_arn"></a> [private\_route53\_zone\_arn](#output\_private\_route53\_zone\_arn) | Zone ARN of the private Route53 zone |
 | <a name="output_private_route53_zone_id"></a> [private\_route53\_zone\_id](#output\_private\_route53\_zone\_id) | Zone ID of the private Route53 zone |
-| <a name="output_public_dns_zone_name_servers"></a> [public\_dns\_zone\_name\_servers](#output\_public\_dns\_zone\_name\_servers) | Name servers of Route53 zone |
 | <a name="output_public_route53_zone_arn"></a> [public\_route53\_zone\_arn](#output\_public\_route53\_zone\_arn) | Zone ARN of the public Route53 zone |
 | <a name="output_public_route53_zone_id"></a> [public\_route53\_zone\_id](#output\_public\_route53\_zone\_id) | Zone ID of the public Route53 zone |
 | <a name="output_public_route53_zone_name_servers"></a> [public\_route53\_zone\_name\_servers](#output\_public\_route53\_zone\_name\_servers) | Name servers of Route53 zone |
