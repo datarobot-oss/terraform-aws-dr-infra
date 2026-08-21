@@ -3,6 +3,12 @@ variable "name" {
   type        = string
 }
 
+variable "domain_name" {
+  description = "Name of the domain to use for the DataRobot application. If create_dns_zones is true then zones will be created for this domain. It is also used by ACM for DNS validation and as a domain filter by the external-dns helm chart."
+  type        = string
+  default     = ""
+}
+
 variable "availability_zones" {
   description = "Number of availability zones to deploy into"
   type        = number
@@ -10,7 +16,7 @@ variable "availability_zones" {
 }
 
 variable "password_constraints" {
-  description = "Constraints to apply to any generated passwords"
+  description = "Constraints to put on any generated passwords"
   type = object({
     length           = number
     min_lower        = optional(number)
@@ -205,32 +211,26 @@ variable "network_firewall_policy_stateful_rule_group_reference" {
 # DNS
 ################################################################################
 
-variable "existing_route53_zone_id" {
-  description = "ID of existing Route53 hosted zone to use. When specified, all other DNS variables will be ignored."
+variable "existing_public_route53_zone_id" {
+  description = "ID of existing public Route53 hosted zone to use for public DNS records created by external-dns and ACM certificate validation. This is required when create_dns_zones is false and ingress_nginx and internet_facing_ingress_lb are true or when create_acm_certificate is true."
   type        = string
   default     = null
 }
 
-variable "create_dns_zone" {
-  description = "Create Route53 hosted DNS zone. Ignored if existing_route53_zone_id is specified."
-  type        = bool
-  default     = true
-}
-
-variable "dns_zone_name" {
-  description = "Name of the Route53 hosted DNS zone to create. Ignored if existing_route53_zone_id is specified."
+variable "existing_private_route53_zone_id" {
+  description = "ID of existing private Route53 hosted zone to use for private DNS records created by external-dns. This is required when create_dns_zones is false and ingress_nginx is true with internet_facing_ingress_lb false."
   type        = string
   default     = null
 }
 
-variable "dns_zone_public" {
-  description = "Create public Route53 hosted DNS zone. When `false`, a private zone will be created for the given VPC."
+variable "create_dns_zones" {
+  description = "Create DNS zones for domain_name. Ignored if existing_public_route53_zone_id and existing_private_route53_zone_id are specified."
   type        = bool
   default     = true
 }
 
-variable "dns_zone_force_destroy" {
-  description = "Force destroy the Route53 zone. Ignored if an existing_route53_zone_id is specified or create_dns_zone is false."
+variable "dns_zones_force_destroy" {
+  description = "Force destroy the public and private Route53 zones. Ignored if an existing route53_zone_id is specified or create_dns_zones is false."
   type        = bool
   default     = false
 }
@@ -247,9 +247,9 @@ variable "existing_acm_certificate_arn" {
 }
 
 variable "create_acm_certificate" {
-  description = "Create a new ACM certificate for the ingress load balancer to use. Ignored if existing_acm_certificate_arn is specified. This will only work if the Route53 zone is public."
+  description = "Create a new ACM certificate for the ingress load balancer to use. Ignored if existing_acm_certificate_arn is specified."
   type        = bool
-  default     = false
+  default     = true
 }
 
 
@@ -485,8 +485,7 @@ variable "kubernetes_cluster_addons" {
     vpc-cni = {
       before_compute              = true
       resolve_conflicts_on_create = "OVERWRITE"
-      # configuration_values        = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
-      configuration_values = "{\"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+      configuration_values        = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
     }
   }
 }
@@ -1123,9 +1122,9 @@ variable "cert_manager_version" {
 }
 
 variable "cert_manager_letsencrypt_clusterissuers" {
-  description = "Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers. This will only work if the Route53 zone is public."
+  description = "Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "cert_manager_letsencrypt_email_address" {
@@ -1141,7 +1140,7 @@ variable "cert_manager_values_overrides" {
 }
 
 variable "external_dns" {
-  description = "Install the external_dns helm chart to manage DNS records for resources created by the application. All other external_dns variables are ignored if this variable is false."
+  description = "Install the external_dns helm chart to create DNS records for ingress resources matching the domain_name variable. All other external_dns variables are ignored if this variable is false."
   type        = bool
   default     = true
 }
