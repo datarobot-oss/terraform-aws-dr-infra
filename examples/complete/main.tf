@@ -16,6 +16,7 @@ module "datarobot_infra" {
   # General
   ################################################################################
   name               = local.name
+  domain_name        = "${local.name}.yourdomain.com"
   availability_zones = 2
   tags = {
     application = local.name
@@ -79,15 +80,16 @@ module "datarobot_infra" {
   ################################################################################
   # DNS
   ################################################################################
-  create_dns_zone        = true
-  dns_zone_name          = "${local.name}.yourdomain.com"
-  dns_zone_public        = true
-  dns_zone_force_destroy = true
+  create_dns_zones        = true
+  dns_zones_force_destroy = true
 
   ################################################################################
   # ACM
   ################################################################################
-  create_acm_certificate = true
+  # bring your own certificate rather than using ACM by setting create_acm_certificate
+  # to false, omitting existing_acm_certificate_arn, and updating ingress-nginx
+  # values with controller.service.targetPorts.https = https
+  create_acm_certificate = false
 
   ################################################################################
   # Storage
@@ -163,8 +165,6 @@ module "datarobot_infra" {
   kubernetes_iam_role_use_name_prefix                 = true
   kubernetes_iam_role_permissions_boundary            = null
   kubernetes_enable_cluster_creator_admin_permissions = true
-  ## Additional access entries for the Kubernetes cluster.
-  ## The user/role running this Terraform is automatically given Cluster Admin.
   # kubernetes_cluster_access_entries = {
   #   customadmin = {
   #     kubernetes_groups = []
