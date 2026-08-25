@@ -16,7 +16,7 @@ variable "availability_zones" {
 }
 
 variable "password_constraints" {
-  description = "Constraints to put on any generated passwords"
+  description = "Constraints to apply to any generated passwords"
   type = object({
     length           = number
     min_lower        = optional(number)
@@ -249,7 +249,7 @@ variable "existing_acm_certificate_arn" {
 variable "create_acm_certificate" {
   description = "Create a new ACM certificate for the ingress load balancer to use. Ignored if existing_acm_certificate_arn is specified."
   type        = bool
-  default     = true
+  default     = false
 }
 
 
@@ -486,7 +486,8 @@ variable "kubernetes_cluster_addons" {
     vpc-cni = {
       before_compute              = true
       resolve_conflicts_on_create = "OVERWRITE"
-      configuration_values        = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+      # configuration_values        = "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
+      configuration_values = "{\"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}"
     }
   }
 }
@@ -1125,7 +1126,7 @@ variable "cert_manager_version" {
 variable "cert_manager_letsencrypt_clusterissuers" {
   description = "Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "cert_manager_letsencrypt_email_address" {

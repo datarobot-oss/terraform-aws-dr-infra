@@ -1,0 +1,19 @@
+# Copy this file to terraform.tfvars and fill in the values before running terraform apply.
+
+name            = "datarobot"
+environment     = "dev" # must be one of: dev, staging, prod
+account_id      = "123456789012"
+region          = "us-east-1"
+domain_name     = "datarobot.example.com"
+existing_vpc_id = "vpc-0123456789abcdef0"
+email_address   = "you@example.com"
+
+# IP address of the host running terraform apply. Granted access to the private EKS API endpoint.
+provisioner_ip = "10.0.1.5"
+
+# CIDR block allowed to reach the internal ingress load balancer.
+ingress_allowed_cidr = "10.0.0.0/24"
+
+tags = {
+  managed-by = "terraform"
+}

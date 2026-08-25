@@ -6,37 +6,11 @@ Terraform module to create AWS Cloud infrastructure resources required to run Da
 module "datarobot_infra" {
   source = "datarobot-oss/dr-infra/aws"
 
-  name        = "datarobot"
-  domain_name = "yourdomain.com"
-
-  create_network                  = true
-  network_address_space           = "10.7.0.0/16"
-  create_dns_zones                = false
-  existing_public_route53_zone_id = "Z06110132R7HO9BLI64XY"
-  create_acm_certificate          = false
-  existing_acm_certificate_arn    = "arn:aws:acm:us-east-1:000000000000:certificate/00000000-0000-0000-0000-000000000000"
-  create_storage                  = true
-  create_container_registry       = true
-  create_kubernetes_cluster       = true
-  create_app_identity             = true
-  create_postgres                 = true
-  create_redis                    = true
-  create_mongodb                  = true
-  create_rabbitmq                 = true
-
-  cluster_autoscaler           = true
-  descheduler                  = true
-  aws_ebs_csi_driver           = true
-  aws_load_balancer_controller = true
-  ingress_nginx                = true
-  internet_facing_ingress_lb   = true
-  cert_manager                 = true
-  external_dns                 = true
-  nvidia_gpu_operator          = true
-  metrics_server               = true
+  name = "datarobot"
+  domain_name = "datarobot.example.com"
+  cert_manager_letsencrypt_email_address = "you@example.com"
 
   tags = {
-    application = "datarobot"
     environment = "dev"
     managed-by  = "terraform"
   }
@@ -44,26 +18,24 @@ module "datarobot_infra" {
 ```
 
 ## Examples
-- [Complete](examples/complete) - Demonstrates all input variables
-- [Partial](examples/partial) - Demonstrates the use of existing resources
-- [Minimal](examples/minimal) - Demonstrates the minimum set of input variables needed to deploy all infrastructure
+- [Complete](examples/complete) - Demonstrates all available input variables.
+- [Public](examples/public) - Minimal configuration for a publicly accessible deployment (internet-facing NLB, public EKS API endpoint).
+- [Private](examples/private) - Minimal configuration for a private deployment (internal NLB, private-only EKS API endpoint, existing VPC).
 
 ### Using an example directly from source
 1. Clone the repo
 ```bash
 git clone https://github.com/datarobot-oss/terraform-aws-dr-infra.git
 ```
-2. Change directories into the example that best suits your needs
+2. Change directories into the example that best aligns with your use-case.
 ```bash
-cd terraform-aws-dr-infra/examples/minimal
+cd terraform-aws-dr-infra/examples/public
 ```
-3. Modify `main.tf` as needed with any changes to the input variables passed to the `datarobot_infra` module
-4. Run terraform commands
+3. Modify `main.tf` to suit your specific use-case.
+4. Run terraform.
 ```bash
 terraform init
-terraform plan
 terraform apply
-terraform destroy
 ```
 
 
@@ -1051,7 +1023,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_aws_load_balancer_controller_values_overrides"></a> [aws\_load\_balancer\_controller\_values\_overrides](#input\_aws\_load\_balancer\_controller\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_aws_load_balancer_controller_version"></a> [aws\_load\_balancer\_controller\_version](#input\_aws\_load\_balancer\_controller\_version) | Version of the aws-load-balancer-controller helm chart to install | `string` | `null` | no |
 | <a name="input_cert_manager"></a> [cert\_manager](#input\_cert\_manager) | Install the cert-manager helm chart. All other cert\_manager variables are ignored if this variable is false. | `bool` | `true` | no |
-| <a name="input_cert_manager_letsencrypt_clusterissuers"></a> [cert\_manager\_letsencrypt\_clusterissuers](#input\_cert\_manager\_letsencrypt\_clusterissuers) | Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers | `bool` | `false` | no |
+| <a name="input_cert_manager_letsencrypt_clusterissuers"></a> [cert\_manager\_letsencrypt\_clusterissuers](#input\_cert\_manager\_letsencrypt\_clusterissuers) | Whether to create letsencrypt-prod and letsencrypt-staging ClusterIssuers | `bool` | `true` | no |
 | <a name="input_cert_manager_letsencrypt_email_address"></a> [cert\_manager\_letsencrypt\_email\_address](#input\_cert\_manager\_letsencrypt\_email\_address) | Email address for the certificate owner. Let's Encrypt will use this to contact you about expiring certificates, and issues related to your account. Only required if cert\_manager\_letsencrypt\_clusterissuers is true. | `string` | `"user@example.com"` | no |
 | <a name="input_cert_manager_values_overrides"></a> [cert\_manager\_values\_overrides](#input\_cert\_manager\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_cert_manager_version"></a> [cert\_manager\_version](#input\_cert\_manager\_version) | Version of the cert-manager helm chart to install | `string` | `null` | no |
@@ -1066,7 +1038,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_container_registry_repos"></a> [container\_registry\_repos](#input\_container\_registry\_repos) | Repositories to create. Ignored if create\_container\_registry is false. | `set(string)` | <pre>[<br/>  "base-image",<br/>  "custom-apps-managed-image",<br/>  "custom-jobs/managed-image",<br/>  "ephemeral-image",<br/>  "managed-image",<br/>  "pipelines-api/managed-images",<br/>  "services/custom-model-conversion",<br/>  "spark-batch-image",<br/>  "workload-api/managed-workloads"<br/>]</pre> | no |
 | <a name="input_container_registry_repos_force_destroy"></a> [container\_registry\_repos\_force\_destroy](#input\_container\_registry\_repos\_force\_destroy) | Force destroy the ECR repositories. Ignored if create\_container\_registry is false. | `bool` | `false` | no |
 | <a name="input_container_registry_repos_scan_on_push"></a> [container\_registry\_repos\_scan\_on\_push](#input\_container\_registry\_repos\_scan\_on\_push) | Indicates whether images are scanned after being pushed to the repository (`true`) or not scanned (`false`). Ignored if create\_container\_registry is false. | `bool` | `false` | no |
-| <a name="input_create_acm_certificate"></a> [create\_acm\_certificate](#input\_create\_acm\_certificate) | Create a new ACM certificate for the ingress load balancer to use. Ignored if existing\_acm\_certificate\_arn is specified. | `bool` | `true` | no |
+| <a name="input_create_acm_certificate"></a> [create\_acm\_certificate](#input\_create\_acm\_certificate) | Create a new ACM certificate for the ingress load balancer to use. Ignored if existing\_acm\_certificate\_arn is specified. | `bool` | `false` | no |
 | <a name="input_create_app_identity"></a> [create\_app\_identity](#input\_create\_app\_identity) | Create an IAM role for the DataRobot application service accounts | `bool` | `true` | no |
 | <a name="input_create_container_registry"></a> [create\_container\_registry](#input\_create\_container\_registry) | Create DataRobot image builder container repositories in Amazon Elastic Container Registry | `bool` | `true` | no |
 | <a name="input_create_dns_zones"></a> [create\_dns\_zones](#input\_create\_dns\_zones) | Create DNS zones for domain\_name. Ignored if existing\_public\_route53\_zone\_id and existing\_private\_route53\_zone\_id are specified. | `bool` | `true` | no |
@@ -1115,7 +1087,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_internet_facing_ingress_lb"></a> [internet\_facing\_ingress\_lb](#input\_internet\_facing\_ingress\_lb) | Determines the type of NLB created for EKS ingress. If true, an internet-facing NLB will be created. If false, an internal NLB will be created. Ignored when ingress\_nginx is false. | `bool` | `true` | no |
 | <a name="input_kubernetes_authentication_mode"></a> [kubernetes\_authentication\_mode](#input\_kubernetes\_authentication\_mode) | The authentication mode for the cluster. Valid values are `CONFIG_MAP`, `API` or `API_AND_CONFIG_MAP` | `string` | `"API_AND_CONFIG_MAP"` | no |
 | <a name="input_kubernetes_cluster_access_entries"></a> [kubernetes\_cluster\_access\_entries](#input\_kubernetes\_cluster\_access\_entries) | Map of access entries to add to the cluster | `any` | `{}` | no |
-| <a name="input_kubernetes_cluster_addons"></a> [kubernetes\_cluster\_addons](#input\_kubernetes\_cluster\_addons) | Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name` | `any` | <pre>{<br/>  "coredns": {},<br/>  "eks-pod-identity-agent": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"agent\": {\"additionalArgs\": {\"-b\": \"169.254.170.23\"}}}"<br/>  },<br/>  "kube-proxy": {},<br/>  "vpc-cni": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"enableNetworkPolicy\": \"true\", \"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}",<br/>    "resolve_conflicts_on_create": "OVERWRITE"<br/>  }<br/>}</pre> | no |
+| <a name="input_kubernetes_cluster_addons"></a> [kubernetes\_cluster\_addons](#input\_kubernetes\_cluster\_addons) | Map of cluster addon configurations to enable for the cluster. Addon name can be the map keys or set with `name` | `any` | <pre>{<br/>  "coredns": {},<br/>  "eks-pod-identity-agent": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"agent\": {\"additionalArgs\": {\"-b\": \"169.254.170.23\"}}}"<br/>  },<br/>  "kube-proxy": {},<br/>  "vpc-cni": {<br/>    "before_compute": true,<br/>    "configuration_values": "{\"env\": {\"ENABLE_PREFIX_DELEGATION\": \"true\", \"WARM_PREFIX_TARGET\": \"1\"}}",<br/>    "resolve_conflicts_on_create": "OVERWRITE"<br/>  }<br/>}</pre> | no |
 | <a name="input_kubernetes_cluster_encryption_config"></a> [kubernetes\_cluster\_encryption\_config](#input\_kubernetes\_cluster\_encryption\_config) | Configuration block with encryption configuration for the cluster. To disable secret encryption, set this value to `{}` | `any` | <pre>{<br/>  "resources": [<br/>    "secrets"<br/>  ]<br/>}</pre> | no |
 | <a name="input_kubernetes_cluster_endpoint_private_access_cidrs"></a> [kubernetes\_cluster\_endpoint\_private\_access\_cidrs](#input\_kubernetes\_cluster\_endpoint\_private\_access\_cidrs) | List of additional CIDR blocks allowed to access the Amazon EKS private API server endpoint. By default only the kubernetes nodes are allowed, if any other hosts such as a provisioner need to access the EKS private API endpoint they need to be added here. | `list(string)` | `[]` | no |
 | <a name="input_kubernetes_cluster_endpoint_public_access"></a> [kubernetes\_cluster\_endpoint\_public\_access](#input\_kubernetes\_cluster\_endpoint\_public\_access) | Indicates whether or not the Amazon EKS public API server endpoint is enabled | `bool` | `true` | no |
@@ -1184,7 +1156,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_nvidia_gpu_operator"></a> [nvidia\_gpu\_operator](#input\_nvidia\_gpu\_operator) | Install the nvidia-gpu-operator helm chart to manage NVIDIA GPU resources in the EKS cluster. All other nvidia\_gpu\_operator variables are ignored if this variable is false. | `bool` | `false` | no |
 | <a name="input_nvidia_gpu_operator_values_overrides"></a> [nvidia\_gpu\_operator\_values\_overrides](#input\_nvidia\_gpu\_operator\_values\_overrides) | Values in raw yaml format to pass to helm. | `string` | `null` | no |
 | <a name="input_nvidia_gpu_operator_version"></a> [nvidia\_gpu\_operator\_version](#input\_nvidia\_gpu\_operator\_version) | Version of the nvidia-gpu-operator helm chart to install | `string` | `null` | no |
-| <a name="input_password_constraints"></a> [password\_constraints](#input\_password\_constraints) | Constraints to put on any generated passwords | <pre>object({<br/>    length           = number<br/>    min_lower        = optional(number)<br/>    min_numeric      = optional(number)<br/>    min_upper        = optional(number)<br/>    min_special      = optional(number, 0)<br/>    special          = optional(bool)<br/>    override_special = optional(string)<br/>  })</pre> | <pre>{<br/>  "length": 32,<br/>  "min_lower": 1,<br/>  "min_numeric": 1,<br/>  "min_upper": 1,<br/>  "override_special": "-"<br/>}</pre> | no |
+| <a name="input_password_constraints"></a> [password\_constraints](#input\_password\_constraints) | Constraints to apply to any generated passwords | <pre>object({<br/>    length           = number<br/>    min_lower        = optional(number)<br/>    min_numeric      = optional(number)<br/>    min_upper        = optional(number)<br/>    min_special      = optional(number, 0)<br/>    special          = optional(bool)<br/>    override_special = optional(string)<br/>  })</pre> | <pre>{<br/>  "length": 32,<br/>  "min_lower": 1,<br/>  "min_numeric": 1,<br/>  "min_upper": 1,<br/>  "override_special": "-"<br/>}</pre> | no |
 | <a name="input_postgres_additional_ingress_cidr_blocks"></a> [postgres\_additional\_ingress\_cidr\_blocks](#input\_postgres\_additional\_ingress\_cidr\_blocks) | Additional CIDR blocks allowed to reach the PostgreSQL port | `list(string)` | `[]` | no |
 | <a name="input_postgres_allocated_storage"></a> [postgres\_allocated\_storage](#input\_postgres\_allocated\_storage) | The allocated storage in gigabytes | `number` | `20` | no |
 | <a name="input_postgres_allow_major_version_upgrade"></a> [postgres\_allow\_major\_version\_upgrade](#input\_postgres\_allow\_major\_version\_upgrade) | Indicates that major version upgrades are allowed. Changing this parameter does not result in an outage and the change is asynchronously applied as soon as possible | `bool` | `true` | no |
