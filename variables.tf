@@ -337,6 +337,7 @@ variable "container_registry_repos" {
     "custom-jobs/managed-image",
     "ephemeral-image",
     "managed-image",
+    "pipelines-api/managed-images",
     "services/custom-model-conversion",
     "spark-batch-image",
     "workload-api/managed-workloads"

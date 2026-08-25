@@ -194,6 +194,11 @@ locals {
 
   private_zone_id  = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.private_dns[0].id, null)
   private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.private_dns[0].arn, null)
+
+  # Whether a private zone will exist, derived only from input variables so it is
+  # known at plan time. private_zone_id is unknown until apply when the zone is
+  # created by this module, so it must not be used in count/for_each.
+  has_private_zone = var.existing_private_route53_zone_id != null || var.create_dns_zones
 }
 
 module "public_dns" {
@@ -618,7 +623,7 @@ module "postgres" {
   postgres_parameters                       = var.postgres_parameters
   postgres_apply_immediately                = var.postgres_apply_immediately
 
-  create_route53_cname_record = local.private_zone_id != null && var.postgres_create_route53_cname_record
+  create_route53_cname_record = local.has_private_zone && var.postgres_create_route53_cname_record
   route_53_zone_id            = local.private_zone_id
 
   tags = var.tags
