@@ -194,12 +194,16 @@ locals {
 
   private_zone_id  = var.existing_private_route53_zone_id != null ? var.existing_private_route53_zone_id : try(module.private_dns[0].id, null)
   private_zone_arn = try(data.aws_route53_zone.existing_private[0].arn, module.private_dns[0].arn, null)
+
+  create_public_zone  = var.existing_public_route53_zone_id == null && var.create_dns_zones
+  create_private_zone = var.existing_private_route53_zone_id == null && var.create_dns_zones
+  has_private_zone    = var.existing_private_route53_zone_id != null || local.create_private_zone
 }
 
 module "public_dns" {
   source  = "terraform-aws-modules/route53/aws"
   version = "~> 6.0"
-  count   = var.existing_public_route53_zone_id == null && var.create_dns_zones ? 1 : 0
+  count   = local.create_public_zone ? 1 : 0
 
   name          = var.domain_name
   comment       = "${var.domain_name} public zone"
@@ -211,7 +215,7 @@ module "public_dns" {
 module "private_dns" {
   source  = "terraform-aws-modules/route53/aws"
   version = "~> 6.0"
-  count   = var.existing_private_route53_zone_id == null && var.create_dns_zones ? 1 : 0
+  count   = local.create_private_zone ? 1 : 0
 
   name          = var.domain_name
   comment       = "${var.domain_name} private zone"
@@ -618,7 +622,7 @@ module "postgres" {
   postgres_parameters                       = var.postgres_parameters
   postgres_apply_immediately                = var.postgres_apply_immediately
 
-  create_route53_cname_record = local.private_zone_id != null && var.postgres_create_route53_cname_record
+  create_route53_cname_record = local.has_private_zone && var.postgres_create_route53_cname_record
   route_53_zone_id            = local.private_zone_id
 
   tags = var.tags
