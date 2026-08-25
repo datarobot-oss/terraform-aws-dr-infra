@@ -3,6 +3,12 @@ variable "name" {
   type        = string
 }
 
+variable "domain_name" {
+  description = "Name of the domain to use for the DataRobot application. If create_dns_zones is true then zones will be created for this domain. It is also used by ACM for DNS validation and as a domain filter by the external-dns helm chart."
+  type        = string
+  default     = ""
+}
+
 variable "availability_zones" {
   description = "Number of availability zones to deploy into"
   type        = number
@@ -205,32 +211,26 @@ variable "network_firewall_policy_stateful_rule_group_reference" {
 # DNS
 ################################################################################
 
-variable "existing_route53_zone_id" {
-  description = "ID of existing Route53 hosted zone to use. When specified, all other DNS variables will be ignored."
+variable "existing_public_route53_zone_id" {
+  description = "ID of existing public Route53 hosted zone to use for public DNS records created by external-dns and ACM certificate validation. This is required when create_dns_zones is false and ingress_nginx and internet_facing_ingress_lb are true or when create_acm_certificate is true."
   type        = string
   default     = null
 }
 
-variable "create_dns_zone" {
-  description = "Create Route53 hosted DNS zone. Ignored if existing_route53_zone_id is specified."
-  type        = bool
-  default     = true
-}
-
-variable "dns_zone_name" {
-  description = "Name of the Route53 hosted DNS zone to create. Ignored if existing_route53_zone_id is specified."
+variable "existing_private_route53_zone_id" {
+  description = "ID of existing private Route53 hosted zone to use for private DNS records created by external-dns. This is required when create_dns_zones is false and ingress_nginx is true with internet_facing_ingress_lb false."
   type        = string
   default     = null
 }
 
-variable "dns_zone_public" {
-  description = "Create public Route53 hosted DNS zone. When `false`, a private zone will be created for the given VPC."
+variable "create_dns_zones" {
+  description = "Create DNS zones for domain_name. Ignored if existing_public_route53_zone_id and existing_private_route53_zone_id are specified."
   type        = bool
   default     = true
 }
 
-variable "dns_zone_force_destroy" {
-  description = "Force destroy the Route53 zone. Ignored if an existing_route53_zone_id is specified or create_dns_zone is false."
+variable "dns_zones_force_destroy" {
+  description = "Force destroy the public and private Route53 zones. Ignored if an existing route53_zone_id is specified or create_dns_zones is false."
   type        = bool
   default     = false
 }
