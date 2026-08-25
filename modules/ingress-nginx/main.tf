@@ -20,6 +20,7 @@ resource "helm_release" "this" {
     var.values_overrides
   ]
 
+  # If an ACM certificate ARN is provided, annotate the controller service to use it for SSL termination at the load balancer
   set = var.acm_certificate_arn != null ? [
     {
       name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/aws-load-balancer-ssl-cert"
