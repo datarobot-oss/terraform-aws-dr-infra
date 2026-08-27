@@ -549,6 +549,67 @@ module "app_identity" {
       ]
       resources = ["*"]
     }
+    # Spark batch jobs run on EMR Serverless, which the role is already trusted
+    # to assume via trust_policy_permissions.emr above.
+    EMRServerlessActions = {
+      actions = [
+        "iam:CreateServiceLinkedRole",
+        "emr-serverless:TagResource",
+        "emr-serverless:CreateApplication",
+        "emr-serverless:UpdateApplication",
+        "emr-serverless:DeleteApplication",
+        "emr-serverless:ListApplications",
+        "emr-serverless:GetApplication",
+        "emr-serverless:StartApplication",
+        "emr-serverless:StopApplication",
+        "emr-serverless:StartJobRun",
+        "emr-serverless:CancelJobRun",
+        "emr-serverless:ListJobRuns",
+        "emr-serverless:GetJobRun"
+      ]
+      resources = ["*"]
+    }
+    AllowEMRToCreateNetworkInterface = {
+      actions   = ["ec2:CreateNetworkInterface"]
+      resources = ["arn:${data.aws_partition.current.id}:ec2:*:*:*"]
+    }
+    PassRoleToEMR = {
+      actions   = ["iam:PassRole"]
+      resources = ["*"]
+      condition = [{
+        test     = "StringLike"
+        variable = "iam:PassedToService"
+        values   = ["emr-serverless.amazonaws.com"]
+      }]
+    }
+    ReadAccessForEMRSamples = {
+      actions = [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+      resources = [
+        "arn:${data.aws_partition.current.id}:s3:::*.elasticmapreduce",
+        "arn:${data.aws_partition.current.id}:s3:::*.elasticmapreduce/*"
+      ]
+    }
+    GlueCreateAndReadDataCatalog = {
+      actions = [
+        "glue:GetDatabase",
+        "glue:CreateDatabase",
+        "glue:GetDataBases",
+        "glue:CreateTable",
+        "glue:GetTable",
+        "glue:UpdateTable",
+        "glue:DeleteTable",
+        "glue:GetTables",
+        "glue:GetPartition",
+        "glue:GetPartitions",
+        "glue:CreatePartition",
+        "glue:BatchCreatePartition",
+        "glue:GetUserDefinedFunctions"
+      ]
+      resources = ["*"]
+    }
   }, local.app_s3_kms_inline_policy)
 
   tags = var.tags
