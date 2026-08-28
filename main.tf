@@ -546,6 +546,7 @@ module "app_identity" {
         "ecr:BatchDeleteImage",
         "ecr:CreateRepository",
         "ecr:BatchImportUpstreamImage",
+        "ecr:BatchGetImage",
       ]
       resources = ["*"]
     }
