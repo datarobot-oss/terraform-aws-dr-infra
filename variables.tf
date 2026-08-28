@@ -357,7 +357,7 @@ variable "container_registry_repos_force_destroy" {
 }
 
 variable "container_registry_create_repository_policy" {
-  description = "Indicates whether to create a repository policy for the ECR repositories. Ignored if create_container_registry is false."
+  description = "Indicates whether to create a repository policy for the ECR repositories. Ignored if create_container_registry is false. The spark-batch-image repository is always given a policy regardless of this setting, because EMR Serverless can only be granted access to pull the SAFER Spark image through a repository policy."
   type        = bool
   default     = true
 }

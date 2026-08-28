@@ -1,5 +1,6 @@
 data "aws_partition" "current" {}
 data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
 data "aws_availability_zones" "available" {
   state = "available"
   filter {
@@ -304,7 +305,29 @@ module "storage" {
 ################################################################################
 
 locals {
-  repository_prefix = coalesce(var.container_registry_repo_prefix, var.name)
+  repository_prefix         = coalesce(var.container_registry_repo_prefix, var.name)
+  emr_serverless_image_repo = "spark-batch-image"
+
+  emr_serverless_repository_policy_statements = {
+    emr_serverless_custom_image = {
+      sid    = "EmrServerlessCustomImageSupport"
+      effect = "Allow"
+      actions = [
+        "ecr:BatchGetImage",
+        "ecr:DescribeImages",
+        "ecr:GetDownloadUrlForLayer",
+      ]
+      principals = [{
+        type        = "Service"
+        identifiers = ["emr-serverless.amazonaws.com"]
+      }]
+      conditions = [{
+        test     = "StringLike"
+        variable = "aws:SourceArn"
+        values   = ["arn:${data.aws_partition.current.partition}:emr-serverless:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:/applications/*"]
+      }]
+    }
+  }
 }
 
 module "container_registry" {
@@ -313,13 +336,16 @@ module "container_registry" {
   for_each = var.create_container_registry ? var.container_registry_repos : []
 
   repository_name                   = "${local.repository_prefix}/${each.key}"
-  repository_read_write_access_arns = [local.app_role_arn]
+  repository_read_write_access_arns = compact([local.app_role_arn])
   repository_image_scan_on_push     = var.container_registry_repos_scan_on_push
   repository_force_delete           = var.container_registry_repos_force_destroy
   create_lifecycle_policy           = false
-  create_repository_policy          = var.container_registry_create_repository_policy
-  attach_repository_policy          = var.container_registry_create_repository_policy
-  tags                              = var.tags
+
+  create_repository_policy     = var.container_registry_create_repository_policy || each.key == local.emr_serverless_image_repo
+  attach_repository_policy     = var.container_registry_create_repository_policy || each.key == local.emr_serverless_image_repo
+  repository_policy_statements = each.key == local.emr_serverless_image_repo ? local.emr_serverless_repository_policy_statements : null
+
+  tags = var.tags
 }
 
 
