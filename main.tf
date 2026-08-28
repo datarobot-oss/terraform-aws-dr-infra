@@ -336,7 +336,7 @@ module "container_registry" {
   for_each = var.create_container_registry ? var.container_registry_repos : []
 
   repository_name                   = "${local.repository_prefix}/${each.key}"
-  repository_read_write_access_arns = compact([local.app_role_arn])
+  repository_read_write_access_arns = [local.app_role_arn]
   repository_image_scan_on_push     = var.container_registry_repos_scan_on_push
   repository_force_delete           = var.container_registry_repos_force_destroy
   create_lifecycle_policy           = false
