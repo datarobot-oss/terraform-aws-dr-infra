@@ -73,8 +73,9 @@ variable "network_address_space" {
 }
 
 variable "network_endpoints" {
-  description = "A map of interface and/or gateway endpoints containing their properties and configurations. See https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/modules/vpc-endpoints/variables.tf#L19 for available options. If `private_dns_enabled` is `false`, `custom_private_dns_name` and `custom_private_dns_zone` can be used to create a private DNS record for the endpoint."
+  description = "A map of interface and/or gateway endpoints containing their properties and configurations. See https://github.com/terraform-aws-modules/terraform-aws-vpc/blob/master/modules/vpc-endpoints/variables.tf#L19 for available options. If `private_dns_enabled` is `false`, `custom_private_dns_name` and `custom_private_dns_zone` can be used to create a private DNS record for the endpoint. Endpoints are keyed by `key` if set, otherwise by `service` / `service_name`; set `key` to create more than one endpoint for the same service (e.g. separate endpoints with different custom private DNS zones)."
   type = list(object({
+    key                      = optional(string)
     service                  = optional(string)
     service_name             = optional(string)
     service_type             = optional(string, "Interface")
@@ -122,6 +123,13 @@ variable "network_endpoints" {
       service = "bedrock-runtime" # Bedrock LLMs
     }
   ]
+
+  validation {
+    condition = length(distinct([
+      for endpoint in var.network_endpoints : try(coalesce(endpoint.key, endpoint.service, endpoint.service_name), null)
+    ])) == length(var.network_endpoints)
+    error_message = "Each network_endpoints entry must have a unique key (`key`, falling back to `service` / `service_name`). Set `key` on entries that share the same service."
+  }
 }
 
 variable "network_enable_vpc_flow_logs" {

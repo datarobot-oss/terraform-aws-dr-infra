@@ -101,6 +101,11 @@ module "network_firewall" {
   tags = var.tags
 }
 
+locals {
+  # endpoints keyed by `key`, falling back to service / service_name
+  network_endpoints = { for endpoint in var.network_endpoints : coalesce(endpoint.key, endpoint.service, endpoint.service_name) => endpoint }
+}
+
 module "endpoints" {
   source  = "terraform-aws-modules/vpc/aws//modules/vpc-endpoints"
   version = "~> 6.0"
@@ -120,8 +125,8 @@ module "endpoints" {
     }
   }
 
-  endpoints = { for endpoint in var.network_endpoints :
-    coalesce(endpoint.service, endpoint.service_name) => merge(
+  endpoints = { for key, endpoint in local.network_endpoints :
+    key => merge(
       {
         service             = endpoint.service
         service_name        = endpoint.service_name
@@ -143,7 +148,7 @@ module "endpoints" {
 
 # custom_private_dns_zone for VPC endpoints
 resource "aws_route53_zone" "endpoint" {
-  for_each = { for endpoint in var.network_endpoints : coalesce(endpoint.service, endpoint.service_name) => endpoint if endpoint.custom_private_dns_zone != null }
+  for_each = { for key, endpoint in local.network_endpoints : key => endpoint if endpoint.custom_private_dns_zone != null }
 
   name = each.value.custom_private_dns_zone
   vpc {
@@ -154,7 +159,7 @@ resource "aws_route53_zone" "endpoint" {
 
 # custom_private_dns_name for VPC endpoints
 resource "aws_route53_record" "endpoint" {
-  for_each = { for endpoint in var.network_endpoints : coalesce(endpoint.service, endpoint.service_name) => endpoint if endpoint.custom_private_dns_zone != null }
+  for_each = { for key, endpoint in local.network_endpoints : key => endpoint if endpoint.custom_private_dns_zone != null }
 
   name    = each.value.custom_private_dns_name
   zone_id = aws_route53_zone.endpoint[each.key].id
