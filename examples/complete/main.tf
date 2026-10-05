@@ -36,6 +36,14 @@ module "datarobot_infra" {
     #   custom_private_dns_name = "example-vpce-service"
     #   custom_private_dns_zone = "internal.datarobot.com"
     # },
+    # # A second endpoint for the same service needs a unique `key`
+    # {
+    #   key                     = "example-vpce-service-alt"
+    #   service_name            = "com.vpce.us-west-2.vpce-svc-0a5fa55fb030ce1ac"
+    #   private_dns_enabled     = false
+    #   custom_private_dns_name = "example-vpce-service-alt"
+    #   custom_private_dns_zone = "alt.datarobot.com"
+    # },
     {
       service = "s3"
     },
