@@ -601,7 +601,7 @@ Not required
 #### Description
 Uses the [terraform-aws-eks-pod-identity](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity) module to create a pod identity for the `cert-manager` service account in the `cert-manager` namespace with an [IAM policy](https://github.com/terraform-aws-modules/terraform-aws-eks-pod-identity/blob/master/cert_manager.tf) that allows the creation of DNS resources within the specified DNS zone.
 
-Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `cert-manager` helm chart from the `https://charts.jetstack.io` repo into the `cert-manager` namespace.
+Uses the [terraform-helm-release](https://github.com/terraform-module/terraform-helm-release) module to install the `cert-manager` helm chart from the `oci://quay.io/jetstack/charts` OCI registry into the `cert-manager` namespace.
 
 `cert-manager` can be used by the DataRobot application to create and manage various certificates. When an ACM certificate is used in the ingress load balancer, `cert-manager` is typically just used to generate self-signed certificates that can be used for service to service communications.
 
