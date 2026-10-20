@@ -65,8 +65,9 @@ module "network" {
 }
 
 module "flow_log" {
-  source = "terraform-aws-modules/vpc/aws//modules/flow-log"
-  count  = var.network_enable_vpc_flow_logs ? 1 : 0
+  source  = "terraform-aws-modules/vpc/aws//modules/flow-log"
+  version = "~> 6.0"
+  count   = var.network_enable_vpc_flow_logs ? 1 : 0
 
   name   = var.name
   vpc_id = local.vpc_id

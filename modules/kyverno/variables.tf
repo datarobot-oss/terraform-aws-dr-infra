@@ -11,7 +11,7 @@ variable "eks_cluster_name" {
 }
 
 variable "chart_version" {
-  description = "Version of the helm chart to install"
+  description = "Semver range (helm --version constraint) of the helm chart to install"
   type        = string
   default     = null
 }
@@ -29,7 +29,7 @@ variable "install_policies" {
 }
 
 variable "policies_chart_version" {
-  description = "Version of the kyverno-policies helm chart to install"
+  description = "Semver range (helm --version constraint) of the kyverno-policies helm chart to install"
   type        = string
   default     = null
 }
@@ -47,7 +47,7 @@ variable "notation_aws" {
 }
 
 variable "notation_aws_chart_version" {
-  description = "Version of the kyverno-notation-aws helm chart to install"
+  description = "Semver range (helm --version constraint) of the kyverno-notation-aws helm chart to install"
   type        = string
   default     = null
 }

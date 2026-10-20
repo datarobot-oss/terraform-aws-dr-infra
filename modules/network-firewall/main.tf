@@ -113,7 +113,8 @@ resource "aws_route" "firewall_igw" {
 }
 
 module "network_firewall" {
-  source = "terraform-aws-modules/network-firewall/aws"
+  source  = "terraform-aws-modules/network-firewall/aws"
+  version = "~> 2.0"
 
   name = var.name
 

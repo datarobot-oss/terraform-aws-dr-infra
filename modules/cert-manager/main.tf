@@ -50,7 +50,7 @@ resource "helm_release" "letsencrypt_clusterissuers" {
   namespace  = local.namespace
   repository = "https://dysnix.github.io/charts"
   chart      = "raw"
-  version    = "0.3.2"
+  version    = ">=0.3.2 <1.0.0"
 
   values = [
     <<-EOF

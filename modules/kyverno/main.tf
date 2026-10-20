@@ -33,7 +33,8 @@ resource "helm_release" "policies" {
 }
 
 module "notation_aws_pod_identity" {
-  source = "terraform-aws-modules/eks-pod-identity/aws"
+  source  = "terraform-aws-modules/eks-pod-identity/aws"
+  version = "~> 2.0"
 
   name = "kyverno-notation-aws"
 

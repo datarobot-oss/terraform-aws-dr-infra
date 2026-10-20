@@ -1024,9 +1024,9 @@ variable "aws_load_balancer_controller" {
 }
 
 variable "aws_load_balancer_controller_version" {
-  description = "Version of the aws-load-balancer-controller helm chart to install"
+  description = "Semver range (helm --version constraint) of the aws-load-balancer-controller helm chart to install"
   type        = string
-  default     = null
+  default     = "^3.6.0"
 }
 
 variable "aws_load_balancer_controller_values_overrides" {
@@ -1042,9 +1042,9 @@ variable "aws_ebs_csi_driver" {
 }
 
 variable "aws_ebs_csi_driver_version" {
-  description = "Version of the aws-ebs-csi-driver helm chart to install"
+  description = "Semver range (helm --version constraint) of the aws-ebs-csi-driver helm chart to install"
   type        = string
-  default     = null
+  default     = "^2.67.0"
 }
 
 variable "aws_ebs_csi_driver_values_overrides" {
@@ -1060,9 +1060,9 @@ variable "cluster_autoscaler" {
 }
 
 variable "cluster_autoscaler_version" {
-  description = "Version of the cluster-autoscaler helm chart to install"
+  description = "Semver range (helm --version constraint) of the cluster-autoscaler helm chart to install. The chart minor maps to a cluster-autoscaler app minor, which must match kubernetes_cluster_version, so keep this patch-scoped and bump it together with the EKS version."
   type        = string
-  default     = "9.51.0" # app version 1.33.0
+  default     = "~9.51.0" # 9.47.x-9.51.x ship app 1.33.0 (EKS 1.33); 9.52+ ships 1.34, so do not use a caret range here
 }
 
 variable "cluster_autoscaler_values_overrides" {
@@ -1078,9 +1078,9 @@ variable "descheduler" {
 }
 
 variable "descheduler_version" {
-  description = "Version of the descheduler helm chart to install"
+  description = "Semver range (helm --version constraint) of the descheduler helm chart to install"
   type        = string
-  default     = null
+  default     = ">=0.33.0 <1.0.0"
 }
 
 variable "descheduler_values_overrides" {
@@ -1096,9 +1096,9 @@ variable "ingress_nginx" {
 }
 
 variable "ingress_nginx_version" {
-  description = "Version of the ingress-nginx helm chart to install"
+  description = "Semver range (helm --version constraint) of the ingress-nginx helm chart to install"
   type        = string
-  default     = null
+  default     = "^4.11.5"
 }
 
 variable "ingress_nginx_use_acm_cert" {
@@ -1126,9 +1126,9 @@ variable "cert_manager" {
 }
 
 variable "cert_manager_version" {
-  description = "Version of the cert-manager helm chart to install"
+  description = "Semver range (helm --version constraint) of the cert-manager helm chart to install"
   type        = string
-  default     = null
+  default     = "^1.16.2"
 }
 
 variable "cert_manager_letsencrypt_clusterissuers" {
@@ -1156,9 +1156,9 @@ variable "external_dns" {
 }
 
 variable "external_dns_version" {
-  description = "Version of the external-dns helm chart to install"
+  description = "Semver range (helm --version constraint) of the external-dns helm chart to install"
   type        = string
-  default     = null
+  default     = "^1.19.0"
 }
 
 variable "external_dns_values_overrides" {
@@ -1174,9 +1174,9 @@ variable "external_secrets" {
 }
 
 variable "external_secrets_version" {
-  description = "Version of the external-secrets helm chart to install"
+  description = "Semver range (helm --version constraint) of the external-secrets helm chart to install"
   type        = string
-  default     = null
+  default     = "^2.13.0"
 }
 
 variable "external_secrets_secrets_manager_arns" {
@@ -1198,9 +1198,9 @@ variable "nvidia_gpu_operator" {
 }
 
 variable "nvidia_gpu_operator_version" {
-  description = "Version of the nvidia-gpu-operator helm chart to install"
+  description = "Semver range (helm --version constraint) of the nvidia-gpu-operator helm chart to install"
   type        = string
-  default     = null
+  default     = "^26.7.2"
 }
 
 variable "nvidia_gpu_operator_values_overrides" {
@@ -1216,9 +1216,9 @@ variable "metrics_server" {
 }
 
 variable "metrics_server_version" {
-  description = "Version of the metrics-server helm chart to install"
+  description = "Semver range (helm --version constraint) of the metrics-server helm chart to install"
   type        = string
-  default     = null
+  default     = "^3.14.0"
 }
 
 variable "metrics_server_values_overrides" {
@@ -1234,9 +1234,9 @@ variable "cilium" {
 }
 
 variable "cilium_version" {
-  description = "Version of the cilium helm chart to install"
+  description = "Semver range (helm --version constraint) of the cilium helm chart to install"
   type        = string
-  default     = "1.18.3"
+  default     = "^1.18.3"
 }
 
 variable "cilium_values_overrides" {
@@ -1252,9 +1252,9 @@ variable "kyverno" {
 }
 
 variable "kyverno_version" {
-  description = "Version of the kyverno helm chart to install"
+  description = "Semver range (helm --version constraint) of the kyverno helm chart to install"
   type        = string
-  default     = null
+  default     = "^3.9.1"
 }
 
 variable "kyverno_values_overrides" {
@@ -1270,9 +1270,9 @@ variable "kyverno_policies" {
 }
 
 variable "kyverno_policies_version" {
-  description = "Version of the kyverno-policies helm chart to install"
+  description = "Semver range (helm --version constraint) of the kyverno-policies helm chart to install"
   type        = string
-  default     = null
+  default     = "^3.9.1"
 }
 
 variable "kyverno_policies_values_overrides" {
@@ -1288,9 +1288,9 @@ variable "kyverno_notation_aws" {
 }
 
 variable "kyverno_notation_aws_version" {
-  description = "Version of the kyverno-notation-aws helm chart to install"
+  description = "Semver range (helm --version constraint) of the kyverno-notation-aws helm chart to install"
   type        = string
-  default     = null
+  default     = "^1.1.0"
 }
 
 variable "kyverno_notation_aws_values_overrides" {
