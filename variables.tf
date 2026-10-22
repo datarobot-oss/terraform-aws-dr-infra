@@ -1128,7 +1128,7 @@ variable "cert_manager" {
 variable "cert_manager_version" {
   description = "Semver range (helm --version constraint) of the cert-manager helm chart to install"
   type        = string
-  default     = "^1.16.2"
+  default     = "~1.21.2"
 }
 
 variable "cert_manager_letsencrypt_clusterissuers" {
@@ -1176,7 +1176,7 @@ variable "external_secrets" {
 variable "external_secrets_version" {
   description = "Semver range (helm --version constraint) of the external-secrets helm chart to install"
   type        = string
-  default     = "^2.13.0"
+  default     = "~2.13.0"
 }
 
 variable "external_secrets_secrets_manager_arns" {
@@ -1200,7 +1200,7 @@ variable "nvidia_gpu_operator" {
 variable "nvidia_gpu_operator_version" {
   description = "Semver range (helm --version constraint) of the nvidia-gpu-operator helm chart to install"
   type        = string
-  default     = "^26.7.2"
+  default     = "~26.7.2"
 }
 
 variable "nvidia_gpu_operator_values_overrides" {
@@ -1236,7 +1236,7 @@ variable "cilium" {
 variable "cilium_version" {
   description = "Semver range (helm --version constraint) of the cilium helm chart to install"
   type        = string
-  default     = "^1.18.3"
+  default     = "~1.18.3"
 }
 
 variable "cilium_values_overrides" {
@@ -1254,7 +1254,7 @@ variable "kyverno" {
 variable "kyverno_version" {
   description = "Semver range (helm --version constraint) of the kyverno helm chart to install"
   type        = string
-  default     = "^3.9.1"
+  default     = "~3.9.1"
 }
 
 variable "kyverno_values_overrides" {
@@ -1272,7 +1272,7 @@ variable "kyverno_policies" {
 variable "kyverno_policies_version" {
   description = "Semver range (helm --version constraint) of the kyverno-policies helm chart to install"
   type        = string
-  default     = "^3.9.1"
+  default     = "~3.9.1"
 }
 
 variable "kyverno_policies_values_overrides" {
