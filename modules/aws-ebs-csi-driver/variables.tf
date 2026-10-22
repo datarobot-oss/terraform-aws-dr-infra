@@ -1,5 +1,5 @@
 variable "chart_version" {
-  description = "Semver range (helm --version constraint) of the helm chart to install"
+  description = "Version of the helm chart to install"
   type        = string
   default     = null
 }

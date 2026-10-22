@@ -3,6 +3,7 @@ controller:
   admissionWebhooks:
     enabled: false
   config:
+    annotations-risk-level: "Critical"
     use-forwarded-headers: "true"
     use-proxy-protocol: "true"
     worker-shutdown-timeout: "600s"
