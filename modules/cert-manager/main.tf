@@ -29,7 +29,7 @@ module "pod_identity" {
 resource "helm_release" "this" {
   name       = local.name
   namespace  = local.namespace
-  repository = "https://charts.jetstack.io"
+  repository = "oci://quay.io/jetstack/charts"
   chart      = local.name
   version    = var.chart_version
 
