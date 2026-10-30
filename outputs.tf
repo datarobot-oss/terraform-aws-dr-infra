@@ -129,6 +129,21 @@ output "ecr_repository_urls" {
 
 
 ################################################################################
+# Pull-Through Cache
+################################################################################
+
+output "pull_through_cache_registry_url" {
+  description = "Registry URL to pull Docker Hub images through the ECR pull through cache, e.g. <url>/<namespace>/<image>:<tag>"
+  value       = try("${aws_ecr_pull_through_cache_rule.this[0].registry_id}.dkr.ecr.${data.aws_region.current.region}.${data.aws_partition.current.dns_suffix}/${aws_ecr_pull_through_cache_rule.this[0].ecr_repository_prefix}", null)
+}
+
+output "pull_through_cache_node_policy_arn" {
+  description = "ARN of the IAM policy that allows nodes to pull images through the cache. Attach it to the node role when using an existing EKS cluster."
+  value       = try(aws_iam_policy.pull_through_cache[0].arn, null)
+}
+
+
+################################################################################
 # Kubernetes
 ################################################################################
 

@@ -372,6 +372,59 @@ variable "container_registry_create_repository_policy" {
 
 
 ################################################################################
+# Pull-Through Cache
+################################################################################
+
+variable "create_pull_through_cache" {
+  description = "Create an ECR pull through cache rule for Docker Hub. Requires pull_through_cache_dockerhub_username and pull_through_cache_dockerhub_access_token."
+  type        = bool
+  default     = false
+}
+
+variable "pull_through_cache_dockerhub_username" {
+  description = "Docker Hub username the pull through cache uses to authenticate to Docker Hub. Required when create_pull_through_cache is true."
+  type        = string
+  default     = null
+}
+
+variable "pull_through_cache_dockerhub_access_token" {
+  description = "Docker Hub personal access token the pull through cache uses to authenticate to Docker Hub. Required when create_pull_through_cache is true. Stored in AWS Secrets Manager and in Terraform state."
+  type        = string
+  default     = null
+  sensitive   = true
+}
+
+variable "pull_through_cache_repository_prefix" {
+  description = "ECR repository prefix for the pull through cache rule. Cached images are pulled as <account>.dkr.ecr.<region>.amazonaws.com/<prefix>/<namespace>/<image>:<tag>. Must be unique within the account and region."
+  type        = string
+  default     = "dockerhub-remote"
+}
+
+variable "pull_through_cache_secret_name" {
+  description = "Name of the Secrets Manager secret holding the Docker Hub credentials. ECR requires the name to start with `ecr-pullthroughcache/`."
+  type        = string
+  default     = "ecr-pullthroughcache/dockerhub"
+
+  validation {
+    condition     = startswith(var.pull_through_cache_secret_name, "ecr-pullthroughcache/")
+    error_message = "pull_through_cache_secret_name must start with \"ecr-pullthroughcache/\"."
+  }
+}
+
+variable "pull_through_cache_secret_recovery_window_in_days" {
+  description = "Number of days Secrets Manager waits before deleting the Docker Hub credentials secret. Set to 0 to delete immediately so the secret name can be reused right away."
+  type        = number
+  default     = 30
+}
+
+variable "pull_through_cache_expiration_days" {
+  description = "When set, creates an ECR repository creation template that expires cached images this many days after they are cached. Expired images are pulled from Docker Hub again on the next request. Only applies to repositories the pull through cache creates after the template exists."
+  type        = number
+  default     = null
+}
+
+
+################################################################################
 # Kubernetes
 ################################################################################
 

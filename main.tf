@@ -356,6 +356,99 @@ module "container_registry" {
 
 
 ################################################################################
+# Pull-Through Cache
+################################################################################
+
+resource "aws_secretsmanager_secret" "pull_through_cache" {
+  count = var.create_pull_through_cache ? 1 : 0
+
+  name                    = var.pull_through_cache_secret_name
+  description             = "Docker Hub credentials for the ${var.pull_through_cache_repository_prefix} ECR pull through cache rule"
+  recovery_window_in_days = var.pull_through_cache_secret_recovery_window_in_days
+
+  tags = var.tags
+}
+
+resource "aws_secretsmanager_secret_version" "pull_through_cache" {
+  count = var.create_pull_through_cache ? 1 : 0
+
+  secret_id = aws_secretsmanager_secret.pull_through_cache[0].id
+  secret_string = jsonencode({
+    username    = var.pull_through_cache_dockerhub_username
+    accessToken = var.pull_through_cache_dockerhub_access_token
+  })
+
+  lifecycle {
+    precondition {
+      condition     = var.pull_through_cache_dockerhub_username != null && var.pull_through_cache_dockerhub_access_token != null
+      error_message = "pull_through_cache_dockerhub_username and pull_through_cache_dockerhub_access_token are required when create_pull_through_cache is true."
+    }
+  }
+}
+
+resource "aws_ecr_pull_through_cache_rule" "this" {
+  count = var.create_pull_through_cache ? 1 : 0
+
+  ecr_repository_prefix = var.pull_through_cache_repository_prefix
+  upstream_registry_url = "registry-1.docker.io"
+  credential_arn        = aws_secretsmanager_secret.pull_through_cache[0].arn
+
+  depends_on = [aws_secretsmanager_secret_version.pull_through_cache]
+}
+
+resource "aws_ecr_repository_creation_template" "pull_through_cache" {
+  count = var.create_pull_through_cache && var.pull_through_cache_expiration_days != null ? 1 : 0
+
+  prefix               = var.pull_through_cache_repository_prefix
+  description          = "Repositories created by the ${var.pull_through_cache_repository_prefix} pull through cache rule"
+  applied_for          = ["PULL_THROUGH_CACHE"]
+  image_tag_mutability = "MUTABLE"
+
+  lifecycle_policy = jsonencode({
+    rules = [{
+      rulePriority = 1
+      description  = "Expire cached images"
+      selection = {
+        tagStatus   = "any"
+        countType   = "sinceImagePushed"
+        countUnit   = "days"
+        countNumber = var.pull_through_cache_expiration_days
+      }
+      action = {
+        type = "expire"
+      }
+    }]
+  })
+}
+
+# AmazonEC2ContainerRegistryReadOnly on the nodes lacks the actions the first pull through the cache needs
+resource "aws_iam_policy" "pull_through_cache" {
+  count = var.create_pull_through_cache ? 1 : 0
+
+  name        = "${var.name}-ecr-pull-through-cache"
+  description = "Allow pulling images through the ${var.pull_through_cache_repository_prefix} ECR pull through cache rule"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "ECRPullThroughCache"
+      Effect = "Allow"
+      Action = [
+        "ecr:BatchImportUpstreamImage",
+        "ecr:CreateRepository",
+      ]
+      Resource = "arn:${data.aws_partition.current.partition}:ecr:${data.aws_region.current.region}:${data.aws_caller_identity.current.account_id}:repository/${var.pull_through_cache_repository_prefix}/*"
+    }]
+  })
+
+  tags = var.tags
+}
+
+locals {
+  pull_through_cache_node_policies = { for k, v in { ecrPullThroughCache = try(aws_iam_policy.pull_through_cache[0].arn, null) } : k => v if var.create_pull_through_cache }
+}
+
+
+################################################################################
 # Kubernetes
 ################################################################################
 
@@ -379,14 +472,20 @@ locals {
         {
           subnet_ids = [element(local.kubernetes_node_subnets, index(local.azs, az))]
         },
-        v
+        v,
+        {
+          iam_role_additional_policies = merge(coalesce(try(v.iam_role_additional_policies, null), {}), local.pull_through_cache_node_policies)
+        }
       )
     }
     ]...) : { for k, v in var.kubernetes_node_groups : "${var.name}-${k}" => merge(
     {
       subnet_ids = null
     },
-    v
+    v,
+    {
+      iam_role_additional_policies = merge(coalesce(try(v.iam_role_additional_policies, null), {}), local.pull_through_cache_node_policies)
+    }
   ) }
 }
 
