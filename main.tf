@@ -390,7 +390,7 @@ resource "aws_ecr_pull_through_cache_rule" "this" {
   count = var.create_pull_through_cache ? 1 : 0
 
   ecr_repository_prefix = var.pull_through_cache_repository_prefix
-  upstream_registry_url = "registry-1.docker.io"
+  upstream_registry_url = var.pull_through_cache_upstream_registry_url
   credential_arn        = aws_secretsmanager_secret.pull_through_cache[0].arn
 
   depends_on = [aws_secretsmanager_secret_version.pull_through_cache]
