@@ -161,7 +161,6 @@ module "datarobot_infra" {
   pull_through_cache_dockerhub_username             = "dockerhub-username"
   pull_through_cache_dockerhub_access_token         = "dockerhub-access-token"
   pull_through_cache_repository_prefix              = "dockerhub-remote"
-  pull_through_cache_upstream_registry_url          = "registry-1.docker.io"
   pull_through_cache_secret_name                    = "ecr-pullthroughcache/dockerhub"
   pull_through_cache_secret_recovery_window_in_days = 0
   pull_through_cache_expiration_days                = 180

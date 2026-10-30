@@ -400,12 +400,6 @@ variable "pull_through_cache_repository_prefix" {
   default     = "dockerhub-remote"
 }
 
-variable "pull_through_cache_upstream_registry_url" {
-  description = "Registry URL of the upstream Docker Hub registry for the pull through cache rule."
-  type        = string
-  default     = "registry-1.docker.io"
-}
-
 variable "pull_through_cache_secret_name" {
   description = "Name of the Secrets Manager secret holding the Docker Hub credentials. ECR requires the name to start with `ecr-pullthroughcache/`."
   type        = string
