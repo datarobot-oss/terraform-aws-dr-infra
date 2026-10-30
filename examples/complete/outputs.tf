@@ -13,6 +13,11 @@ output "ecr_repository_urls" {
   value       = module.datarobot_infra.ecr_repository_urls
 }
 
+output "pull_through_cache_registry_url" {
+  description = "Registry URL to pull Docker Hub images through the ECR pull through cache"
+  value       = module.datarobot_infra.pull_through_cache_registry_url
+}
+
 output "s3_bucket_name" {
   description = "S3 bucket name to use for DataRobot application file storage"
   value       = module.datarobot_infra.s3_bucket_id

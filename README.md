@@ -257,6 +257,79 @@ By default, only the DataRobot application IAM role will be allowed read/write a
 ```
 
 
+### Pull-Through Cache
+#### Toggle
+- `create_pull_through_cache` to create an ECR pull through cache rule for Docker Hub
+
+#### Description
+Creates an [ECR pull through cache rule](https://docs.aws.amazon.com/AmazonECR/latest/userguide/pull-through-cache.html) that caches Docker Hub images in ECR. Images are pulled as `<account>.dkr.ecr.<region>.amazonaws.com/<pull_through_cache_repository_prefix>/<namespace>/<image>:<tag>`; the `pull_through_cache_registry_url` output can be used as the DataRobot `global.imageRegistry` value.
+
+Docker Hub credentials (`pull_through_cache_dockerhub_username` and `pull_through_cache_dockerhub_access_token`) are required and are stored in a Secrets Manager secret named `pull_through_cache_secret_name`. The access token is also stored in the Terraform state.
+
+The first pull of each image through the cache creates the ECR repository and imports the image, which requires `ecr:CreateRepository` and `ecr:BatchImportUpstreamImage`. The `pull_through_cache_node_policy_arn` policy grants these actions on the cache prefix and is attached to every node group created by this module. When using `existing_eks_cluster_name`, or node groups that set their own `iam_role_arn`, attach it to the node role yourself.
+
+Set `pull_through_cache_expiration_days` to create an ECR repository creation template that expires cached images. The template only applies to repositories created after it exists.
+
+Only one pull through cache rule can use a given prefix in an account and region. To manage an existing rule and secret, import them with `terraform import`.
+
+#### IAM Policy
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "AllowECRPullThroughCacheActions",
+            "Effect": "Allow",
+            "Action": [
+                "ecr:CreatePullThroughCacheRule",
+                "ecr:DescribePullThroughCacheRules",
+                "ecr:UpdatePullThroughCacheRule",
+                "ecr:DeletePullThroughCacheRule",
+                "ecr:CreateRepositoryCreationTemplate",
+                "ecr:DescribeRepositoryCreationTemplates",
+                "ecr:UpdateRepositoryCreationTemplate",
+                "ecr:DeleteRepositoryCreationTemplate",
+                "ecr:PutLifecyclePolicy",
+                "ecr:GetLifecyclePolicy"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowSecretsManagerActions",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:CreateSecret",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:PutSecretValue",
+                "secretsmanager:UpdateSecret",
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:TagResource",
+                "secretsmanager:UntagResource",
+                "secretsmanager:DeleteSecret"
+            ],
+            "Resource": "arn:aws:secretsmanager:*:*:secret:ecr-pullthroughcache/*"
+        },
+        {
+            "Sid": "AllowIAMPolicyActions",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreatePolicy",
+                "iam:GetPolicy",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion",
+                "iam:DeletePolicy",
+                "iam:TagPolicy"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+
 ### Kubernetes
 #### Toggle
 - `create_kubernetes_cluster` to create a new Amazon Elastic Kubernetes Service Cluster
@@ -822,9 +895,35 @@ Not required
                 "ecr:DescribeRepositories",
                 "ecr:DeleteRepository",
                 "ecr:TagResource",
-                "ecr:ListTagsForResource"
+                "ecr:ListTagsForResource",
+                "ecr:CreatePullThroughCacheRule",
+                "ecr:DescribePullThroughCacheRules",
+                "ecr:UpdatePullThroughCacheRule",
+                "ecr:DeletePullThroughCacheRule",
+                "ecr:CreateRepositoryCreationTemplate",
+                "ecr:DescribeRepositoryCreationTemplates",
+                "ecr:UpdateRepositoryCreationTemplate",
+                "ecr:DeleteRepositoryCreationTemplate",
+                "ecr:PutLifecyclePolicy",
+                "ecr:GetLifecyclePolicy"
             ],
             "Resource": "*"
+        },
+        {
+            "Sid": "AllowSecretsManagerActions",
+            "Effect": "Allow",
+            "Action": [
+                "secretsmanager:CreateSecret",
+                "secretsmanager:DescribeSecret",
+                "secretsmanager:GetSecretValue",
+                "secretsmanager:PutSecretValue",
+                "secretsmanager:UpdateSecret",
+                "secretsmanager:GetResourcePolicy",
+                "secretsmanager:TagResource",
+                "secretsmanager:UntagResource",
+                "secretsmanager:DeleteSecret"
+            ],
+            "Resource": "arn:aws:secretsmanager:*:*:secret:ecr-pullthroughcache/*"
         },
         {
             "Sid": "AllowEKSActions",
@@ -869,6 +968,8 @@ Not required
                 "iam:TagPolicy",
                 "iam:GetPolicyVersion",
                 "iam:ListPolicyVersions",
+                "iam:CreatePolicyVersion",
+                "iam:DeletePolicyVersion",
                 "iam:DeletePolicy",
                 "iam:AttachRolePolicy",
                 "iam:ListRolePolicies",
@@ -997,8 +1098,13 @@ The default installation supports DataRobot versions >= 10.1.
 | ---- | ---- |
 | [aws_autoscaling_group_tag.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/autoscaling_group_tag) | resource |
 | [aws_ebs_encryption_by_default.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_encryption_by_default) | resource |
+| [aws_ecr_pull_through_cache_rule.this](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecr_pull_through_cache_rule) | resource |
+| [aws_ecr_repository_creation_template.pull_through_cache](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ecr_repository_creation_template) | resource |
+| [aws_iam_policy.pull_through_cache](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
 | [aws_route53_record.endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record) | resource |
 | [aws_route53_zone.endpoint](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone) | resource |
+| [aws_secretsmanager_secret.pull_through_cache](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret) | resource |
+| [aws_secretsmanager_secret_version.pull_through_cache](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/secretsmanager_secret_version) | resource |
 | [aws_availability_zones.available](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/availability_zones) | data source |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_eks_cluster.existing](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/eks_cluster) | data source |
@@ -1049,6 +1155,7 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_create_network"></a> [create\_network](#input\_create\_network) | Create a new Virtual Private Cloud. Ignored if an existing existing\_vpc\_id is specified. | `bool` | `true` | no |
 | <a name="input_create_observability"></a> [create\_observability](#input\_create\_observability) | Whether to provision observability resources with Cloudwatch, Prometheus and Grafana | `bool` | `false` | no |
 | <a name="input_create_postgres"></a> [create\_postgres](#input\_create\_postgres) | Whether to create a RDS postgres instance | `bool` | `false` | no |
+| <a name="input_create_pull_through_cache"></a> [create\_pull\_through\_cache](#input\_create\_pull\_through\_cache) | Create an ECR pull through cache rule for Docker Hub. Requires pull\_through\_cache\_dockerhub\_username and pull\_through\_cache\_dockerhub\_access\_token. | `bool` | `false` | no |
 | <a name="input_create_rabbitmq"></a> [create\_rabbitmq](#input\_create\_rabbitmq) | Whether to create an AMQ RabbitMQ instance | `bool` | `false` | no |
 | <a name="input_create_redis"></a> [create\_redis](#input\_create\_redis) | Whether to create a Elasticache Redis instance | `bool` | `false` | no |
 | <a name="input_create_storage"></a> [create\_storage](#input\_create\_storage) | Create a new S3 storage bucket to use for DataRobot application file storage. Ignored if an existing\_s3\_bucket\_id is specified. | `bool` | `true` | no |
@@ -1176,6 +1283,12 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="input_postgres_skip_final_snapshot"></a> [postgres\_skip\_final\_snapshot](#input\_postgres\_skip\_final\_snapshot) | Whether to skip the final snapshot before the DB instance is deleted | `bool` | `true` | no |
 | <a name="input_postgres_subnet_group_name"></a> [postgres\_subnet\_group\_name](#input\_postgres\_subnet\_group\_name) | Name of RDS postgres instance DB subnet group. | `string` | `null` | no |
 | <a name="input_postgres_subnet_group_use_name_prefix"></a> [postgres\_subnet\_group\_use\_name\_prefix](#input\_postgres\_subnet\_group\_use\_name\_prefix) | Determines whether to use subnet\_group\_name as is or create a unique name beginning with the subnet\_group\_name as the prefix | `bool` | `true` | no |
+| <a name="input_pull_through_cache_dockerhub_access_token"></a> [pull\_through\_cache\_dockerhub\_access\_token](#input\_pull\_through\_cache\_dockerhub\_access\_token) | Docker Hub personal access token the pull through cache uses to authenticate to Docker Hub. Required when create\_pull\_through\_cache is true. Stored in AWS Secrets Manager and in Terraform state. | `string` | `null` | no |
+| <a name="input_pull_through_cache_dockerhub_username"></a> [pull\_through\_cache\_dockerhub\_username](#input\_pull\_through\_cache\_dockerhub\_username) | Docker Hub username the pull through cache uses to authenticate to Docker Hub. Required when create\_pull\_through\_cache is true. | `string` | `null` | no |
+| <a name="input_pull_through_cache_expiration_days"></a> [pull\_through\_cache\_expiration\_days](#input\_pull\_through\_cache\_expiration\_days) | When set, creates an ECR repository creation template that expires cached images this many days after they are cached. Expired images are pulled from Docker Hub again on the next request. Only applies to repositories the pull through cache creates after the template exists. | `number` | `null` | no |
+| <a name="input_pull_through_cache_repository_prefix"></a> [pull\_through\_cache\_repository\_prefix](#input\_pull\_through\_cache\_repository\_prefix) | ECR repository prefix for the pull through cache rule. Cached images are pulled as <account>.dkr.ecr.<region>.amazonaws.com/<prefix>/<namespace>/<image>:<tag>. Must be unique within the account and region. | `string` | `"dockerhub-remote"` | no |
+| <a name="input_pull_through_cache_secret_name"></a> [pull\_through\_cache\_secret\_name](#input\_pull\_through\_cache\_secret\_name) | Name of the Secrets Manager secret holding the Docker Hub credentials. ECR requires the name to start with `ecr-pullthroughcache/`. | `string` | `"ecr-pullthroughcache/dockerhub"` | no |
+| <a name="input_pull_through_cache_secret_recovery_window_in_days"></a> [pull\_through\_cache\_secret\_recovery\_window\_in\_days](#input\_pull\_through\_cache\_secret\_recovery\_window\_in\_days) | Number of days Secrets Manager waits before deleting the Docker Hub credentials secret. Set to 0 to delete immediately so the secret name can be reused right away. | `number` | `30` | no |
 | <a name="input_rabbitmq_authentication_strategy"></a> [rabbitmq\_authentication\_strategy](#input\_rabbitmq\_authentication\_strategy) | Authentication strategy used to secure the broker | `string` | `"simple"` | no |
 | <a name="input_rabbitmq_auto_minor_version_upgrade"></a> [rabbitmq\_auto\_minor\_version\_upgrade](#input\_rabbitmq\_auto\_minor\_version\_upgrade) | Whether to automatically upgrade to new minor versions of brokers as Amazon MQ makes releases available. | `bool` | `true` | no |
 | <a name="input_rabbitmq_cloudwatch_log_group_retention_in_days"></a> [rabbitmq\_cloudwatch\_log\_group\_retention\_in\_days](#input\_rabbitmq\_cloudwatch\_log\_group\_retention\_in\_days) | CloudWatch log retention for RabbitMQ | `string` | `90` | no |
@@ -1224,6 +1337,8 @@ The default installation supports DataRobot versions >= 10.1.
 | <a name="output_public_route53_zone_arn"></a> [public\_route53\_zone\_arn](#output\_public\_route53\_zone\_arn) | Zone ARN of the public Route53 zone |
 | <a name="output_public_route53_zone_id"></a> [public\_route53\_zone\_id](#output\_public\_route53\_zone\_id) | Zone ID of the public Route53 zone |
 | <a name="output_public_route53_zone_name_servers"></a> [public\_route53\_zone\_name\_servers](#output\_public\_route53\_zone\_name\_servers) | Name servers of Route53 zone |
+| <a name="output_pull_through_cache_node_policy_arn"></a> [pull\_through\_cache\_node\_policy\_arn](#output\_pull\_through\_cache\_node\_policy\_arn) | ARN of the IAM policy that allows nodes to pull images through the cache. Attach it to the node role when using an existing EKS cluster. |
+| <a name="output_pull_through_cache_registry_url"></a> [pull\_through\_cache\_registry\_url](#output\_pull\_through\_cache\_registry\_url) | Registry URL to pull Docker Hub images through the ECR pull through cache, e.g. <url>/<namespace>/<image>:<tag> |
 | <a name="output_rabbitmq_endpoint"></a> [rabbitmq\_endpoint](#output\_rabbitmq\_endpoint) | RabbitMQ AMQP(S) endpoint |
 | <a name="output_rabbitmq_password"></a> [rabbitmq\_password](#output\_rabbitmq\_password) | RabbitMQ broker password |
 | <a name="output_redis_endpoint"></a> [redis\_endpoint](#output\_redis\_endpoint) | ElastiCache redis endpoint |
