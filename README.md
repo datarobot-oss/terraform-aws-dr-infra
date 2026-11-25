@@ -444,6 +444,13 @@ To enable batch spark jobs using EMR serverless, the `emr-serverless.amazonaws.c
 
 The role is given the `AmazonEC2ContainerRegistryPowerUser` managed policy in order to manage ECR repositories as well as S3 bucket access to either the bucket created in this module or specified by the `existing_s3_bucket_id` variable.
 
+Additional S3 buckets, such as customer buckets used for S3 ingestion, can be given the same access with `app_identity_additional_s3_buckets`. If those buckets are encrypted with customer managed KMS keys, list the keys in `app_identity_additional_kms_key_arns`. For buckets in another AWS account, the bucket owner must also allow the role in the bucket policy (and the key policy).
+
+```hcl
+app_identity_additional_s3_buckets   = ["customer-data-bucket", "customer-other-bucket"]
+app_identity_additional_kms_key_arns = ["arn:aws:kms:us-east-1:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"]
+```
+
 A second role will also be created which the DataRobot app role will assume in order to access Amazon Bedrock resources.
 
 #### IAM Policy
@@ -1120,6 +1127,8 @@ The default installation supports DataRobot versions >= 10.1.
 
 | Name | Description | Type | Default | Required |
 | ---- | ----------- | ---- | ------- | :------: |
+| <a name="input_app_identity_additional_kms_key_arns"></a> [app\_identity\_additional\_kms\_key\_arns](#input\_app\_identity\_additional\_kms\_key\_arns) | ARNs of KMS keys protecting the app\_identity\_additional\_s3\_buckets, if they use SSE-KMS with customer managed keys. The DataRobot application role is granted the same key permissions as for s3\_bucket\_kms\_key\_arn. Cross-account keys must also allow the role in their key policy. | `list(string)` | `[]` | no |
+| <a name="input_app_identity_additional_s3_buckets"></a> [app\_identity\_additional\_s3\_buckets](#input\_app\_identity\_additional\_s3\_buckets) | Names of additional S3 buckets the DataRobot application role is granted the same access as the storage bucket, e.g. customer buckets for S3 ingestion. Cross-account buckets must also allow the role in their bucket policy. | `list(string)` | `[]` | no |
 | <a name="input_app_identity_name"></a> [app\_identity\_name](#input\_app\_identity\_name) | Name of the IAM role for the DataRobot application. Defaults to <name>-app-irsa. | `string` | `null` | no |
 | <a name="input_application_dns_name"></a> [application\_dns\_name](#input\_application\_dns\_name) | Application dns name | `string` | `null` | no |
 | <a name="input_availability_zones"></a> [availability\_zones](#input\_availability\_zones) | Number of availability zones to deploy into | `number` | `2` | no |

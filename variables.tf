@@ -656,6 +656,20 @@ variable "app_identity_name" {
   default     = null
 }
 
+variable "app_identity_additional_s3_buckets" {
+  description = "Names of additional S3 buckets the DataRobot application role is granted the same access as the storage bucket, e.g. customer buckets for S3 ingestion. Cross-account buckets must also allow the role in their bucket policy."
+  type        = list(string)
+  default     = []
+  nullable    = false
+}
+
+variable "app_identity_additional_kms_key_arns" {
+  description = "ARNs of KMS keys protecting the app_identity_additional_s3_buckets, if they use SSE-KMS with customer managed keys. The DataRobot application role is granted the same key permissions as for s3_bucket_kms_key_arn. Cross-account keys must also allow the role in their key policy."
+  type        = list(string)
+  default     = []
+  nullable    = false
+}
+
 variable "datarobot_namespace" {
   description = "Kubernetes namespace in which the DataRobot application will be installed"
   type        = string
