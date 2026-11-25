@@ -599,8 +599,12 @@ resource "aws_autoscaling_group_tag" "this" {
 locals {
   app_role_arn = var.existing_app_role_arn != null ? var.existing_app_role_arn : try(module.app_identity[0].arn, null)
 
-  # Allow the application to use the customer managed key protecting the S3 storage bucket.
-  app_s3_kms_inline_policy = var.s3_bucket_kms_key_arn != null ? {
+  # Allow the application to use the customer managed keys protecting the S3 storage bucket and any additional buckets.
+  app_s3_kms_key_arns = concat(
+    var.s3_bucket_kms_key_arn != null ? [var.s3_bucket_kms_key_arn] : [],
+    var.app_identity_additional_kms_key_arns
+  )
+  app_s3_kms_inline_policy = length(local.app_s3_kms_key_arns) > 0 ? {
     s3BucketKms = {
       actions = [
         "kms:Encrypt",
@@ -609,7 +613,7 @@ locals {
         "kms:GenerateDataKey*",
         "kms:DescribeKey"
       ]
-      resources = [var.s3_bucket_kms_key_arn]
+      resources = local.app_s3_kms_key_arns
     }
   } : {}
 }
@@ -653,10 +657,12 @@ module "app_identity" {
         "s3:ReplicateDelete",
         "s3:ListMultipartUploadParts"
       ]
-      resources = [
-        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}",
-        "arn:${data.aws_partition.current.id}:s3:::${local.s3_bucket_id}/*"
-      ]
+      resources = flatten([
+        for bucket in concat([local.s3_bucket_id], var.app_identity_additional_s3_buckets) : [
+          "arn:${data.aws_partition.current.id}:s3:::${bucket}",
+          "arn:${data.aws_partition.current.id}:s3:::${bucket}/*"
+        ]
+      ])
     }
     s3list = {
       actions = [
